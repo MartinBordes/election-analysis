@@ -398,9 +398,11 @@ function showBureaux() {
         style: function(feature) {
             const bId = feature.properties.bureau;
             const stats = bureauStats(bId);
+            const pct = Math.max(stats.pctPap, stats.pctBoi);
+            const color = pct > 0 ? '#2e7d32' : '#e0e0e0';
             return {
-                fillColor: stats.total > 0 ? '#c62828' : '#e0e0e0',
-                fillOpacity: Math.min(0.2 + stats.total * 0.03, 0.7),
+                fillColor: color,
+                fillOpacity: Math.min(0.1 + pct / 100 * 0.6, 0.7),
                 color: '#555', weight: 1.5
             };
         },
@@ -409,11 +411,18 @@ function showBureaux() {
             const stats = bureauStats(b.bureau);
             layer.bindTooltip(
                 `<b>Bureau ${b.bureau}</b><br>${b.nom}<br>` +
-                `${stats.pap} PàP · ${stats.boi} boîtages`,
+                `${stats.totalAddr} adresses<br>` +
+                `PàP : ${stats.pctPap}% couvert (${stats.pap} visites)<br>` +
+                `Boîtage : ${stats.pctBoi}% couvert (${stats.boi} passages)`,
                 { sticky: true, className: 'bureau-tooltip' }
             );
-            layer.on('click', function() {
-                zoomToBureau(b.bureau, layer);
+            layer.on('click', function(e) {
+                L.DomEvent.stopPropagation(e);
+                if (currentBureau && currentBureau !== b.bureau) {
+                    zoomOut();
+                } else if (!currentBureau) {
+                    zoomToBureau(b.bureau, layer);
+                }
             });
         }
     }).addTo(map);
@@ -424,16 +433,19 @@ function showBureaux() {
 }
 
 function bureauStats(bureauId) {
-    let pap = 0, boi = 0;
+    let pap = 0, boi = 0, addrPap = 0, addrBoi = 0;
+    const totalAddr = ADDRESSES.filter(a => a._bureau === bureauId).length;
     Object.entries(visites).forEach(([addrId, v]) => {
         const addr = ADDRESSES.find(a => a.id === addrId);
-        if (!addr) return;
-        if (isInBureau(addr, bureauId)) {
-            if (v.pap) pap += v.pap.count;
-            if (v.boi) boi += v.boi.count;
-        }
+        if (!addr || addr._bureau !== bureauId) return;
+        if (v.pap) { pap += v.pap.count; addrPap++; }
+        if (v.boi) { boi += v.boi.count; addrBoi++; }
     });
-    return { pap, boi, total: pap + boi };
+    return {
+        pap, boi, total: pap + boi, totalAddr,
+        pctPap: totalAddr ? Math.round(addrPap / totalAddr * 100) : 0,
+        pctBoi: totalAddr ? Math.round(addrBoi / totalAddr * 100) : 0,
+    };
 }
 
 function isInBureau(addr, bureauId) {
