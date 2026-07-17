@@ -326,8 +326,9 @@ function openAddrPopup(addr) {
     currentAddrId = addr.id;
     if (isMobile()) {
         const v = visites[addr.id] || {};
+        const lgts = addr.lgts || 1;
         document.getElementById('mo-title').textContent = addr.adr;
-        document.getElementById('mo-addr').textContent = addr.rue;
+        document.getElementById('mo-addr').textContent = `${addr.rue} — ~${lgts} logement${lgts > 1 ? 's' : ''}`;
         document.getElementById('mo-history').innerHTML = historyText(addr.id);
         document.getElementById('mo-undo-pap').style.display = v.pap ? '' : 'none';
         document.getElementById('mo-undo-boi').style.display = v.boi ? '' : 'none';
@@ -344,9 +345,10 @@ function closeMobilePopup() {
 
 function createPopupHTML(addr) {
     const v = visites[addr.id] || {};
+    const lgts = addr.lgts || 1;
     return `<div class="addr-popup">
         <h3>${addr.adr}</h3>
-        <div class="popup-rue">${addr.rue}</div>
+        <div class="popup-rue">${addr.rue} — ~${lgts} logement${lgts > 1 ? 's' : ''}</div>
         <div class="popup-history">${historyText(addr.id)}</div>
         <div class="btn-row">
             <div style="flex:1;text-align:center;">
@@ -411,9 +413,9 @@ function showBureaux() {
             const stats = bureauStats(b.bureau);
             layer.bindTooltip(
                 `<b>Bureau ${b.bureau}</b><br>${b.nom}<br>` +
-                `${stats.totalAddr} adresses<br>` +
-                `PàP : ${stats.pctPap}% couvert (${stats.pap} visites)<br>` +
-                `Boîtage : ${stats.pctBoi}% couvert (${stats.boi} passages)`,
+                `~${stats.totalLgts} logements estimés<br>` +
+                `PàP : ${stats.pctPap}% couvert (${stats.papCount} visites)<br>` +
+                `Boîtage : ${stats.pctBoi}% couvert (${stats.boiCount} passages)`,
                 { sticky: true, className: 'bureau-tooltip' }
             );
             layer.on('click', function(e) {
@@ -433,18 +435,21 @@ function showBureaux() {
 }
 
 function bureauStats(bureauId) {
-    let pap = 0, boi = 0, addrPap = 0, addrBoi = 0;
-    const totalAddr = ADDRESSES.filter(a => a._bureau === bureauId).length;
+    const bureauAddrs = ADDRESSES.filter(a => a._bureau === bureauId);
+    const totalLgts = bureauAddrs.reduce((s, a) => s + (a.lgts || 1), 0);
+    let lgtsPap = 0, lgtsBoi = 0, papCount = 0, boiCount = 0;
     Object.entries(visites).forEach(([addrId, v]) => {
-        const addr = ADDRESSES.find(a => a.id === addrId);
-        if (!addr || addr._bureau !== bureauId) return;
-        if (v.pap) { pap += v.pap.count; addrPap++; }
-        if (v.boi) { boi += v.boi.count; addrBoi++; }
+        const addr = bureauAddrs.find(a => a.id === addrId);
+        if (!addr) return;
+        const lgts = addr.lgts || 1;
+        if (v.pap) { lgtsPap += lgts; papCount += v.pap.count; }
+        if (v.boi) { lgtsBoi += lgts; boiCount += v.boi.count; }
     });
     return {
-        pap, boi, total: pap + boi, totalAddr,
-        pctPap: totalAddr ? Math.round(addrPap / totalAddr * 100) : 0,
-        pctBoi: totalAddr ? Math.round(addrBoi / totalAddr * 100) : 0,
+        totalLgts, papCount, boiCount,
+        total: papCount + boiCount,
+        pctPap: totalLgts ? Math.round(lgtsPap / totalLgts * 100) : 0,
+        pctBoi: totalLgts ? Math.round(lgtsBoi / totalLgts * 100) : 0,
     };
 }
 
