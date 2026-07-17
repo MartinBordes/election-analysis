@@ -95,9 +95,16 @@ body { font-family: 'Source Sans 3', Arial, sans-serif; }
 }
 .addr-popup .btn-action.pap { border-color: #ef9a9a; color: #c62828; }
 .addr-popup .btn-action.boi { border-color: #90caf9; color: #1565c0; }
+.btn-undo { background: none; border: none; color: #999; font-size: 12px;
+    cursor: pointer; padding: 2px 6px; font-family: inherit; }
+.btn-undo:hover { color: #c62828; }
 
 /* Cacher les contrôles zoom leaflet */
 .leaflet-control-zoom { display: none !important; }
+/* Supprimer le rectangle de focus/tap sur les polygones */
+.leaflet-interactive { outline: none !important; }
+.leaflet-interactive:focus { outline: none !important; }
+path.leaflet-interactive { -webkit-tap-highlight-color: transparent; }
 </style>
 </head>
 <body>
@@ -122,12 +129,14 @@ body { font-family: 'Source Sans 3', Arial, sans-serif; }
     <div class="mo-addr" id="mo-addr"></div>
     <div class="mo-history" id="mo-history"></div>
     <div class="btn-row">
-        <button class="btn-action pap" id="mo-btn-pap" onclick="addVisite('pap')">
-            + Porte-à-porte
-        </button>
-        <button class="btn-action boi" id="mo-btn-boi" onclick="addVisite('boi')">
-            + Boîtage
-        </button>
+        <div style="flex:1;text-align:center;">
+            <button class="btn-action pap" style="width:100%;" onclick="addVisite('pap')">+ Porte-à-porte</button>
+            <button class="btn-undo" id="mo-undo-pap" onclick="undoVisite('pap')" style="display:none;">Annuler dernière</button>
+        </div>
+        <div style="flex:1;text-align:center;">
+            <button class="btn-action boi" style="width:100%;" onclick="addVisite('boi')">+ Boîtage</button>
+            <button class="btn-undo" id="mo-undo-boi" onclick="undoVisite('boi')" style="display:none;">Annuler dernière</button>
+        </div>
     </div>
 </div>
 
@@ -221,6 +230,41 @@ async function addVisite(type) {
     refreshPopup();
 }
 
+async function undoVisite(type) {
+    if (!currentAddrId) return;
+    const v = visites[currentAddrId];
+    if (!v || !v[type] || v[type].count <= 0) return;
+
+    const newCount = v[type].count - 1;
+
+    if (newCount === 0) {
+        delete v[type];
+        if (Object.keys(v).length === 0) delete visites[currentAddrId];
+        try {
+            await fetch(
+                `${SUPABASE_URL}/rest/v1/visites?address_id=eq.${currentAddrId}&type=eq.${type}`,
+                { method: 'DELETE', headers: SB_HEADERS }
+            );
+        } catch(e) { console.error('Supabase delete error:', e); }
+    } else {
+        v[type].count = newCount;
+        try {
+            await fetch(`${SUPABASE_URL}/rest/v1/visites`, {
+                method: 'POST',
+                headers: { ...SB_HEADERS, 'Prefer': 'resolution=merge-duplicates' },
+                body: JSON.stringify({
+                    address_id: currentAddrId, type: type,
+                    count: newCount, last_date: v[type].last_date
+                })
+            });
+        } catch(e) { console.error('Supabase save error:', e); }
+    }
+
+    updateMarkerStyle(currentAddrId);
+    updateStats();
+    refreshPopup();
+}
+
 // ============================================================
 // MARKER STYLES
 // ============================================================
@@ -264,9 +308,12 @@ function refreshPopup() {
     if (!currentAddrId) return;
     const addr = ADDRESSES.find(a => a.id === currentAddrId);
     if (!addr) return;
+    const v = visites[addr.id] || {};
 
     if (isMobile()) {
         document.getElementById('mo-history').innerHTML = historyText(addr.id);
+        document.getElementById('mo-undo-pap').style.display = v.pap ? '' : 'none';
+        document.getElementById('mo-undo-boi').style.display = v.boi ? '' : 'none';
     } else {
         const m = markers[addr.id];
         if (m && m.getPopup() && m.getPopup().isOpen()) {
@@ -278,9 +325,12 @@ function refreshPopup() {
 function openAddrPopup(addr) {
     currentAddrId = addr.id;
     if (isMobile()) {
+        const v = visites[addr.id] || {};
         document.getElementById('mo-title').textContent = addr.adr;
         document.getElementById('mo-addr').textContent = addr.rue;
         document.getElementById('mo-history').innerHTML = historyText(addr.id);
+        document.getElementById('mo-undo-pap').style.display = v.pap ? '' : 'none';
+        document.getElementById('mo-undo-boi').style.display = v.boi ? '' : 'none';
         document.getElementById('mobile-overlay').style.display = 'block';
         document.getElementById('mobile-backdrop').style.display = 'block';
     }
@@ -293,15 +343,24 @@ function closeMobilePopup() {
 }
 
 function createPopupHTML(addr) {
+    const v = visites[addr.id] || {};
     return `<div class="addr-popup">
         <h3>${addr.adr}</h3>
         <div class="popup-rue">${addr.rue}</div>
         <div class="popup-history">${historyText(addr.id)}</div>
         <div class="btn-row">
-            <button class="btn-action pap"
-                onclick="currentAddrId='${addr.id}';addVisite('pap');">+ PàP</button>
-            <button class="btn-action boi"
-                onclick="currentAddrId='${addr.id}';addVisite('boi');">+ Boîtage</button>
+            <div style="flex:1;text-align:center;">
+                <button class="btn-action pap" style="width:100%;"
+                    onclick="currentAddrId='${addr.id}';addVisite('pap');">+ PàP</button>
+                ${v.pap ? `<button class="btn-undo"
+                    onclick="currentAddrId='${addr.id}';undoVisite('pap');">Annuler</button>` : ''}
+            </div>
+            <div style="flex:1;text-align:center;">
+                <button class="btn-action boi" style="width:100%;"
+                    onclick="currentAddrId='${addr.id}';addVisite('boi');">+ Boîtage</button>
+                ${v.boi ? `<button class="btn-undo"
+                    onclick="currentAddrId='${addr.id}';undoVisite('boi');">Annuler</button>` : ''}
+            </div>
         </div>
     </div>`;
 }
@@ -314,6 +373,19 @@ function buildMap() {
     L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
         attribution: '&copy; OSM, CARTO', maxZoom: 19
     }).addTo(map);
+
+    map.on('click', function(e) {
+        if (!currentBureau) return;
+        const pt = [e.latlng.lng, e.latlng.lat];
+        let clickedInBureau = false;
+        for (const f of BUREAUX.features) {
+            if (f.properties.bureau === currentBureau && pointInPolygon(pt, f.geometry)) {
+                clickedInBureau = true;
+                break;
+            }
+        }
+        if (!clickedInBureau) zoomOut();
+    });
 
     showBureaux();
 }
