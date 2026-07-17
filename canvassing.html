@@ -3,10 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Canvassing Nanterre — Porte-à-porte &amp; Boîtage</title>
+<title>Canvassing Nanterre</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
-<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
@@ -14,7 +12,7 @@
 body { font-family: 'Source Sans 3', Arial, sans-serif; }
 #map { position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 1; }
 
-/* Barre de recherche */
+/* Contrôles carte */
 #search-bar {
     position: fixed; top: 10px; left: 50px; right: 50px; z-index: 1000;
     display: flex; gap: 6px;
@@ -25,13 +23,14 @@ body { font-family: 'Source Sans 3', Arial, sans-serif; }
     box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
 #search-input:focus { outline: none; border-color: #c62828; }
-#btn-locate {
+#btn-locate, #btn-back {
     width: 44px; height: 44px; border: none; border-radius: 8px;
     background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.15);
     font-size: 20px; cursor: pointer; flex-shrink: 0;
 }
+#btn-back { display: none; position: fixed; top: 10px; left: 6px; z-index: 1001; }
 
-/* Compteurs */
+/* Stats en bas */
 #stats-bar {
     position: fixed; bottom: 10px; left: 10px; right: 10px; z-index: 1000;
     display: flex; gap: 8px; justify-content: center;
@@ -44,60 +43,8 @@ body { font-family: 'Source Sans 3', Arial, sans-serif; }
 .stat-chip.pap { color: #c62828; }
 .stat-chip.boi { color: #1565c0; }
 
-/* Popup adresse */
-.addr-popup { font-family: 'Source Sans 3', Arial, sans-serif; min-width: 200px; }
-.addr-popup h3 { font-size: 15px; margin-bottom: 8px; }
-.addr-popup .btn-row { display: flex; gap: 6px; margin-top: 8px; }
-.addr-popup .btn-action {
-    flex: 1; padding: 10px 8px; border: 2px solid #ddd; border-radius: 8px;
-    font-size: 13px; font-weight: 600; cursor: pointer; text-align: center;
-    font-family: inherit; background: white; transition: all 0.15s;
-}
-.addr-popup .btn-action:active { transform: scale(0.96); }
-.addr-popup .btn-action.pap { border-color: #ef9a9a; color: #c62828; }
-.addr-popup .btn-action.pap.active { background: #c62828; color: white; border-color: #c62828; }
-.addr-popup .btn-action.boi { border-color: #90caf9; color: #1565c0; }
-.addr-popup .btn-action.boi.active { background: #1565c0; color: white; border-color: #1565c0; }
-
-/* Légende filtre */
-#filter-bar {
-    position: fixed; top: 64px; left: 10px; z-index: 1000;
-    background: white; border-radius: 8px; padding: 6px 10px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.15); font-size: 12px;
-    display: flex; flex-direction: column; gap: 4px;
-}
-#filter-bar label { cursor: pointer; display: flex; align-items: center; gap: 4px; }
-
-/* Mobile overlay pour popup */
-#mobile-overlay {
-    display: none; position: fixed; bottom: 0; left: 0; right: 0;
-    background: white; z-index: 2000; border-radius: 16px 16px 0 0;
-    box-shadow: 0 -4px 20px rgba(0,0,0,0.2); padding: 20px;
-    max-height: 50vh; overflow-y: auto; -webkit-overflow-scrolling: touch;
-}
-#mobile-overlay .mo-handle {
-    width: 40px; height: 4px; background: #ddd; border-radius: 2px;
-    margin: 0 auto 12px;
-}
-#mobile-overlay h3 { font-size: 18px; margin-bottom: 4px; }
-#mobile-overlay .mo-addr { color: #888; font-size: 14px; margin-bottom: 12px; }
-#mobile-overlay .btn-row { display: flex; gap: 10px; }
-#mobile-overlay .btn-action {
-    flex: 1; padding: 14px; border: 2px solid #ddd; border-radius: 10px;
-    font-size: 15px; font-weight: 600; cursor: pointer; text-align: center;
-    font-family: inherit; background: white;
-}
-#mobile-overlay .btn-action.pap { border-color: #ef9a9a; color: #c62828; }
-#mobile-overlay .btn-action.pap.active { background: #c62828; color: white; }
-#mobile-overlay .btn-action.boi { border-color: #90caf9; color: #1565c0; }
-#mobile-overlay .btn-action.boi.active { background: #1565c0; color: white; }
-#mobile-backdrop {
-    display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.3); z-index: 1999;
-}
-
-/* Markers */
-.marker-default { background: #999; border: 2px solid white; border-radius: 50%;
+/* Marqueurs adresse */
+.marker-default { background: #bbb; border: 2px solid white; border-radius: 50%;
     width: 10px; height: 10px; margin: -5px 0 0 -5px; }
 .marker-pap { background: #c62828; border: 2px solid white; border-radius: 50%;
     width: 12px; height: 12px; margin: -6px 0 0 -6px; }
@@ -105,26 +52,67 @@ body { font-family: 'Source Sans 3', Arial, sans-serif; }
     width: 12px; height: 12px; margin: -6px 0 0 -6px; }
 .marker-both { background: #6a1b9a; border: 2px solid white; border-radius: 50%;
     width: 12px; height: 12px; margin: -6px 0 0 -6px; }
+
+/* Bottom sheet mobile */
+#mobile-backdrop {
+    display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.3); z-index: 1999;
+}
+#mobile-overlay {
+    display: none; position: fixed; bottom: 0; left: 0; right: 0;
+    background: white; z-index: 2000; border-radius: 16px 16px 0 0;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.2); padding: 20px;
+    max-height: 60vh; overflow-y: auto; -webkit-overflow-scrolling: touch;
+}
+#mobile-overlay .mo-handle {
+    width: 40px; height: 4px; background: #ddd; border-radius: 2px;
+    margin: 0 auto 12px;
+}
+#mobile-overlay h3 { font-size: 18px; margin-bottom: 4px; }
+#mobile-overlay .mo-addr { color: #888; font-size: 14px; margin-bottom: 6px; }
+#mobile-overlay .mo-history { color: #888; font-size: 13px; margin-bottom: 12px; }
+#mobile-overlay .btn-row { display: flex; gap: 10px; }
+#mobile-overlay .btn-action {
+    flex: 1; padding: 14px; border: 2px solid #ddd; border-radius: 10px;
+    font-size: 15px; font-weight: 600; cursor: pointer; text-align: center;
+    font-family: inherit; background: white;
+}
+#mobile-overlay .btn-action.pap { border-color: #ef9a9a; color: #c62828; }
+#mobile-overlay .btn-action.pap:active { background: #fbe9e7; }
+#mobile-overlay .btn-action.boi { border-color: #90caf9; color: #1565c0; }
+#mobile-overlay .btn-action.boi:active { background: #e3f2fd; }
+
+/* Popup desktop */
+.addr-popup { font-family: 'Source Sans 3', Arial, sans-serif; min-width: 220px; }
+.addr-popup h3 { font-size: 15px; margin-bottom: 2px; }
+.addr-popup .popup-rue { color: #888; font-size: 13px; margin-bottom: 4px; }
+.addr-popup .popup-history { color: #888; font-size: 12px; margin-bottom: 8px; }
+.addr-popup .btn-row { display: flex; gap: 6px; }
+.addr-popup .btn-action {
+    flex: 1; padding: 10px 8px; border: 2px solid #ddd; border-radius: 8px;
+    font-size: 13px; font-weight: 600; cursor: pointer; text-align: center;
+    font-family: inherit; background: white;
+}
+.addr-popup .btn-action.pap { border-color: #ef9a9a; color: #c62828; }
+.addr-popup .btn-action.boi { border-color: #90caf9; color: #1565c0; }
+
+/* Cacher les contrôles zoom leaflet */
+.leaflet-control-zoom { display: none !important; }
 </style>
 </head>
 <body>
 
 <div id="map"></div>
+<button id="btn-back" onclick="zoomOut()">&#8592;</button>
 
 <div id="search-bar">
     <input id="search-input" type="text" placeholder="Rechercher une adresse...">
-    <button id="btn-locate" title="Ma position">📍</button>
-</div>
-
-<div id="filter-bar">
-    <label><input type="checkbox" id="show-todo" checked> <span style="color:#999;">&#9679;</span> À faire</label>
-    <label><input type="checkbox" id="show-pap" checked> <span style="color:#c62828;">&#9679;</span> Porte-à-porte</label>
-    <label><input type="checkbox" id="show-boi" checked> <span style="color:#1565c0;">&#9679;</span> Boîtage</label>
+    <button id="btn-locate" title="Ma position">&#128205;</button>
 </div>
 
 <div id="stats-bar">
-    <div class="stat-chip pap"><span class="num" id="count-pap">0</span> porte-à-porte</div>
-    <div class="stat-chip boi"><span class="num" id="count-boi">0</span> boîtage</div>
+    <div class="stat-chip pap"><span class="num" id="count-pap">0</span> PàP</div>
+    <div class="stat-chip boi"><span class="num" id="count-boi">0</span> boîtages</div>
 </div>
 
 <div id="mobile-backdrop" onclick="closeMobilePopup()"></div>
@@ -132,108 +120,109 @@ body { font-family: 'Source Sans 3', Arial, sans-serif; }
     <div class="mo-handle"></div>
     <h3 id="mo-title"></h3>
     <div class="mo-addr" id="mo-addr"></div>
+    <div class="mo-history" id="mo-history"></div>
     <div class="btn-row">
-        <button class="btn-action pap" id="mo-btn-pap" onclick="toggleAction('pap')">
-            Porte-à-porte
+        <button class="btn-action pap" id="mo-btn-pap" onclick="addVisite('pap')">
+            + Porte-à-porte
         </button>
-        <button class="btn-action boi" id="mo-btn-boi" onclick="toggleAction('boi')">
-            Boîtage
+        <button class="btn-action boi" id="mo-btn-boi" onclick="addVisite('boi')">
+            + Boîtage
         </button>
     </div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 <script>
 // ============================================================
-// CONFIG — Remplace ces valeurs avec tes clés Supabase
+// CONFIG
 // ============================================================
 const SUPABASE_URL = 'https://htprfzzqjqfzyqcbjynz.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh0cHJmenpxanFmenlxY2JqeW56Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQyOTI1MTEsImV4cCI6MjA5OTg2ODUxMX0.HtHvc7_OGAidJ0XSnlKnx3d6tfrPTxbkFUaLsEv5nbE';
-const USE_SUPABASE = SUPABASE_URL && SUPABASE_KEY;
+const SB_HEADERS = {
+    'apikey': SUPABASE_KEY,
+    'Authorization': `Bearer ${SUPABASE_KEY}`,
+    'Content-Type': 'application/json'
+};
 
 // ============================================================
-// DONNÉES
+// STATE
 // ============================================================
 let ADDRESSES = [];
-let visites = {};  // { address_id: { pap: bool, boi: bool } }
-let markers = {};  // { address_id: L.marker }
+let BUREAUX = null;
+// visites[address_id] = { pap: { count, last_date }, boi: { count, last_date } }
+let visites = {};
+let markers = {};
+let addressLayer = null;
+let bureauLayer = null;
 let currentAddrId = null;
-let map, clusterGroup;
+let currentBureau = null;
+let map;
 
-// Charger les adresses
+// ============================================================
+// DATA LOADING
+// ============================================================
 async function loadAddresses() {
     const resp = await fetch('adresses_nanterre.json');
     ADDRESSES = await resp.json();
 }
 
-// ============================================================
-// PERSISTENCE — Supabase ou localStorage
-// ============================================================
-const LS_KEY = 'nanterre-canvassing';
+async function loadBureaux() {
+    const resp = await fetch('bureaux_vote.geojson');
+    BUREAUX = await resp.json();
+}
 
 async function loadVisites() {
-    if (USE_SUPABASE) {
-        try {
-            const resp = await fetch(`${SUPABASE_URL}/rest/v1/visites?select=*`, {
-                headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
-            });
-            const rows = await resp.json();
+    try {
+        const resp = await fetch(`${SUPABASE_URL}/rest/v1/visites?select=*`, {
+            headers: SB_HEADERS
+        });
+        const rows = await resp.json();
+        if (Array.isArray(rows)) {
             rows.forEach(r => {
                 if (!visites[r.address_id]) visites[r.address_id] = {};
-                visites[r.address_id][r.type] = true;
+                visites[r.address_id][r.type] = {
+                    count: r.count || 1,
+                    last_date: r.last_date
+                };
             });
-        } catch(e) { console.error('Supabase load error:', e); loadFromLS(); }
-    } else {
-        loadFromLS();
+        }
+    } catch(e) {
+        console.error('Supabase load error:', e);
     }
-}
-
-function loadFromLS() {
-    try { visites = JSON.parse(localStorage.getItem(LS_KEY)) || {}; } catch { visites = {}; }
-}
-
-function saveToLS() {
-    localStorage.setItem(LS_KEY, JSON.stringify(visites));
-}
-
-async function saveVisite(addrId, type, active) {
-    if (!visites[addrId]) visites[addrId] = {};
-    if (active) {
-        visites[addrId][type] = true;
-    } else {
-        delete visites[addrId][type];
-        if (Object.keys(visites[addrId]).length === 0) delete visites[addrId];
-    }
-
-    saveToLS();
-
-    if (USE_SUPABASE) {
-        try {
-            if (active) {
-                await fetch(`${SUPABASE_URL}/rest/v1/visites`, {
-                    method: 'POST',
-                    headers: {
-                        'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`,
-                        'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates'
-                    },
-                    body: JSON.stringify({ address_id: addrId, type: type, date: new Date().toISOString() })
-                });
-            } else {
-                await fetch(`${SUPABASE_URL}/rest/v1/visites?address_id=eq.${addrId}&type=eq.${type}`, {
-                    method: 'DELETE',
-                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
-                });
-            }
-        } catch(e) { console.error('Supabase save error:', e); }
-    }
-
-    updateMarkerStyle(addrId);
-    updateStats();
 }
 
 // ============================================================
-// CARTE
+// PERSISTENCE
+// ============================================================
+async function addVisite(type) {
+    if (!currentAddrId) return;
+    if (!visites[currentAddrId]) visites[currentAddrId] = {};
+    const prev = visites[currentAddrId][type];
+    const newCount = prev ? prev.count + 1 : 1;
+    const now = new Date().toISOString();
+    visites[currentAddrId][type] = { count: newCount, last_date: now };
+
+    // Upsert dans Supabase
+    try {
+        await fetch(`${SUPABASE_URL}/rest/v1/visites`, {
+            method: 'POST',
+            headers: { ...SB_HEADERS, 'Prefer': 'resolution=merge-duplicates' },
+            body: JSON.stringify({
+                address_id: currentAddrId,
+                type: type,
+                count: newCount,
+                last_date: now
+            })
+        });
+    } catch(e) { console.error('Supabase save error:', e); }
+
+    updateMarkerStyle(currentAddrId);
+    updateStats();
+    refreshPopup();
+}
+
+// ============================================================
+// MARKER STYLES
 // ============================================================
 function getMarkerClass(addrId) {
     const v = visites[addrId] || {};
@@ -243,32 +232,55 @@ function getMarkerClass(addrId) {
     return 'marker-default';
 }
 
-function getMarkerStatus(addrId) {
-    const v = visites[addrId] || {};
-    if (v.pap && v.boi) return 'both';
-    if (v.pap) return 'pap';
-    if (v.boi) return 'boi';
-    return 'todo';
-}
-
 function updateMarkerStyle(addrId) {
     const m = markers[addrId];
     if (!m) return;
-    const cls = getMarkerClass(addrId);
-    m.setIcon(L.divIcon({ className: cls }));
+    m.setIcon(L.divIcon({ className: getMarkerClass(addrId) }));
 }
 
+// ============================================================
+// HISTORY TEXT
+// ============================================================
+function historyText(addrId) {
+    const v = visites[addrId] || {};
+    const parts = [];
+    if (v.pap) {
+        const d = new Date(v.pap.last_date).toLocaleDateString('fr-FR');
+        parts.push(`PàP : ${v.pap.count} visite${v.pap.count > 1 ? 's' : ''} (dernière : ${d})`);
+    }
+    if (v.boi) {
+        const d = new Date(v.boi.last_date).toLocaleDateString('fr-FR');
+        parts.push(`Boîtage : ${v.boi.count} passage${v.boi.count > 1 ? 's' : ''} (dernier : ${d})`);
+    }
+    return parts.length ? parts.join('<br>') : 'Aucune visite';
+}
+
+// ============================================================
+// POPUPS
+// ============================================================
 function isMobile() { return window.innerWidth <= 768; }
+
+function refreshPopup() {
+    if (!currentAddrId) return;
+    const addr = ADDRESSES.find(a => a.id === currentAddrId);
+    if (!addr) return;
+
+    if (isMobile()) {
+        document.getElementById('mo-history').innerHTML = historyText(addr.id);
+    } else {
+        const m = markers[addr.id];
+        if (m && m.getPopup() && m.getPopup().isOpen()) {
+            m.getPopup().setContent(createPopupHTML(addr));
+        }
+    }
+}
 
 function openAddrPopup(addr) {
     currentAddrId = addr.id;
-    const v = visites[addr.id] || {};
-
     if (isMobile()) {
         document.getElementById('mo-title').textContent = addr.adr;
         document.getElementById('mo-addr').textContent = addr.rue;
-        document.getElementById('mo-btn-pap').classList.toggle('active', !!v.pap);
-        document.getElementById('mo-btn-boi').classList.toggle('active', !!v.boi);
+        document.getElementById('mo-history').innerHTML = historyText(addr.id);
         document.getElementById('mobile-overlay').style.display = 'block';
         document.getElementById('mobile-backdrop').style.display = 'block';
     }
@@ -280,53 +292,150 @@ function closeMobilePopup() {
     currentAddrId = null;
 }
 
-function toggleAction(type) {
-    if (!currentAddrId) return;
-    const v = visites[currentAddrId] || {};
-    const newVal = !v[type];
-    saveVisite(currentAddrId, type, newVal);
-
-    // Mettre à jour les boutons
-    if (isMobile()) {
-        document.getElementById('mo-btn-' + type).classList.toggle('active', newVal);
-    }
-    // Mettre à jour le popup Leaflet si ouvert
-    const m = markers[currentAddrId];
-    if (m && m.getPopup() && m.getPopup().isOpen()) {
-        const btn = m.getPopup().getElement().querySelector('.btn-action.' + type);
-        if (btn) btn.classList.toggle('active', newVal);
-    }
-}
-
 function createPopupHTML(addr) {
-    const v = visites[addr.id] || {};
     return `<div class="addr-popup">
         <h3>${addr.adr}</h3>
-        <div style="color:#888;font-size:13px;">${addr.rue}</div>
+        <div class="popup-rue">${addr.rue}</div>
+        <div class="popup-history">${historyText(addr.id)}</div>
         <div class="btn-row">
-            <button class="btn-action pap ${v.pap ? 'active' : ''}"
-                onclick="currentAddrId='${addr.id}';toggleAction('pap');
-                         this.classList.toggle('active');">Porte-à-porte</button>
-            <button class="btn-action boi ${v.boi ? 'active' : ''}"
-                onclick="currentAddrId='${addr.id}';toggleAction('boi');
-                         this.classList.toggle('active');">Boîtage</button>
+            <button class="btn-action pap"
+                onclick="currentAddrId='${addr.id}';addVisite('pap');">+ PàP</button>
+            <button class="btn-action boi"
+                onclick="currentAddrId='${addr.id}';addVisite('boi');">+ Boîtage</button>
         </div>
     </div>`;
 }
 
+// ============================================================
+// MAP — Vue bureau de vote
+// ============================================================
 function buildMap() {
     map = L.map('map', { zoomControl: false }).setView([48.8925, 2.2052], 14);
     L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; OpenStreetMap, &copy; CARTO', maxZoom: 19
+        attribution: '&copy; OSM, CARTO', maxZoom: 19
     }).addTo(map);
 
-    clusterGroup = L.markerClusterGroup({
-        maxClusterRadius: 40,
-        disableClusteringAtZoom: 17,
-        spiderfyOnMaxZoom: false
+    showBureaux();
+}
+
+function showBureaux() {
+    if (bureauLayer) map.removeLayer(bureauLayer);
+    if (addressLayer) { map.removeLayer(addressLayer); addressLayer = null; }
+
+    bureauLayer = L.geoJSON(BUREAUX, {
+        style: function(feature) {
+            const bId = feature.properties.bureau;
+            const stats = bureauStats(bId);
+            return {
+                fillColor: stats.total > 0 ? '#c62828' : '#e0e0e0',
+                fillOpacity: Math.min(0.2 + stats.total * 0.03, 0.7),
+                color: '#555', weight: 1.5
+            };
+        },
+        onEachFeature: function(feature, layer) {
+            const b = feature.properties;
+            const stats = bureauStats(b.bureau);
+            layer.bindTooltip(
+                `<b>Bureau ${b.bureau}</b><br>${b.nom}<br>` +
+                `${stats.pap} PàP · ${stats.boi} boîtages`,
+                { sticky: true, className: 'bureau-tooltip' }
+            );
+            layer.on('click', function() {
+                zoomToBureau(b.bureau, layer);
+            });
+        }
+    }).addTo(map);
+
+    currentBureau = null;
+    document.getElementById('btn-back').style.display = 'none';
+    map.setView([48.8925, 2.2052], 14);
+}
+
+function bureauStats(bureauId) {
+    let pap = 0, boi = 0;
+    Object.entries(visites).forEach(([addrId, v]) => {
+        const addr = ADDRESSES.find(a => a.id === addrId);
+        if (!addr) return;
+        if (isInBureau(addr, bureauId)) {
+            if (v.pap) pap += v.pap.count;
+            if (v.boi) boi += v.boi.count;
+        }
+    });
+    return { pap, boi, total: pap + boi };
+}
+
+function isInBureau(addr, bureauId) {
+    // Utilise le pré-calcul si disponible
+    if (addr._bureau !== undefined) return addr._bureau === bureauId;
+    return false;
+}
+
+function precomputeBureaux() {
+    // Assigne chaque adresse à son bureau de vote
+    if (!BUREAUX) return;
+    const features = BUREAUX.features;
+    ADDRESSES.forEach(addr => {
+        const pt = [addr.lon, addr.lat];
+        for (const f of features) {
+            if (pointInPolygon(pt, f.geometry)) {
+                addr._bureau = f.properties.bureau;
+                return;
+            }
+        }
+        addr._bureau = null;
+    });
+}
+
+function pointInPolygon(pt, geometry) {
+    const coords = geometry.type === 'MultiPolygon'
+        ? geometry.coordinates.flat()
+        : geometry.coordinates;
+    for (const ring of coords) {
+        if (pipRing(pt, ring)) return true;
+    }
+    return false;
+}
+
+function pipRing(pt, ring) {
+    let inside = false;
+    for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+        const xi = ring[i][0], yi = ring[i][1];
+        const xj = ring[j][0], yj = ring[j][1];
+        if (((yi > pt[1]) !== (yj > pt[1])) &&
+            (pt[0] < (xj - xi) * (pt[1] - yi) / (yj - yi) + xi)) {
+            inside = !inside;
+        }
+    }
+    return inside;
+}
+
+// ============================================================
+// MAP — Vue adresses d'un bureau
+// ============================================================
+function zoomToBureau(bureauId, layer) {
+    currentBureau = bureauId;
+    map.fitBounds(layer.getBounds(), { padding: [20, 20] });
+
+    // Masquer les autres bureaux, garder celui-ci en surbrillance
+    bureauLayer.eachLayer(function(l) {
+        if (l.feature.properties.bureau === bureauId) {
+            l.setStyle({ color: '#c62828', weight: 3, fillOpacity: 0.05 });
+        } else {
+            l.setStyle({ fillOpacity: 0, weight: 0.5, color: '#ccc' });
+        }
     });
 
-    ADDRESSES.forEach(addr => {
+    // Afficher les adresses de ce bureau
+    showAddressesForBureau(bureauId);
+    document.getElementById('btn-back').style.display = 'block';
+}
+
+function showAddressesForBureau(bureauId) {
+    if (addressLayer) map.removeLayer(addressLayer);
+    addressLayer = L.layerGroup();
+
+    const addrs = ADDRESSES.filter(a => a._bureau === bureauId);
+    addrs.forEach(addr => {
         const cls = getMarkerClass(addr.id);
         const m = L.marker([addr.lat, addr.lon], {
             icon: L.divIcon({ className: cls })
@@ -337,88 +446,81 @@ function buildMap() {
                 openAddrPopup(addr);
             } else {
                 currentAddrId = addr.id;
-                m.bindPopup(createPopupHTML(addr), { maxWidth: 250 }).openPopup();
+                m.unbindPopup();
+                m.bindPopup(createPopupHTML(addr), { maxWidth: 260 }).openPopup();
             }
         });
 
-        m.addr = addr;
         markers[addr.id] = m;
-        clusterGroup.addLayer(m);
+        addressLayer.addLayer(m);
     });
 
-    map.addLayer(clusterGroup);
+    addressLayer.addTo(map);
+}
+
+function zoomOut() {
+    showBureaux();
 }
 
 // ============================================================
-// FILTRES
-// ============================================================
-function applyFilters() {
-    const showTodo = document.getElementById('show-todo').checked;
-    const showPap = document.getElementById('show-pap').checked;
-    const showBoi = document.getElementById('show-boi').checked;
-
-    Object.entries(markers).forEach(([id, m]) => {
-        const status = getMarkerStatus(id);
-        let visible = false;
-        if (status === 'todo' && showTodo) visible = true;
-        if (status === 'pap' && showPap) visible = true;
-        if (status === 'boi' && showBoi) visible = true;
-        if (status === 'both' && (showPap || showBoi)) visible = true;
-
-        if (visible && !clusterGroup.hasLayer(m)) clusterGroup.addLayer(m);
-        if (!visible && clusterGroup.hasLayer(m)) clusterGroup.removeLayer(m);
-    });
-}
-
-document.getElementById('show-todo').addEventListener('change', applyFilters);
-document.getElementById('show-pap').addEventListener('change', applyFilters);
-document.getElementById('show-boi').addEventListener('change', applyFilters);
-
-// ============================================================
-// RECHERCHE
+// RECHERCHE + GÉOLOC
 // ============================================================
 const searchInput = document.getElementById('search-input');
-let searchResults = [];
 
 searchInput.addEventListener('input', function() {
     const q = this.value.toLowerCase().trim();
-    if (q.length < 2) return;
+    if (q.length < 3) return;
 
-    searchResults = ADDRESSES.filter(a =>
-        a.adr.toLowerCase().includes(q)
-    ).slice(0, 5);
-
-    // Simple: zoom sur le premier résultat
-    if (searchResults.length > 0) {
-        const a = searchResults[0];
-        map.setView([a.lat, a.lon], 18);
-        const m = markers[a.id];
-        if (m) {
-            clusterGroup.zoomToShowLayer(m, function() {
-                if (isMobile()) openAddrPopup(a);
-                else { currentAddrId = a.id; m.bindPopup(createPopupHTML(a), { maxWidth: 250 }).openPopup(); }
-            });
+    const results = ADDRESSES.filter(a => a.adr.toLowerCase().includes(q)).slice(0, 5);
+    if (results.length > 0) {
+        const a = results[0];
+        if (a._bureau) {
+            const layer = findBureauLayer(a._bureau);
+            if (layer) zoomToBureau(a._bureau, layer);
+            setTimeout(() => {
+                map.setView([a.lat, a.lon], 18);
+                const m = markers[a.id];
+                if (m) {
+                    if (isMobile()) openAddrPopup(a);
+                    else { currentAddrId = a.id; m.unbindPopup(); m.bindPopup(createPopupHTML(a), { maxWidth: 260 }).openPopup(); }
+                }
+            }, 300);
         }
     }
 });
 
 searchInput.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') {
-        e.preventDefault();
-        searchInput.blur();
-    }
+    if (e.key === 'Enter') { e.preventDefault(); this.blur(); }
 });
 
-// Géolocalisation
 document.getElementById('btn-locate').addEventListener('click', function() {
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(function(pos) {
-            map.setView([pos.coords.latitude, pos.coords.longitude], 18);
-        }, function() {
-            alert('Impossible de vous géolocaliser.');
-        }, { enableHighAccuracy: true });
-    }
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(function(pos) {
+        const lat = pos.coords.latitude, lon = pos.coords.longitude;
+        // Trouver le bureau contenant cette position
+        const pt = [lon, lat];
+        for (const f of BUREAUX.features) {
+            if (pointInPolygon(pt, f.geometry)) {
+                const layer = findBureauLayer(f.properties.bureau);
+                if (layer) zoomToBureau(f.properties.bureau, layer);
+                setTimeout(() => map.setView([lat, lon], 18), 300);
+                return;
+            }
+        }
+        map.setView([lat, lon], 18);
+    }, function() {
+        alert('Impossible de vous géolocaliser.');
+    }, { enableHighAccuracy: true });
 });
+
+function findBureauLayer(bureauId) {
+    let found = null;
+    if (!bureauLayer) return null;
+    bureauLayer.eachLayer(function(l) {
+        if (l.feature && l.feature.properties.bureau === bureauId) found = l;
+    });
+    return found;
+}
 
 // ============================================================
 // STATS
@@ -426,8 +528,8 @@ document.getElementById('btn-locate').addEventListener('click', function() {
 function updateStats() {
     let pap = 0, boi = 0;
     Object.values(visites).forEach(v => {
-        if (v.pap) pap++;
-        if (v.boi) boi++;
+        if (v.pap) pap += v.pap.count;
+        if (v.boi) boi += v.boi.count;
     });
     document.getElementById('count-pap').textContent = pap;
     document.getElementById('count-boi').textContent = boi;
@@ -437,8 +539,8 @@ function updateStats() {
 // INIT
 // ============================================================
 async function init() {
-    await loadAddresses();
-    await loadVisites();
+    await Promise.all([loadAddresses(), loadBureaux(), loadVisites()]);
+    precomputeBureaux();
     buildMap();
     updateStats();
 }
