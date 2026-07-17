@@ -11,37 +11,64 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'Source Sans 3', Arial, sans-serif; }
 #map { position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 1; }
+.leaflet-control-zoom { display: none !important; }
+.leaflet-interactive { outline: none !important; }
+.leaflet-interactive:focus { outline: none !important; }
+path.leaflet-interactive { -webkit-tap-highlight-color: transparent; }
 
-/* Contrôles carte */
-#search-bar {
-    position: fixed; top: 10px; left: 50px; right: 50px; z-index: 1000;
-    display: flex; gap: 6px;
-}
+/* Barre de recherche + dropdown */
+#search-bar { position: fixed; top: 10px; left: 50px; right: 50px; z-index: 1000; }
+#search-row { display: flex; gap: 6px; }
 #search-input {
     flex: 1; padding: 10px 14px; border: 1px solid #ccc; border-radius: 8px;
     font-size: 15px; font-family: inherit; background: white;
     box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
 #search-input:focus { outline: none; border-color: #c62828; }
-#btn-locate, #btn-back {
+#btn-locate {
     width: 44px; height: 44px; border: none; border-radius: 8px;
     background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.15);
     font-size: 20px; cursor: pointer; flex-shrink: 0;
 }
-#btn-back { display: none; position: fixed; top: 10px; left: 6px; z-index: 1001; }
+#search-results {
+    display: none; background: white; border-radius: 0 0 8px 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2); max-height: 200px; overflow-y: auto;
+    margin-top: -2px;
+}
+.search-item {
+    padding: 10px 14px; cursor: pointer; border-bottom: 1px solid #f0f0f0;
+    font-size: 14px;
+}
+.search-item:hover, .search-item:active { background: #f5f5f5; }
+.search-item .si-rue { color: #888; font-size: 12px; }
 
-/* Stats en bas */
-#stats-bar {
-    position: fixed; bottom: 10px; left: 10px; right: 10px; z-index: 1000;
-    display: flex; gap: 8px; justify-content: center;
+/* Bouton retour */
+#btn-back {
+    display: none; position: fixed; top: 10px; left: 6px; z-index: 1001;
+    width: 44px; height: 44px; border: none; border-radius: 8px;
+    background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    font-size: 20px; cursor: pointer;
 }
-.stat-chip {
-    background: white; padding: 6px 14px; border-radius: 20px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.15); font-size: 13px; font-weight: 600;
+
+/* Panneau stats en bas */
+#stats-panel {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 1000;
+    background: white; border-radius: 12px 12px 0 0;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.1); padding: 10px 16px 14px;
 }
-.stat-chip .num { font-size: 16px; font-weight: 700; }
-.stat-chip.pap { color: #c62828; }
-.stat-chip.boi { color: #1565c0; }
+#stats-panel .sp-title { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+#stats-panel .sp-subtitle { font-size: 12px; color: #888; margin-bottom: 8px; }
+.progress-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.progress-label { font-size: 12px; font-weight: 600; width: 60px; flex-shrink: 0; }
+.progress-label.pap { color: #c62828; }
+.progress-label.boi { color: #1565c0; }
+.progress-bar-bg {
+    flex: 1; height: 14px; background: #eee; border-radius: 7px; overflow: hidden;
+}
+.progress-bar-fill { height: 100%; border-radius: 7px; transition: width 0.3s; }
+.progress-bar-fill.pap { background: #c62828; }
+.progress-bar-fill.boi { background: #1565c0; }
+.progress-pct { font-size: 12px; font-weight: 700; width: 36px; text-align: right; }
 
 /* Marqueurs adresse */
 .marker-default { background: #bbb; border: 2px solid white; border-radius: 50%;
@@ -78,9 +105,10 @@ body { font-family: 'Source Sans 3', Arial, sans-serif; }
     font-family: inherit; background: white;
 }
 #mobile-overlay .btn-action.pap { border-color: #ef9a9a; color: #c62828; }
-#mobile-overlay .btn-action.pap:active { background: #fbe9e7; }
 #mobile-overlay .btn-action.boi { border-color: #90caf9; color: #1565c0; }
-#mobile-overlay .btn-action.boi:active { background: #e3f2fd; }
+.btn-undo { background: none; border: none; color: #999; font-size: 12px;
+    cursor: pointer; padding: 2px 6px; font-family: inherit; }
+.btn-undo:hover { color: #c62828; }
 
 /* Popup desktop */
 .addr-popup { font-family: 'Source Sans 3', Arial, sans-serif; min-width: 220px; }
@@ -95,16 +123,6 @@ body { font-family: 'Source Sans 3', Arial, sans-serif; }
 }
 .addr-popup .btn-action.pap { border-color: #ef9a9a; color: #c62828; }
 .addr-popup .btn-action.boi { border-color: #90caf9; color: #1565c0; }
-.btn-undo { background: none; border: none; color: #999; font-size: 12px;
-    cursor: pointer; padding: 2px 6px; font-family: inherit; }
-.btn-undo:hover { color: #c62828; }
-
-/* Cacher les contrôles zoom leaflet */
-.leaflet-control-zoom { display: none !important; }
-/* Supprimer le rectangle de focus/tap sur les polygones */
-.leaflet-interactive { outline: none !important; }
-.leaflet-interactive:focus { outline: none !important; }
-path.leaflet-interactive { -webkit-tap-highlight-color: transparent; }
 </style>
 </head>
 <body>
@@ -113,13 +131,26 @@ path.leaflet-interactive { -webkit-tap-highlight-color: transparent; }
 <button id="btn-back" onclick="zoomOut()">&#8592;</button>
 
 <div id="search-bar">
-    <input id="search-input" type="text" placeholder="Rechercher une adresse...">
-    <button id="btn-locate" title="Ma position">&#128205;</button>
+    <div id="search-row">
+        <input id="search-input" type="text" placeholder="Rechercher une adresse..." autocomplete="off">
+        <button id="btn-locate" title="Ma position">&#128205;</button>
+    </div>
+    <div id="search-results"></div>
 </div>
 
-<div id="stats-bar">
-    <div class="stat-chip pap"><span class="num" id="count-pap">0</span> PàP</div>
-    <div class="stat-chip boi"><span class="num" id="count-boi">0</span> boîtages</div>
+<div id="stats-panel">
+    <div id="sp-title" class="sp-title">Nanterre — <span id="sp-lgts">0</span> logements</div>
+    <div id="sp-subtitle" class="sp-subtitle"></div>
+    <div class="progress-row">
+        <span class="progress-label pap">PàP</span>
+        <div class="progress-bar-bg"><div class="progress-bar-fill pap" id="bar-pap" style="width:0%"></div></div>
+        <span class="progress-pct" id="pct-pap">0%</span>
+    </div>
+    <div class="progress-row">
+        <span class="progress-label boi">Boîtage</span>
+        <div class="progress-bar-bg"><div class="progress-bar-fill boi" id="bar-boi" style="width:0%"></div></div>
+        <span class="progress-pct" id="pct-boi">0%</span>
+    </div>
 </div>
 
 <div id="mobile-backdrop" onclick="closeMobilePopup()"></div>
@@ -131,509 +162,346 @@ path.leaflet-interactive { -webkit-tap-highlight-color: transparent; }
     <div class="btn-row">
         <div style="flex:1;text-align:center;">
             <button class="btn-action pap" style="width:100%;" onclick="addVisite('pap')">+ Porte-à-porte</button>
-            <button class="btn-undo" id="mo-undo-pap" onclick="undoVisite('pap')" style="display:none;">Annuler dernière</button>
+            <button class="btn-undo" id="mo-undo-pap" onclick="undoVisite('pap')" style="display:none;">Annuler</button>
         </div>
         <div style="flex:1;text-align:center;">
             <button class="btn-action boi" style="width:100%;" onclick="addVisite('boi')">+ Boîtage</button>
-            <button class="btn-undo" id="mo-undo-boi" onclick="undoVisite('boi')" style="display:none;">Annuler dernière</button>
+            <button class="btn-undo" id="mo-undo-boi" onclick="undoVisite('boi')" style="display:none;">Annuler</button>
         </div>
     </div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-// ============================================================
-// CONFIG
-// ============================================================
 const SUPABASE_URL = 'https://htprfzzqjqfzyqcbjynz.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh0cHJmenpxanFmenlxY2JqeW56Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQyOTI1MTEsImV4cCI6MjA5OTg2ODUxMX0.HtHvc7_OGAidJ0XSnlKnx3d6tfrPTxbkFUaLsEv5nbE';
-const SB_HEADERS = {
-    'apikey': SUPABASE_KEY,
-    'Authorization': `Bearer ${SUPABASE_KEY}`,
-    'Content-Type': 'application/json'
-};
+const SB_H = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' };
 
-// ============================================================
-// STATE
-// ============================================================
-let ADDRESSES = [];
-let BUREAUX = null;
-// visites[address_id] = { pap: { count, last_date }, boi: { count, last_date } }
-let visites = {};
-let markers = {};
-let addressLayer = null;
-let bureauLayer = null;
-let currentAddrId = null;
-let currentBureau = null;
-let map;
+let ADDRESSES = [], BUREAUX = null, visites = {}, markers = {};
+let addressLayer = null, bureauLayer = null, currentAddrId = null, currentBureau = null, map;
 
-// ============================================================
-// DATA LOADING
-// ============================================================
-async function loadAddresses() {
-    const resp = await fetch('adresses_nanterre.json');
-    ADDRESSES = await resp.json();
-}
-
-async function loadBureaux() {
-    const resp = await fetch('bureaux_vote.geojson');
-    BUREAUX = await resp.json();
-}
-
+async function loadAddresses() { ADDRESSES = await (await fetch('adresses_nanterre.json')).json(); }
+async function loadBureaux() { BUREAUX = await (await fetch('bureaux_vote.geojson')).json(); }
 async function loadVisites() {
     try {
-        const resp = await fetch(`${SUPABASE_URL}/rest/v1/visites?select=*`, {
-            headers: SB_HEADERS
+        const rows = await (await fetch(`${SUPABASE_URL}/rest/v1/visites?select=*`, { headers: SB_H })).json();
+        if (Array.isArray(rows)) rows.forEach(r => {
+            if (!visites[r.address_id]) visites[r.address_id] = {};
+            visites[r.address_id][r.type] = { count: r.count || 1, last_date: r.last_date };
         });
-        const rows = await resp.json();
-        if (Array.isArray(rows)) {
-            rows.forEach(r => {
-                if (!visites[r.address_id]) visites[r.address_id] = {};
-                visites[r.address_id][r.type] = {
-                    count: r.count || 1,
-                    last_date: r.last_date
-                };
-            });
-        }
-    } catch(e) {
-        console.error('Supabase load error:', e);
-    }
+    } catch(e) { console.error(e); }
 }
 
-// ============================================================
-// PERSISTENCE
-// ============================================================
+// === PERSISTENCE ===
 async function addVisite(type) {
     if (!currentAddrId) return;
     if (!visites[currentAddrId]) visites[currentAddrId] = {};
     const prev = visites[currentAddrId][type];
-    const newCount = prev ? prev.count + 1 : 1;
+    const n = prev ? prev.count + 1 : 1;
     const now = new Date().toISOString();
-    visites[currentAddrId][type] = { count: newCount, last_date: now };
-
-    // Upsert dans Supabase
-    try {
-        await fetch(`${SUPABASE_URL}/rest/v1/visites`, {
-            method: 'POST',
-            headers: { ...SB_HEADERS, 'Prefer': 'resolution=merge-duplicates' },
-            body: JSON.stringify({
-                address_id: currentAddrId,
-                type: type,
-                count: newCount,
-                last_date: now
-            })
-        });
-    } catch(e) { console.error('Supabase save error:', e); }
-
-    updateMarkerStyle(currentAddrId);
-    updateStats();
-    refreshPopup();
+    visites[currentAddrId][type] = { count: n, last_date: now };
+    try { await fetch(`${SUPABASE_URL}/rest/v1/visites`, {
+        method: 'POST', headers: { ...SB_H, 'Prefer': 'resolution=merge-duplicates' },
+        body: JSON.stringify({ address_id: currentAddrId, type, count: n, last_date: now })
+    }); } catch(e) { console.error(e); }
+    updateMarkerStyle(currentAddrId); updateStatsPanel(); refreshPopup();
 }
-
 async function undoVisite(type) {
     if (!currentAddrId) return;
-    const v = visites[currentAddrId];
-    if (!v || !v[type] || v[type].count <= 0) return;
-
-    const newCount = v[type].count - 1;
-
-    if (newCount === 0) {
-        delete v[type];
-        if (Object.keys(v).length === 0) delete visites[currentAddrId];
-        try {
-            await fetch(
-                `${SUPABASE_URL}/rest/v1/visites?address_id=eq.${currentAddrId}&type=eq.${type}`,
-                { method: 'DELETE', headers: SB_HEADERS }
-            );
-        } catch(e) { console.error('Supabase delete error:', e); }
+    const v = visites[currentAddrId]; if (!v || !v[type]) return;
+    const n = v[type].count - 1;
+    if (n <= 0) {
+        delete v[type]; if (!Object.keys(v).length) delete visites[currentAddrId];
+        try { await fetch(`${SUPABASE_URL}/rest/v1/visites?address_id=eq.${currentAddrId}&type=eq.${type}`,
+            { method: 'DELETE', headers: SB_H }); } catch(e) {}
     } else {
-        v[type].count = newCount;
-        try {
-            await fetch(`${SUPABASE_URL}/rest/v1/visites`, {
-                method: 'POST',
-                headers: { ...SB_HEADERS, 'Prefer': 'resolution=merge-duplicates' },
-                body: JSON.stringify({
-                    address_id: currentAddrId, type: type,
-                    count: newCount, last_date: v[type].last_date
-                })
-            });
-        } catch(e) { console.error('Supabase save error:', e); }
+        v[type].count = n;
+        try { await fetch(`${SUPABASE_URL}/rest/v1/visites`, {
+            method: 'POST', headers: { ...SB_H, 'Prefer': 'resolution=merge-duplicates' },
+            body: JSON.stringify({ address_id: currentAddrId, type, count: n, last_date: v[type].last_date })
+        }); } catch(e) {}
     }
-
-    updateMarkerStyle(currentAddrId);
-    updateStats();
-    refreshPopup();
+    updateMarkerStyle(currentAddrId); updateStatsPanel(); refreshPopup();
 }
 
-// ============================================================
-// MARKER STYLES
-// ============================================================
-function getMarkerClass(addrId) {
-    const v = visites[addrId] || {};
+// === MARKERS ===
+function getMarkerClass(id) {
+    const v = visites[id] || {};
     if (v.pap && v.boi) return 'marker-both';
     if (v.pap) return 'marker-pap';
     if (v.boi) return 'marker-boi';
     return 'marker-default';
 }
+function updateMarkerStyle(id) { const m = markers[id]; if (m) m.setIcon(L.divIcon({ className: getMarkerClass(id) })); }
 
-function updateMarkerStyle(addrId) {
-    const m = markers[addrId];
-    if (!m) return;
-    m.setIcon(L.divIcon({ className: getMarkerClass(addrId) }));
+function historyText(id) {
+    const v = visites[id] || {}; const p = [];
+    if (v.pap) { const d = new Date(v.pap.last_date).toLocaleDateString('fr-FR');
+        p.push(`PàP : ${v.pap.count} visite${v.pap.count>1?'s':''} (dernière : ${d})`); }
+    if (v.boi) { const d = new Date(v.boi.last_date).toLocaleDateString('fr-FR');
+        p.push(`Boîtage : ${v.boi.count} passage${v.boi.count>1?'s':''} (dernier : ${d})`); }
+    return p.length ? p.join('<br>') : 'Aucune visite';
 }
 
-// ============================================================
-// HISTORY TEXT
-// ============================================================
-function historyText(addrId) {
-    const v = visites[addrId] || {};
-    const parts = [];
-    if (v.pap) {
-        const d = new Date(v.pap.last_date).toLocaleDateString('fr-FR');
-        parts.push(`PàP : ${v.pap.count} visite${v.pap.count > 1 ? 's' : ''} (dernière : ${d})`);
-    }
-    if (v.boi) {
-        const d = new Date(v.boi.last_date).toLocaleDateString('fr-FR');
-        parts.push(`Boîtage : ${v.boi.count} passage${v.boi.count > 1 ? 's' : ''} (dernier : ${d})`);
-    }
-    return parts.length ? parts.join('<br>') : 'Aucune visite';
-}
-
-// ============================================================
-// POPUPS
-// ============================================================
+// === POPUPS ===
 function isMobile() { return window.innerWidth <= 768; }
-
 function refreshPopup() {
     if (!currentAddrId) return;
-    const addr = ADDRESSES.find(a => a.id === currentAddrId);
-    if (!addr) return;
-    const v = visites[addr.id] || {};
-
+    const a = ADDRESSES.find(x => x.id === currentAddrId); if (!a) return;
+    const v = visites[a.id] || {};
     if (isMobile()) {
-        document.getElementById('mo-history').innerHTML = historyText(addr.id);
+        document.getElementById('mo-history').innerHTML = historyText(a.id);
         document.getElementById('mo-undo-pap').style.display = v.pap ? '' : 'none';
         document.getElementById('mo-undo-boi').style.display = v.boi ? '' : 'none';
-    } else {
-        const m = markers[addr.id];
-        if (m && m.getPopup() && m.getPopup().isOpen()) {
-            m.getPopup().setContent(createPopupHTML(addr));
-        }
-    }
+    } else { const m = markers[a.id]; if (m && m.getPopup() && m.getPopup().isOpen()) m.getPopup().setContent(popupHTML(a)); }
 }
-
-function openAddrPopup(addr) {
-    currentAddrId = addr.id;
+function openAddrPopup(a) {
+    currentAddrId = a.id;
     if (isMobile()) {
-        const v = visites[addr.id] || {};
-        const lgts = addr.lgts || 1;
-        document.getElementById('mo-title').textContent = addr.adr;
-        document.getElementById('mo-addr').textContent = `${addr.rue} — ~${lgts} logement${lgts > 1 ? 's' : ''}`;
-        document.getElementById('mo-history').innerHTML = historyText(addr.id);
+        const v = visites[a.id] || {};
+        document.getElementById('mo-title').textContent = a.adr;
+        document.getElementById('mo-addr').textContent = `${a.rue} — ~${a.lgts||1} logement${(a.lgts||1)>1?'s':''}`;
+        document.getElementById('mo-history').innerHTML = historyText(a.id);
         document.getElementById('mo-undo-pap').style.display = v.pap ? '' : 'none';
         document.getElementById('mo-undo-boi').style.display = v.boi ? '' : 'none';
         document.getElementById('mobile-overlay').style.display = 'block';
         document.getElementById('mobile-backdrop').style.display = 'block';
     }
 }
-
 function closeMobilePopup() {
     document.getElementById('mobile-overlay').style.display = 'none';
     document.getElementById('mobile-backdrop').style.display = 'none';
     currentAddrId = null;
 }
-
-function createPopupHTML(addr) {
-    const v = visites[addr.id] || {};
-    const lgts = addr.lgts || 1;
-    return `<div class="addr-popup">
-        <h3>${addr.adr}</h3>
-        <div class="popup-rue">${addr.rue} — ~${lgts} logement${lgts > 1 ? 's' : ''}</div>
-        <div class="popup-history">${historyText(addr.id)}</div>
+function popupHTML(a) {
+    const v = visites[a.id] || {};
+    return `<div class="addr-popup"><h3>${a.adr}</h3>
+        <div class="popup-rue">${a.rue} — ~${a.lgts||1} logement${(a.lgts||1)>1?'s':''}</div>
+        <div class="popup-history">${historyText(a.id)}</div>
         <div class="btn-row">
             <div style="flex:1;text-align:center;">
-                <button class="btn-action pap" style="width:100%;"
-                    onclick="currentAddrId='${addr.id}';addVisite('pap');">+ PàP</button>
-                ${v.pap ? `<button class="btn-undo"
-                    onclick="currentAddrId='${addr.id}';undoVisite('pap');">Annuler</button>` : ''}
-            </div>
-            <div style="flex:1;text-align:center;">
-                <button class="btn-action boi" style="width:100%;"
-                    onclick="currentAddrId='${addr.id}';addVisite('boi');">+ Boîtage</button>
-                ${v.boi ? `<button class="btn-undo"
-                    onclick="currentAddrId='${addr.id}';undoVisite('boi');">Annuler</button>` : ''}
-            </div>
-        </div>
-    </div>`;
+                <button class="btn-action pap" style="width:100%;" onclick="currentAddrId='${a.id}';addVisite('pap');">+ PàP</button>
+                ${v.pap?`<button class="btn-undo" onclick="currentAddrId='${a.id}';undoVisite('pap');">Annuler</button>`:''}
+            </div><div style="flex:1;text-align:center;">
+                <button class="btn-action boi" style="width:100%;" onclick="currentAddrId='${a.id}';addVisite('boi');">+ Boîtage</button>
+                ${v.boi?`<button class="btn-undo" onclick="currentAddrId='${a.id}';undoVisite('boi');">Annuler</button>`:''}
+            </div></div></div>`;
 }
 
-// ============================================================
-// MAP — Vue bureau de vote
-// ============================================================
+// === STATS ===
+function bureauStats(bId) {
+    const ba = ADDRESSES.filter(a => a._bureau === bId);
+    const totalLgts = ba.reduce((s,a) => s + (a.lgts||1), 0);
+    let lP=0, lB=0, cP=0, cB=0;
+    Object.entries(visites).forEach(([id,v]) => {
+        const a = ba.find(x => x.id===id); if (!a) return;
+        const lg = a.lgts||1;
+        if (v.pap) { lP += lg; cP += v.pap.count; }
+        if (v.boi) { lB += lg; cB += v.boi.count; }
+    });
+    return { totalLgts, totalAddr: ba.length, papCount: cP, boiCount: cB,
+        pctPap: totalLgts ? Math.round(lP/totalLgts*100) : 0,
+        pctBoi: totalLgts ? Math.round(lB/totalLgts*100) : 0 };
+}
+
+function globalStats() {
+    const totalLgts = ADDRESSES.reduce((s,a) => s + (a.lgts||1), 0);
+    let lP=0, lB=0;
+    Object.entries(visites).forEach(([id,v]) => {
+        const a = ADDRESSES.find(x => x.id===id); if (!a) return;
+        const lg = a.lgts||1;
+        if (v.pap) lP += lg;
+        if (v.boi) lB += lg;
+    });
+    return { totalLgts, pctPap: totalLgts ? Math.round(lP/totalLgts*100) : 0,
+        pctBoi: totalLgts ? Math.round(lB/totalLgts*100) : 0 };
+}
+
+function updateStatsPanel() {
+    if (currentBureau) {
+        const s = bureauStats(currentBureau);
+        document.getElementById('sp-title').innerHTML =
+            `Bureau ${currentBureau} — <span id="sp-lgts">${s.totalAddr}</span> adresses`;
+        document.getElementById('sp-subtitle').textContent = `~${s.totalLgts} logements estimés`;
+        document.getElementById('bar-pap').style.width = s.pctPap + '%';
+        document.getElementById('pct-pap').textContent = s.pctPap + '%';
+        document.getElementById('bar-boi').style.width = s.pctBoi + '%';
+        document.getElementById('pct-boi').textContent = s.pctBoi + '%';
+    } else {
+        const s = globalStats();
+        document.getElementById('sp-title').innerHTML =
+            `Nanterre — <span id="sp-lgts">~${s.totalLgts}</span> logements`;
+        document.getElementById('sp-subtitle').textContent = '';
+        document.getElementById('bar-pap').style.width = s.pctPap + '%';
+        document.getElementById('pct-pap').textContent = s.pctPap + '%';
+        document.getElementById('bar-boi').style.width = s.pctBoi + '%';
+        document.getElementById('pct-boi').textContent = s.pctBoi + '%';
+    }
+}
+
+// === MAP ===
 function buildMap() {
     map = L.map('map', { zoomControl: false }).setView([48.8925, 2.2052], 14);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; OSM, CARTO', maxZoom: 19
-    }).addTo(map);
-
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+        { attribution: '&copy; OSM, CARTO', maxZoom: 19 }).addTo(map);
     map.on('click', function(e) {
         if (!currentBureau) return;
         const pt = [e.latlng.lng, e.latlng.lat];
-        let clickedInBureau = false;
-        for (const f of BUREAUX.features) {
-            if (f.properties.bureau === currentBureau && pointInPolygon(pt, f.geometry)) {
-                clickedInBureau = true;
-                break;
-            }
-        }
-        if (!clickedInBureau) zoomOut();
+        for (const f of BUREAUX.features)
+            if (f.properties.bureau === currentBureau && pointInPolygon(pt, f.geometry)) return;
+        zoomOut();
     });
-
     showBureaux();
 }
 
 function showBureaux() {
     if (bureauLayer) map.removeLayer(bureauLayer);
     if (addressLayer) { map.removeLayer(addressLayer); addressLayer = null; }
-
     bureauLayer = L.geoJSON(BUREAUX, {
-        style: function(feature) {
-            const bId = feature.properties.bureau;
-            const stats = bureauStats(bId);
-            const pct = Math.max(stats.pctPap, stats.pctBoi);
-            const color = pct > 0 ? '#2e7d32' : '#e0e0e0';
-            return {
-                fillColor: color,
-                fillOpacity: Math.min(0.1 + pct / 100 * 0.6, 0.7),
-                color: '#555', weight: 1.5
-            };
+        style: f => {
+            const s = bureauStats(f.properties.bureau);
+            const pct = Math.max(s.pctPap, s.pctBoi);
+            return { fillColor: pct > 0 ? '#2e7d32' : '#e0e0e0',
+                fillOpacity: Math.min(0.1 + pct/100*0.6, 0.7), color: '#555', weight: 1.5 };
         },
-        onEachFeature: function(feature, layer) {
-            const b = feature.properties;
-            const stats = bureauStats(b.bureau);
-            layer.bindTooltip(
-                `<b>Bureau ${b.bureau}</b><br>${b.nom}<br>` +
-                `~${stats.totalLgts} logements estimés<br>` +
-                `PàP : ${stats.pctPap}% couvert (${stats.papCount} visites)<br>` +
-                `Boîtage : ${stats.pctBoi}% couvert (${stats.boiCount} passages)`,
-                { sticky: true, className: 'bureau-tooltip' }
-            );
-            layer.on('click', function(e) {
+        onEachFeature: (f, layer) => {
+            layer.on('click', e => {
                 L.DomEvent.stopPropagation(e);
-                if (currentBureau && currentBureau !== b.bureau) {
-                    zoomOut();
-                } else if (!currentBureau) {
-                    zoomToBureau(b.bureau, layer);
-                }
+                if (currentBureau && currentBureau !== f.properties.bureau) zoomOut();
+                else if (!currentBureau) zoomToBureau(f.properties.bureau, layer);
             });
         }
     }).addTo(map);
-
     currentBureau = null;
     document.getElementById('btn-back').style.display = 'none';
     map.setView([48.8925, 2.2052], 14);
+    updateStatsPanel();
 }
 
-function bureauStats(bureauId) {
-    const bureauAddrs = ADDRESSES.filter(a => a._bureau === bureauId);
-    const totalLgts = bureauAddrs.reduce((s, a) => s + (a.lgts || 1), 0);
-    let lgtsPap = 0, lgtsBoi = 0, papCount = 0, boiCount = 0;
-    Object.entries(visites).forEach(([addrId, v]) => {
-        const addr = bureauAddrs.find(a => a.id === addrId);
-        if (!addr) return;
-        const lgts = addr.lgts || 1;
-        if (v.pap) { lgtsPap += lgts; papCount += v.pap.count; }
-        if (v.boi) { lgtsBoi += lgts; boiCount += v.boi.count; }
+function zoomToBureau(bId, layer) {
+    currentBureau = bId;
+    map.fitBounds(layer.getBounds(), { padding: [20, 60] });
+    bureauLayer.eachLayer(l => {
+        if (l.feature.properties.bureau === bId) l.setStyle({ color: '#c62828', weight: 3, fillOpacity: 0.05 });
+        else l.setStyle({ fillOpacity: 0, weight: 0.5, color: '#ccc' });
     });
-    return {
-        totalLgts, papCount, boiCount,
-        total: papCount + boiCount,
-        pctPap: totalLgts ? Math.round(lgtsPap / totalLgts * 100) : 0,
-        pctBoi: totalLgts ? Math.round(lgtsBoi / totalLgts * 100) : 0,
-    };
-}
-
-function isInBureau(addr, bureauId) {
-    // Utilise le pré-calcul si disponible
-    if (addr._bureau !== undefined) return addr._bureau === bureauId;
-    return false;
-}
-
-function precomputeBureaux() {
-    // Assigne chaque adresse à son bureau de vote
-    if (!BUREAUX) return;
-    const features = BUREAUX.features;
-    ADDRESSES.forEach(addr => {
-        const pt = [addr.lon, addr.lat];
-        for (const f of features) {
-            if (pointInPolygon(pt, f.geometry)) {
-                addr._bureau = f.properties.bureau;
-                return;
-            }
-        }
-        addr._bureau = null;
-    });
-}
-
-function pointInPolygon(pt, geometry) {
-    const coords = geometry.type === 'MultiPolygon'
-        ? geometry.coordinates.flat()
-        : geometry.coordinates;
-    for (const ring of coords) {
-        if (pipRing(pt, ring)) return true;
-    }
-    return false;
-}
-
-function pipRing(pt, ring) {
-    let inside = false;
-    for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
-        const xi = ring[i][0], yi = ring[i][1];
-        const xj = ring[j][0], yj = ring[j][1];
-        if (((yi > pt[1]) !== (yj > pt[1])) &&
-            (pt[0] < (xj - xi) * (pt[1] - yi) / (yj - yi) + xi)) {
-            inside = !inside;
-        }
-    }
-    return inside;
-}
-
-// ============================================================
-// MAP — Vue adresses d'un bureau
-// ============================================================
-function zoomToBureau(bureauId, layer) {
-    currentBureau = bureauId;
-    map.fitBounds(layer.getBounds(), { padding: [20, 20] });
-
-    // Masquer les autres bureaux, garder celui-ci en surbrillance
-    bureauLayer.eachLayer(function(l) {
-        if (l.feature.properties.bureau === bureauId) {
-            l.setStyle({ color: '#c62828', weight: 3, fillOpacity: 0.05 });
-        } else {
-            l.setStyle({ fillOpacity: 0, weight: 0.5, color: '#ccc' });
-        }
-    });
-
-    // Afficher les adresses de ce bureau
-    showAddressesForBureau(bureauId);
+    showAddresses(bId);
     document.getElementById('btn-back').style.display = 'block';
+    updateStatsPanel();
 }
 
-function showAddressesForBureau(bureauId) {
+function showAddresses(bId) {
     if (addressLayer) map.removeLayer(addressLayer);
     addressLayer = L.layerGroup();
-
-    const addrs = ADDRESSES.filter(a => a._bureau === bureauId);
-    addrs.forEach(addr => {
-        const cls = getMarkerClass(addr.id);
-        const m = L.marker([addr.lat, addr.lon], {
-            icon: L.divIcon({ className: cls })
+    ADDRESSES.filter(a => a._bureau === bId).forEach(a => {
+        const m = L.marker([a.lat, a.lon], { icon: L.divIcon({ className: getMarkerClass(a.id) }) });
+        m.on('click', () => {
+            if (isMobile()) openAddrPopup(a);
+            else { currentAddrId = a.id; m.unbindPopup(); m.bindPopup(popupHTML(a), { maxWidth: 260 }).openPopup(); }
         });
-
-        m.on('click', function() {
-            if (isMobile()) {
-                openAddrPopup(addr);
-            } else {
-                currentAddrId = addr.id;
-                m.unbindPopup();
-                m.bindPopup(createPopupHTML(addr), { maxWidth: 260 }).openPopup();
-            }
-        });
-
-        markers[addr.id] = m;
+        markers[a.id] = m;
         addressLayer.addLayer(m);
     });
-
     addressLayer.addTo(map);
 }
 
-function zoomOut() {
-    showBureaux();
-}
+function zoomOut() { showBureaux(); }
 
-// ============================================================
-// RECHERCHE + GÉOLOC
-// ============================================================
+// === SEARCH DROPDOWN ===
 const searchInput = document.getElementById('search-input');
+const searchResults = document.getElementById('search-results');
 
 searchInput.addEventListener('input', function() {
     const q = this.value.toLowerCase().trim();
-    if (q.length < 3) return;
+    if (q.length < 2) { searchResults.style.display = 'none'; return; }
+    const results = ADDRESSES.filter(a => a.adr.toLowerCase().includes(q)).slice(0, 8);
+    if (!results.length) { searchResults.style.display = 'none'; return; }
+    searchResults.innerHTML = results.map(a =>
+        `<div class="search-item" data-id="${a.id}">
+            <div>${a.adr}</div>
+            <div class="si-rue">${a.rue} — ~${a.lgts||1} logements</div>
+        </div>`
+    ).join('');
+    searchResults.style.display = 'block';
 
-    const results = ADDRESSES.filter(a => a.adr.toLowerCase().includes(q)).slice(0, 5);
-    if (results.length > 0) {
-        const a = results[0];
-        if (a._bureau) {
-            const layer = findBureauLayer(a._bureau);
-            if (layer) zoomToBureau(a._bureau, layer);
-            setTimeout(() => {
-                map.setView([a.lat, a.lon], 18);
-                const m = markers[a.id];
-                if (m) {
-                    if (isMobile()) openAddrPopup(a);
-                    else { currentAddrId = a.id; m.unbindPopup(); m.bindPopup(createPopupHTML(a), { maxWidth: 260 }).openPopup(); }
-                }
-            }, 300);
-        }
-    }
+    searchResults.querySelectorAll('.search-item').forEach(el => {
+        el.addEventListener('click', () => {
+            const addr = ADDRESSES.find(a => a.id === el.dataset.id);
+            if (!addr) return;
+            searchResults.style.display = 'none';
+            searchInput.value = addr.adr;
+            if (addr._bureau) {
+                const layer = findBureauLayer(addr._bureau);
+                if (layer) zoomToBureau(addr._bureau, layer);
+                setTimeout(() => {
+                    map.setView([addr.lat, addr.lon], 18);
+                    const m = markers[addr.id];
+                    if (m) {
+                        if (isMobile()) openAddrPopup(addr);
+                        else { currentAddrId = addr.id; m.unbindPopup(); m.bindPopup(popupHTML(addr), { maxWidth: 260 }).openPopup(); }
+                    }
+                }, 300);
+            }
+        });
+    });
 });
 
-searchInput.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') { e.preventDefault(); this.blur(); }
-});
+searchInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); searchInput.blur(); } });
+document.addEventListener('click', e => { if (!document.getElementById('search-bar').contains(e.target)) searchResults.style.display = 'none'; });
 
-document.getElementById('btn-locate').addEventListener('click', function() {
+// Géoloc
+document.getElementById('btn-locate').addEventListener('click', () => {
     if (!navigator.geolocation) return;
-    navigator.geolocation.getCurrentPosition(function(pos) {
-        const lat = pos.coords.latitude, lon = pos.coords.longitude;
-        // Trouver le bureau contenant cette position
-        const pt = [lon, lat];
+    navigator.geolocation.getCurrentPosition(pos => {
+        const pt = [pos.coords.longitude, pos.coords.latitude];
         for (const f of BUREAUX.features) {
             if (pointInPolygon(pt, f.geometry)) {
                 const layer = findBureauLayer(f.properties.bureau);
                 if (layer) zoomToBureau(f.properties.bureau, layer);
-                setTimeout(() => map.setView([lat, lon], 18), 300);
+                setTimeout(() => map.setView([pt[1], pt[0]], 18), 300);
                 return;
             }
         }
-        map.setView([lat, lon], 18);
-    }, function() {
-        alert('Impossible de vous géolocaliser.');
-    }, { enableHighAccuracy: true });
+        map.setView([pt[1], pt[0]], 18);
+    }, () => alert('Impossible de vous géolocaliser.'), { enableHighAccuracy: true });
 });
 
-function findBureauLayer(bureauId) {
-    let found = null;
-    if (!bureauLayer) return null;
-    bureauLayer.eachLayer(function(l) {
-        if (l.feature && l.feature.properties.bureau === bureauId) found = l;
-    });
-    return found;
+function findBureauLayer(bId) {
+    let f = null;
+    if (bureauLayer) bureauLayer.eachLayer(l => { if (l.feature && l.feature.properties.bureau === bId) f = l; });
+    return f;
 }
 
-// ============================================================
-// STATS
-// ============================================================
-function updateStats() {
-    let pap = 0, boi = 0;
-    Object.values(visites).forEach(v => {
-        if (v.pap) pap += v.pap.count;
-        if (v.boi) boi += v.boi.count;
+// === GEOMETRY ===
+function precomputeBureaux() {
+    if (!BUREAUX) return;
+    ADDRESSES.forEach(a => {
+        const pt = [a.lon, a.lat];
+        for (const f of BUREAUX.features) if (pointInPolygon(pt, f.geometry)) { a._bureau = f.properties.bureau; return; }
+        a._bureau = null;
     });
-    document.getElementById('count-pap').textContent = pap;
-    document.getElementById('count-boi').textContent = boi;
+}
+function pointInPolygon(pt, g) {
+    const coords = g.type === 'MultiPolygon' ? g.coordinates.flat() : g.coordinates;
+    for (const ring of coords) if (pipRing(pt, ring)) return true;
+    return false;
+}
+function pipRing(pt, ring) {
+    let inside = false;
+    for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+        const xi = ring[i][0], yi = ring[i][1], xj = ring[j][0], yj = ring[j][1];
+        if (((yi > pt[1]) !== (yj > pt[1])) && (pt[0] < (xj - xi) * (pt[1] - yi) / (yj - yi) + xi)) inside = !inside;
+    }
+    return inside;
 }
 
-// ============================================================
-// INIT
-// ============================================================
+// === INIT ===
 async function init() {
     await Promise.all([loadAddresses(), loadBureaux(), loadVisites()]);
     precomputeBureaux();
     buildMap();
-    updateStats();
+    updateStatsPanel();
 }
-
 init();
 </script>
 </body>
