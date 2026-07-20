@@ -13,10 +13,41 @@ body { font-family: 'Source Sans 3', Arial, sans-serif; }
 #map { position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 1; }
 .leaflet-control-zoom { display: none !important; }
 .leaflet-interactive { outline: none !important; }
-.leaflet-interactive:focus { outline: none !important; }
 path.leaflet-interactive { -webkit-tap-highlight-color: transparent; }
 
-/* Barre de recherche + dropdown */
+/* Écran d'accueil */
+#welcome {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 9999;
+    background: white; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 20px;
+}
+#welcome h1 { font-size: 24px; color: #333; }
+#welcome p { color: #888; font-size: 14px; max-width: 300px; text-align: center; }
+.welcome-btn {
+    width: 220px; padding: 16px; border: 2px solid #ddd; border-radius: 12px;
+    font-size: 16px; font-weight: 600; cursor: pointer; font-family: inherit;
+    background: white; transition: all 0.15s;
+}
+.welcome-btn:active { transform: scale(0.97); }
+.welcome-btn.militant { border-color: #c62828; color: #c62828; }
+.welcome-btn.militant:hover { background: #c62828; color: white; }
+.welcome-btn.admin { border-color: #1565c0; color: #1565c0; }
+.welcome-btn.admin:hover { background: #1565c0; color: white; }
+#admin-pwd {
+    display: none; margin-top: 10px; text-align: center;
+}
+#admin-pwd input {
+    padding: 10px 14px; border: 1px solid #ccc; border-radius: 8px;
+    font-size: 15px; font-family: inherit; width: 200px;
+}
+#admin-pwd button {
+    padding: 10px 18px; border: none; border-radius: 8px; margin-left: 6px;
+    background: #1565c0; color: white; font-weight: 600; cursor: pointer;
+    font-family: inherit; font-size: 14px;
+}
+#admin-pwd .error { color: #c62828; font-size: 13px; margin-top: 6px; }
+
+/* Recherche */
 #search-bar { position: fixed; top: 10px; left: 50px; right: 50px; z-index: 1000; }
 #search-row { display: flex; gap: 6px; }
 #search-input {
@@ -35,11 +66,8 @@ path.leaflet-interactive { -webkit-tap-highlight-color: transparent; }
     box-shadow: 0 4px 12px rgba(0,0,0,0.2); max-height: 200px; overflow-y: auto;
     margin-top: -2px;
 }
-.search-item {
-    padding: 10px 14px; cursor: pointer; border-bottom: 1px solid #f0f0f0;
-    font-size: 14px;
-}
-.search-item:hover, .search-item:active { background: #f5f5f5; }
+.search-item { padding: 10px 14px; cursor: pointer; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
+.search-item:hover { background: #f5f5f5; }
 .search-item .si-rue { color: #888; font-size: 12px; }
 
 /* Bouton retour */
@@ -50,7 +78,7 @@ path.leaflet-interactive { -webkit-tap-highlight-color: transparent; }
     font-size: 20px; cursor: pointer;
 }
 
-/* Panneau stats en bas */
+/* Stats panel */
 #stats-panel {
     position: fixed; bottom: 0; left: 0; right: 0; z-index: 1000;
     background: white; border-radius: 12px 12px 0 0;
@@ -62,39 +90,28 @@ path.leaflet-interactive { -webkit-tap-highlight-color: transparent; }
 .progress-label { font-size: 12px; font-weight: 600; width: 60px; flex-shrink: 0; }
 .progress-label.pap { color: #c62828; }
 .progress-label.boi { color: #1565c0; }
-.progress-bar-bg {
-    flex: 1; height: 14px; background: #eee; border-radius: 7px; overflow: hidden;
-}
+.progress-bar-bg { flex: 1; height: 14px; background: #eee; border-radius: 7px; overflow: hidden; }
 .progress-bar-fill { height: 100%; border-radius: 7px; transition: width 0.3s; }
 .progress-bar-fill.pap { background: #c62828; }
 .progress-bar-fill.boi { background: #1565c0; }
 .progress-pct { font-size: 12px; font-weight: 700; width: 36px; text-align: right; }
 
-/* Marqueurs adresse */
-.marker-default { background: #bbb; border: 2px solid white; border-radius: 50%;
-    width: 10px; height: 10px; margin: -5px 0 0 -5px; }
-.marker-pap { background: #c62828; border: 2px solid white; border-radius: 50%;
-    width: 12px; height: 12px; margin: -6px 0 0 -6px; }
-.marker-boi { background: #1565c0; border: 2px solid white; border-radius: 50%;
-    width: 12px; height: 12px; margin: -6px 0 0 -6px; }
-.marker-both { background: #6a1b9a; border: 2px solid white; border-radius: 50%;
-    width: 12px; height: 12px; margin: -6px 0 0 -6px; }
+/* Marqueurs */
+.marker-default { background: #bbb; border: 2px solid white; border-radius: 50%; width: 10px; height: 10px; margin: -5px 0 0 -5px; }
+.marker-pap { background: #c62828; border: 2px solid white; border-radius: 50%; width: 12px; height: 12px; margin: -6px 0 0 -6px; }
+.marker-boi { background: #1565c0; border: 2px solid white; border-radius: 50%; width: 12px; height: 12px; margin: -6px 0 0 -6px; }
+.marker-both { background: #6a1b9a; border: 2px solid white; border-radius: 50%; width: 12px; height: 12px; margin: -6px 0 0 -6px; }
+.marker-pending { background: #ff9800; border: 2px solid white; border-radius: 50%; width: 12px; height: 12px; margin: -6px 0 0 -6px; opacity: 0.8; }
 
-/* Bottom sheet mobile */
-#mobile-backdrop {
-    display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.3); z-index: 1999;
-}
+/* Bottom sheet */
+#mobile-backdrop { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.3); z-index: 1999; }
 #mobile-overlay {
     display: none; position: fixed; bottom: 0; left: 0; right: 0;
     background: white; z-index: 2000; border-radius: 16px 16px 0 0;
     box-shadow: 0 -4px 20px rgba(0,0,0,0.2); padding: 20px;
     max-height: 60vh; overflow-y: auto; -webkit-overflow-scrolling: touch;
 }
-#mobile-overlay .mo-handle {
-    width: 40px; height: 4px; background: #ddd; border-radius: 2px;
-    margin: 0 auto 12px;
-}
+#mobile-overlay .mo-handle { width: 40px; height: 4px; background: #ddd; border-radius: 2px; margin: 0 auto 12px; }
 #mobile-overlay h3 { font-size: 18px; margin-bottom: 4px; }
 #mobile-overlay .mo-addr { color: #888; font-size: 14px; margin-bottom: 6px; }
 #mobile-overlay .mo-history { color: #888; font-size: 13px; margin-bottom: 12px; }
@@ -106,9 +123,7 @@ path.leaflet-interactive { -webkit-tap-highlight-color: transparent; }
 }
 #mobile-overlay .btn-action.pap { border-color: #ef9a9a; color: #c62828; }
 #mobile-overlay .btn-action.boi { border-color: #90caf9; color: #1565c0; }
-.btn-undo { background: none; border: none; color: #999; font-size: 12px;
-    cursor: pointer; padding: 2px 6px; font-family: inherit; }
-.btn-undo:hover { color: #c62828; }
+.btn-undo { background: none; border: none; color: #999; font-size: 12px; cursor: pointer; padding: 2px 6px; font-family: inherit; }
 
 /* Popup desktop */
 .addr-popup { font-family: 'Source Sans 3', Arial, sans-serif; min-width: 220px; }
@@ -123,14 +138,67 @@ path.leaflet-interactive { -webkit-tap-highlight-color: transparent; }
 }
 .addr-popup .btn-action.pap { border-color: #ef9a9a; color: #c62828; }
 .addr-popup .btn-action.boi { border-color: #90caf9; color: #1565c0; }
+
+/* Admin review panel */
+#admin-review {
+    display: none; position: fixed; bottom: 0; left: 0; right: 0; z-index: 2000;
+    background: white; border-radius: 12px 12px 0 0;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.2);
+    max-height: 70vh; overflow-y: auto; -webkit-overflow-scrolling: touch;
+}
+#admin-review .ar-header {
+    position: sticky; top: 0; background: white; padding: 12px 16px;
+    border-bottom: 1px solid #eee; display: flex; justify-content: space-between;
+    align-items: center;
+}
+#admin-review .ar-header h3 { font-size: 16px; }
+.ar-btn {
+    padding: 8px 16px; border: none; border-radius: 8px; font-weight: 600;
+    font-family: inherit; font-size: 13px; cursor: pointer;
+}
+.ar-btn.approve { background: #2e7d32; color: white; }
+.ar-btn.reject { background: #c62828; color: white; margin-left: 6px; }
+.ar-btn.close { background: #eee; color: #333; }
+#admin-review .ar-list { padding: 8px 16px 16px; }
+.ar-item {
+    display: flex; align-items: center; gap: 10px; padding: 8px 0;
+    border-bottom: 1px solid #f5f5f5; font-size: 14px;
+}
+.ar-item input[type="checkbox"] { width: 20px; height: 20px; flex-shrink: 0; }
+.ar-item .ar-addr { flex: 1; }
+.ar-item .ar-type { font-weight: 600; font-size: 12px; padding: 2px 8px; border-radius: 4px; }
+.ar-item .ar-type.pap { background: #fbe9e7; color: #c62828; }
+.ar-item .ar-type.boi { background: #e3f2fd; color: #1565c0; }
+.ar-item .ar-date { color: #999; font-size: 12px; }
+
+/* Admin badge */
+#admin-badge {
+    display: none; position: fixed; top: 10px; right: 10px; z-index: 1001;
+    background: #1565c0; color: white; padding: 4px 10px; border-radius: 12px;
+    font-size: 11px; font-weight: 600;
+}
 </style>
 </head>
 <body>
 
+<!-- Écran d'accueil -->
+<div id="welcome">
+    <h1>Canvassing Nanterre</h1>
+    <p>Suivi du porte-à-porte et du boîtage</p>
+    <button class="welcome-btn militant" onclick="enterMode('militant')">Militant</button>
+    <button class="welcome-btn admin" onclick="showAdminLogin()">Admin</button>
+    <div id="admin-pwd">
+        <input type="password" id="pwd-input" placeholder="Mot de passe admin">
+        <button onclick="tryAdminLogin()">OK</button>
+        <div class="error" id="pwd-error"></div>
+    </div>
+</div>
+
 <div id="map"></div>
 <button id="btn-back" onclick="zoomOut()">&#8592;</button>
+<div id="admin-badge">ADMIN</div>
 
-<div id="search-bar">
+<div id="search-bar" style="display:none;">
     <div id="search-row">
         <input id="search-input" type="text" placeholder="Rechercher une adresse..." autocomplete="off">
         <button id="btn-locate" title="Ma position">&#128205;</button>
@@ -138,8 +206,8 @@ path.leaflet-interactive { -webkit-tap-highlight-color: transparent; }
     <div id="search-results"></div>
 </div>
 
-<div id="stats-panel">
-    <div id="sp-title" class="sp-title">Nanterre — <span id="sp-lgts">0</span> logements</div>
+<div id="stats-panel" style="display:none;">
+    <div id="sp-title" class="sp-title"></div>
     <div id="sp-subtitle" class="sp-subtitle"></div>
     <div class="progress-row">
         <span class="progress-label pap">PàP</span>
@@ -171,15 +239,52 @@ path.leaflet-interactive { -webkit-tap-highlight-color: transparent; }
     </div>
 </div>
 
+<!-- Admin review panel -->
+<div id="admin-review">
+    <div class="ar-header">
+        <h3 id="ar-title">Visites en attente</h3>
+        <div>
+            <button class="ar-btn approve" onclick="approveSelected()">Valider</button>
+            <button class="ar-btn reject" onclick="rejectSelected()">Rejeter</button>
+            <button class="ar-btn close" onclick="closeAdminReview()">Fermer</button>
+        </div>
+    </div>
+    <div class="ar-list" id="ar-list"></div>
+</div>
+
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 const SUPABASE_URL = 'https://htprfzzqjqfzyqcbjynz.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh0cHJmenpxanFmenlxY2JqeW56Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQyOTI1MTEsImV4cCI6MjA5OTg2ODUxMX0.HtHvc7_OGAidJ0XSnlKnx3d6tfrPTxbkFUaLsEv5nbE';
 const SB_H = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' };
+const ADMIN_PWD = 'objectif50%';
 
-let ADDRESSES = [], BUREAUX = null, visites = {}, markers = {};
+let ADDRESSES = [], BUREAUX = null;
+// visites[id] = { pap: { count, last_date, status }, boi: { ... } }
+let visites = {}, markers = {};
 let addressLayer = null, bureauLayer = null, currentAddrId = null, currentBureau = null, map;
+let MODE = null; // 'militant' or 'admin'
 
+// === AUTH ===
+function showAdminLogin() { document.getElementById('admin-pwd').style.display = 'block'; }
+function tryAdminLogin() {
+    if (document.getElementById('pwd-input').value === ADMIN_PWD) enterMode('admin');
+    else document.getElementById('pwd-error').textContent = 'Mot de passe incorrect';
+}
+document.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && document.getElementById('admin-pwd').style.display === 'block') tryAdminLogin();
+});
+
+async function enterMode(mode) {
+    MODE = mode;
+    document.getElementById('welcome').style.display = 'none';
+    document.getElementById('search-bar').style.display = '';
+    document.getElementById('stats-panel').style.display = '';
+    if (mode === 'admin') document.getElementById('admin-badge').style.display = '';
+    await init();
+}
+
+// === DATA ===
 async function loadAddresses() { ADDRESSES = await (await fetch('adresses_nanterre.json')).json(); }
 async function loadBureaux() { BUREAUX = await (await fetch('bureaux_vote.geojson')).json(); }
 async function loadVisites() {
@@ -187,7 +292,10 @@ async function loadVisites() {
         const rows = await (await fetch(`${SUPABASE_URL}/rest/v1/visites?select=*`, { headers: SB_H })).json();
         if (Array.isArray(rows)) rows.forEach(r => {
             if (!visites[r.address_id]) visites[r.address_id] = {};
-            visites[r.address_id][r.type] = { count: r.count || 1, last_date: r.last_date };
+            visites[r.address_id][r.type] = {
+                count: r.count || 1, last_date: r.last_date,
+                status: r.status || 'approved'
+            };
         });
     } catch(e) { console.error(e); }
 }
@@ -199,13 +307,15 @@ async function addVisite(type) {
     const prev = visites[currentAddrId][type];
     const n = prev ? prev.count + 1 : 1;
     const now = new Date().toISOString();
-    visites[currentAddrId][type] = { count: n, last_date: now };
+    const status = MODE === 'admin' ? 'approved' : 'pending';
+    visites[currentAddrId][type] = { count: n, last_date: now, status };
     try { await fetch(`${SUPABASE_URL}/rest/v1/visites`, {
         method: 'POST', headers: { ...SB_H, 'Prefer': 'resolution=merge-duplicates' },
-        body: JSON.stringify({ address_id: currentAddrId, type, count: n, last_date: now })
+        body: JSON.stringify({ address_id: currentAddrId, type, count: n, last_date: now, status })
     }); } catch(e) { console.error(e); }
     updateMarkerStyle(currentAddrId); updateStatsPanel(); refreshPopup();
 }
+
 async function undoVisite(type) {
     if (!currentAddrId) return;
     const v = visites[currentAddrId]; if (!v || !v[type]) return;
@@ -218,28 +328,48 @@ async function undoVisite(type) {
         v[type].count = n;
         try { await fetch(`${SUPABASE_URL}/rest/v1/visites`, {
             method: 'POST', headers: { ...SB_H, 'Prefer': 'resolution=merge-duplicates' },
-            body: JSON.stringify({ address_id: currentAddrId, type, count: n, last_date: v[type].last_date })
+            body: JSON.stringify({ address_id: currentAddrId, type, count: n, last_date: v[type].last_date, status: v[type].status })
         }); } catch(e) {}
     }
     updateMarkerStyle(currentAddrId); updateStatsPanel(); refreshPopup();
 }
 
 // === MARKERS ===
+function isApproved(id, type) {
+    const v = visites[id]; if (!v || !v[type]) return false;
+    return v[type].status === 'approved';
+}
+function isPending(id, type) {
+    const v = visites[id]; if (!v || !v[type]) return false;
+    return v[type].status === 'pending';
+}
 function getMarkerClass(id) {
     const v = visites[id] || {};
-    if (v.pap && v.boi) return 'marker-both';
-    if (v.pap) return 'marker-pap';
-    if (v.boi) return 'marker-boi';
+    const aPap = v.pap && v.pap.status === 'approved';
+    const aBoi = v.boi && v.boi.status === 'approved';
+    const pPap = v.pap && v.pap.status === 'pending';
+    const pBoi = v.boi && v.boi.status === 'pending';
+    if (MODE === 'admin' && (pPap || pBoi) && !aPap && !aBoi) return 'marker-pending';
+    if (aPap && aBoi) return 'marker-both';
+    if (aPap) return 'marker-pap';
+    if (aBoi) return 'marker-boi';
+    if (MODE === 'admin' && (pPap || pBoi)) return 'marker-pending';
     return 'marker-default';
 }
 function updateMarkerStyle(id) { const m = markers[id]; if (m) m.setIcon(L.divIcon({ className: getMarkerClass(id) })); }
 
 function historyText(id) {
     const v = visites[id] || {}; const p = [];
-    if (v.pap) { const d = new Date(v.pap.last_date).toLocaleDateString('fr-FR');
-        p.push(`PàP : ${v.pap.count} visite${v.pap.count>1?'s':''} (dernière : ${d})`); }
-    if (v.boi) { const d = new Date(v.boi.last_date).toLocaleDateString('fr-FR');
-        p.push(`Boîtage : ${v.boi.count} passage${v.boi.count>1?'s':''} (dernier : ${d})`); }
+    if (v.pap) {
+        const d = new Date(v.pap.last_date).toLocaleDateString('fr-FR');
+        const st = v.pap.status === 'pending' ? ' (en attente)' : '';
+        p.push(`PàP : ${v.pap.count} visite${v.pap.count>1?'s':''} (${d})${st}`);
+    }
+    if (v.boi) {
+        const d = new Date(v.boi.last_date).toLocaleDateString('fr-FR');
+        const st = v.boi.status === 'pending' ? ' (en attente)' : '';
+        p.push(`Boîtage : ${v.boi.count} passage${v.boi.count>1?'s':''} (${d})${st}`);
+    }
     return p.length ? p.join('<br>') : 'Aucune visite';
 }
 
@@ -288,49 +418,47 @@ function popupHTML(a) {
             </div></div></div>`;
 }
 
-// === STATS ===
+// === STATS (approved only) ===
 function bureauStats(bId) {
     const ba = ADDRESSES.filter(a => a._bureau === bId);
     const totalLgts = ba.reduce((s,a) => s + (a.lgts||1), 0);
-    let lP=0, lB=0, cP=0, cB=0;
+    let lP=0, lB=0, pending=0;
     Object.entries(visites).forEach(([id,v]) => {
         const a = ba.find(x => x.id===id); if (!a) return;
         const lg = a.lgts||1;
-        if (v.pap) { lP += lg; cP += v.pap.count; }
-        if (v.boi) { lB += lg; cB += v.boi.count; }
+        if (v.pap && v.pap.status==='approved') lP += lg;
+        if (v.boi && v.boi.status==='approved') lB += lg;
+        if ((v.pap && v.pap.status==='pending') || (v.boi && v.boi.status==='pending')) pending++;
     });
-    return { totalLgts, totalAddr: ba.length, papCount: cP, boiCount: cB,
+    return { totalLgts, totalAddr: ba.length, pending,
         pctPap: totalLgts ? Math.round(lP/totalLgts*100) : 0,
         pctBoi: totalLgts ? Math.round(lB/totalLgts*100) : 0 };
 }
-
 function globalStats() {
     const totalLgts = ADDRESSES.reduce((s,a) => s + (a.lgts||1), 0);
     let lP=0, lB=0;
     Object.entries(visites).forEach(([id,v]) => {
         const a = ADDRESSES.find(x => x.id===id); if (!a) return;
         const lg = a.lgts||1;
-        if (v.pap) lP += lg;
-        if (v.boi) lB += lg;
+        if (v.pap && v.pap.status==='approved') lP += lg;
+        if (v.boi && v.boi.status==='approved') lB += lg;
     });
     return { totalLgts, pctPap: totalLgts ? Math.round(lP/totalLgts*100) : 0,
         pctBoi: totalLgts ? Math.round(lB/totalLgts*100) : 0 };
 }
-
 function updateStatsPanel() {
     if (currentBureau) {
         const s = bureauStats(currentBureau);
-        document.getElementById('sp-title').innerHTML =
-            `Bureau ${currentBureau} — <span id="sp-lgts">${s.totalAddr}</span> adresses`;
-        document.getElementById('sp-subtitle').textContent = `~${s.totalLgts} logements estimés`;
+        document.getElementById('sp-title').textContent = `Bureau ${currentBureau} — ${s.totalAddr} adresses`;
+        document.getElementById('sp-subtitle').textContent = `~${s.totalLgts} logements` +
+            (MODE==='admin' && s.pending ? ` · ${s.pending} en attente` : '');
         document.getElementById('bar-pap').style.width = s.pctPap + '%';
         document.getElementById('pct-pap').textContent = s.pctPap + '%';
         document.getElementById('bar-boi').style.width = s.pctBoi + '%';
         document.getElementById('pct-boi').textContent = s.pctBoi + '%';
     } else {
         const s = globalStats();
-        document.getElementById('sp-title').innerHTML =
-            `Nanterre — <span id="sp-lgts">~${s.totalLgts}</span> logements`;
+        document.getElementById('sp-title').textContent = `Nanterre — ~${s.totalLgts} logements`;
         document.getElementById('sp-subtitle').textContent = '';
         document.getElementById('bar-pap').style.width = s.pctPap + '%';
         document.getElementById('pct-pap').textContent = s.pctPap + '%';
@@ -344,7 +472,7 @@ function buildMap() {
     map = L.map('map', { zoomControl: false }).setView([48.8925, 2.2052], 14);
     L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
         { attribution: '&copy; OSM, CARTO', maxZoom: 19 }).addTo(map);
-    map.on('click', function(e) {
+    map.on('click', e => {
         if (!currentBureau) return;
         const pt = [e.latlng.lng, e.latlng.lat];
         for (const f of BUREAUX.features)
@@ -357,12 +485,15 @@ function buildMap() {
 function showBureaux() {
     if (bureauLayer) map.removeLayer(bureauLayer);
     if (addressLayer) { map.removeLayer(addressLayer); addressLayer = null; }
+    document.getElementById('admin-review').style.display = 'none';
+
     bureauLayer = L.geoJSON(BUREAUX, {
         style: f => {
             const s = bureauStats(f.properties.bureau);
             const pct = Math.max(s.pctPap, s.pctBoi);
-            return { fillColor: pct > 0 ? '#2e7d32' : '#e0e0e0',
-                fillOpacity: Math.min(0.1 + pct/100*0.6, 0.7), color: '#555', weight: 1.5 };
+            let fillColor = pct > 0 ? '#2e7d32' : '#e0e0e0';
+            if (MODE === 'admin' && s.pending > 0) fillColor = '#ff9800';
+            return { fillColor, fillOpacity: Math.min(0.15 + pct/100*0.5, 0.7), color: '#555', weight: 1.5 };
         },
         onEachFeature: (f, layer) => {
             layer.on('click', e => {
@@ -388,6 +519,8 @@ function zoomToBureau(bId, layer) {
     showAddresses(bId);
     document.getElementById('btn-back').style.display = 'block';
     updateStatsPanel();
+
+    if (MODE === 'admin') showAdminReview(bId);
 }
 
 function showAddresses(bId) {
@@ -396,6 +529,7 @@ function showAddresses(bId) {
     ADDRESSES.filter(a => a._bureau === bId).forEach(a => {
         const m = L.marker([a.lat, a.lon], { icon: L.divIcon({ className: getMarkerClass(a.id) }) });
         m.on('click', () => {
+            if (MODE === 'admin') return;
             if (isMobile()) openAddrPopup(a);
             else { currentAddrId = a.id; m.unbindPopup(); m.bindPopup(popupHTML(a), { maxWidth: 260 }).openPopup(); }
         });
@@ -407,49 +541,106 @@ function showAddresses(bId) {
 
 function zoomOut() { showBureaux(); }
 
-// === SEARCH DROPDOWN ===
-const searchInput = document.getElementById('search-input');
-const searchResults = document.getElementById('search-results');
+// === ADMIN REVIEW ===
+function showAdminReview(bId) {
+    const pending = [];
+    const ba = ADDRESSES.filter(a => a._bureau === bId);
+    ba.forEach(a => {
+        const v = visites[a.id];
+        if (!v) return;
+        ['pap', 'boi'].forEach(type => {
+            if (v[type] && v[type].status === 'pending') {
+                pending.push({ addr: a, type, data: v[type] });
+            }
+        });
+    });
 
+    if (!pending.length) {
+        document.getElementById('admin-review').style.display = 'none';
+        return;
+    }
+
+    document.getElementById('ar-title').textContent = `Bureau ${bId} — ${pending.length} en attente`;
+    const list = document.getElementById('ar-list');
+    list.innerHTML = pending.map((p, i) => {
+        const d = new Date(p.data.last_date).toLocaleDateString('fr-FR');
+        return `<div class="ar-item">
+            <input type="checkbox" checked data-idx="${i}">
+            <div class="ar-addr">${p.addr.adr}</div>
+            <span class="ar-type ${p.type}">${p.type === 'pap' ? 'PàP' : 'Boîtage'}</span>
+            <span class="ar-date">${d}</span>
+        </div>`;
+    }).join('');
+
+    document.getElementById('admin-review').style.display = 'block';
+    document.getElementById('admin-review')._pending = pending;
+}
+
+function closeAdminReview() { document.getElementById('admin-review').style.display = 'none'; }
+
+async function approveSelected() {
+    const pending = document.getElementById('admin-review')._pending;
+    const checks = document.querySelectorAll('#ar-list input[type="checkbox"]');
+    const toApprove = [];
+    checks.forEach((cb, i) => { if (cb.checked) toApprove.push(pending[i]); });
+
+    for (const p of toApprove) {
+        const v = visites[p.addr.id][p.type];
+        v.status = 'approved';
+        try { await fetch(`${SUPABASE_URL}/rest/v1/visites`, {
+            method: 'POST', headers: { ...SB_H, 'Prefer': 'resolution=merge-duplicates' },
+            body: JSON.stringify({ address_id: p.addr.id, type: p.type, count: v.count, last_date: v.last_date, status: 'approved' })
+        }); } catch(e) { console.error(e); }
+        updateMarkerStyle(p.addr.id);
+    }
+    updateStatsPanel();
+    if (currentBureau) showAdminReview(currentBureau);
+}
+
+async function rejectSelected() {
+    const pending = document.getElementById('admin-review')._pending;
+    const checks = document.querySelectorAll('#ar-list input[type="checkbox"]');
+    const toReject = [];
+    checks.forEach((cb, i) => { if (cb.checked) toReject.push(pending[i]); });
+
+    for (const p of toReject) {
+        delete visites[p.addr.id][p.type];
+        if (!Object.keys(visites[p.addr.id]).length) delete visites[p.addr.id];
+        try { await fetch(`${SUPABASE_URL}/rest/v1/visites?address_id=eq.${p.addr.id}&type=eq.${p.type}`,
+            { method: 'DELETE', headers: SB_H }); } catch(e) { console.error(e); }
+        updateMarkerStyle(p.addr.id);
+    }
+    updateStatsPanel();
+    if (currentBureau) showAdminReview(currentBureau);
+}
+
+// === SEARCH ===
+const searchInput = document.getElementById('search-input');
+const searchResultsEl = document.getElementById('search-results');
 searchInput.addEventListener('input', function() {
     const q = this.value.toLowerCase().trim();
-    if (q.length < 2) { searchResults.style.display = 'none'; return; }
-    const results = ADDRESSES.filter(a => a.adr.toLowerCase().includes(q)).slice(0, 8);
-    if (!results.length) { searchResults.style.display = 'none'; return; }
-    searchResults.innerHTML = results.map(a =>
-        `<div class="search-item" data-id="${a.id}">
-            <div>${a.adr}</div>
-            <div class="si-rue">${a.rue} — ~${a.lgts||1} logements</div>
-        </div>`
+    if (q.length < 2) { searchResultsEl.style.display = 'none'; return; }
+    const res = ADDRESSES.filter(a => a.adr.toLowerCase().includes(q)).slice(0, 8);
+    if (!res.length) { searchResultsEl.style.display = 'none'; return; }
+    searchResultsEl.innerHTML = res.map(a =>
+        `<div class="search-item" data-id="${a.id}"><div>${a.adr}</div><div class="si-rue">${a.rue}</div></div>`
     ).join('');
-    searchResults.style.display = 'block';
-
-    searchResults.querySelectorAll('.search-item').forEach(el => {
+    searchResultsEl.style.display = 'block';
+    searchResultsEl.querySelectorAll('.search-item').forEach(el => {
         el.addEventListener('click', () => {
-            const addr = ADDRESSES.find(a => a.id === el.dataset.id);
-            if (!addr) return;
-            searchResults.style.display = 'none';
-            searchInput.value = addr.adr;
+            const addr = ADDRESSES.find(a => a.id === el.dataset.id); if (!addr) return;
+            searchResultsEl.style.display = 'none'; searchInput.value = addr.adr;
             if (addr._bureau) {
                 const layer = findBureauLayer(addr._bureau);
                 if (layer) zoomToBureau(addr._bureau, layer);
-                setTimeout(() => {
-                    map.setView([addr.lat, addr.lon], 18);
-                    const m = markers[addr.id];
-                    if (m) {
-                        if (isMobile()) openAddrPopup(addr);
-                        else { currentAddrId = addr.id; m.unbindPopup(); m.bindPopup(popupHTML(addr), { maxWidth: 260 }).openPopup(); }
-                    }
-                }, 300);
+                setTimeout(() => { map.setView([addr.lat, addr.lon], 18); }, 300);
             }
         });
     });
 });
+searchInput.addEventListener('keydown', e => { if (e.key==='Enter') { e.preventDefault(); searchInput.blur(); } });
+document.addEventListener('click', e => { if (!document.getElementById('search-bar').contains(e.target)) searchResultsEl.style.display = 'none'; });
 
-searchInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); searchInput.blur(); } });
-document.addEventListener('click', e => { if (!document.getElementById('search-bar').contains(e.target)) searchResults.style.display = 'none'; });
-
-// Géoloc
 document.getElementById('btn-locate').addEventListener('click', () => {
     if (!navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(pos => {
@@ -463,7 +654,7 @@ document.getElementById('btn-locate').addEventListener('click', () => {
             }
         }
         map.setView([pt[1], pt[0]], 18);
-    }, () => alert('Impossible de vous géolocaliser.'), { enableHighAccuracy: true });
+    }, () => alert('Géolocalisation impossible.'), { enableHighAccuracy: true });
 });
 
 function findBureauLayer(bId) {
@@ -502,7 +693,6 @@ async function init() {
     buildMap();
     updateStatsPanel();
 }
-init();
 </script>
 </body>
 </html>
