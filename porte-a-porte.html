@@ -21,20 +21,16 @@ path.leaflet-interactive { -webkit-tap-highlight-color: transparent; }
     background: #333; display: flex; flex-direction: column;
     align-items: center; justify-content: center; gap: 16px;
     background-image: url('bg.jpg');
-    background-size: cover; background-position: center;
+    background-size: cover; background-position: right center;
 }
 #welcome::before {
     content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
     background: rgba(0,0,0,0.45);
 }
 #welcome > * { position: relative; z-index: 1; }
-#welcome h1 {
-    font-size: 28px; color: white; text-align: center;
-    text-shadow: 0 2px 8px rgba(0,0,0,0.5);
-}
 #welcome p {
-    color: rgba(255,255,255,0.9); font-size: 15px; max-width: 300px;
-    text-align: center; text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+    color: white; font-size: 22px; font-weight: 700; max-width: 320px;
+    text-align: center; text-shadow: 0 2px 8px rgba(0,0,0,0.5);
 }
 .welcome-btn {
     width: 220px; padding: 16px; border: 2px solid rgba(255,255,255,0.6);
@@ -197,7 +193,6 @@ path.leaflet-interactive { -webkit-tap-highlight-color: transparent; }
 
 <!-- Écran d'accueil -->
 <div id="welcome">
-    <h1>Mélenchon à l'Élysée</h1>
     <p>Suivi du porte-à-porte et du boîtage — Nanterre</p>
     <button class="welcome-btn militant" onclick="enterMode('militant')">Militant</button>
     <button class="welcome-btn admin" onclick="showAdminLogin()">Admin</button>
