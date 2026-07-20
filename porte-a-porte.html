@@ -18,34 +18,48 @@ path.leaflet-interactive { -webkit-tap-highlight-color: transparent; }
 /* Écran d'accueil */
 #welcome {
     position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 9999;
-    background: white; display: flex; flex-direction: column;
-    align-items: center; justify-content: center; gap: 20px;
+    background: #333; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 16px;
+    background-image: url('bg.jpg');
+    background-size: cover; background-position: center;
 }
-#welcome h1 { font-size: 24px; color: #333; }
-#welcome p { color: #888; font-size: 14px; max-width: 300px; text-align: center; }
+#welcome::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.45);
+}
+#welcome > * { position: relative; z-index: 1; }
+#welcome h1 {
+    font-size: 28px; color: white; text-align: center;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+}
+#welcome p {
+    color: rgba(255,255,255,0.9); font-size: 15px; max-width: 300px;
+    text-align: center; text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+}
 .welcome-btn {
-    width: 220px; padding: 16px; border: 2px solid #ddd; border-radius: 12px;
-    font-size: 16px; font-weight: 600; cursor: pointer; font-family: inherit;
-    background: white; transition: all 0.15s;
+    width: 220px; padding: 16px; border: 2px solid rgba(255,255,255,0.6);
+    border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer;
+    font-family: inherit; background: rgba(255,255,255,0.15);
+    color: white; backdrop-filter: blur(4px); transition: all 0.15s;
 }
 .welcome-btn:active { transform: scale(0.97); }
-.welcome-btn.militant { border-color: #c62828; color: #c62828; }
-.welcome-btn.militant:hover { background: #c62828; color: white; }
-.welcome-btn.admin { border-color: #1565c0; color: #1565c0; }
-.welcome-btn.admin:hover { background: #1565c0; color: white; }
+.welcome-btn.militant:hover { background: rgba(198,40,40,0.8); border-color: #c62828; }
+.welcome-btn.admin:hover { background: rgba(21,101,192,0.8); border-color: #1565c0; }
 #admin-pwd {
     display: none; margin-top: 10px; text-align: center;
 }
 #admin-pwd input {
-    padding: 10px 14px; border: 1px solid #ccc; border-radius: 8px;
+    padding: 10px 14px; border: 1px solid rgba(255,255,255,0.4); border-radius: 8px;
     font-size: 15px; font-family: inherit; width: 200px;
+    background: rgba(255,255,255,0.15); color: white; backdrop-filter: blur(4px);
 }
+#admin-pwd input::placeholder { color: rgba(255,255,255,0.6); }
 #admin-pwd button {
     padding: 10px 18px; border: none; border-radius: 8px; margin-left: 6px;
-    background: #1565c0; color: white; font-weight: 600; cursor: pointer;
+    background: rgba(21,101,192,0.8); color: white; font-weight: 600; cursor: pointer;
     font-family: inherit; font-size: 14px;
 }
-#admin-pwd .error { color: #c62828; font-size: 13px; margin-top: 6px; }
+#admin-pwd .error { color: #ff8a80; font-size: 13px; margin-top: 6px; }
 
 /* Recherche */
 #search-bar { position: fixed; top: 10px; left: 50px; right: 50px; z-index: 1000; }
@@ -183,8 +197,8 @@ path.leaflet-interactive { -webkit-tap-highlight-color: transparent; }
 
 <!-- Écran d'accueil -->
 <div id="welcome">
-    <h1>Canvassing Nanterre</h1>
-    <p>Suivi du porte-à-porte et du boîtage</p>
+    <h1>Mélenchon à l'Élysée</h1>
+    <p>Suivi du porte-à-porte et du boîtage — Nanterre</p>
     <button class="welcome-btn militant" onclick="enterMode('militant')">Militant</button>
     <button class="welcome-btn admin" onclick="showAdminLogin()">Admin</button>
     <div id="admin-pwd">
@@ -260,10 +274,11 @@ const SB_H = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`
 const ADMIN_PWD = 'objectif50%';
 
 let ADDRESSES = [], BUREAUX = null;
-// visites[id] = { pap: { count, last_date, status }, boi: { ... } }
 let visites = {}, markers = {};
 let addressLayer = null, bureauLayer = null, currentAddrId = null, currentBureau = null, map;
-let MODE = null; // 'militant' or 'admin'
+let MODE = null;
+// Track what the current militant session added (for undo)
+let sessionAdded = {}; // { 'addr_id:type': count_added_this_session }
 
 // === AUTH ===
 function showAdminLogin() { document.getElementById('admin-pwd').style.display = 'block'; }
@@ -309,6 +324,8 @@ async function addVisite(type) {
     const now = new Date().toISOString();
     const status = MODE === 'admin' ? 'approved' : 'pending';
     visites[currentAddrId][type] = { count: n, last_date: now, status };
+    const sk = currentAddrId + ':' + type;
+    sessionAdded[sk] = (sessionAdded[sk] || 0) + 1;
     try { await fetch(`${SUPABASE_URL}/rest/v1/visites`, {
         method: 'POST', headers: { ...SB_H, 'Prefer': 'resolution=merge-duplicates' },
         body: JSON.stringify({ address_id: currentAddrId, type, count: n, last_date: now, status })
@@ -319,6 +336,9 @@ async function addVisite(type) {
 async function undoVisite(type) {
     if (!currentAddrId) return;
     const v = visites[currentAddrId]; if (!v || !v[type]) return;
+    const sk = currentAddrId + ':' + type;
+    if (MODE === 'militant' && (!sessionAdded[sk] || sessionAdded[sk] <= 0)) return;
+    if (MODE === 'militant') sessionAdded[sk]--;
     const n = v[type].count - 1;
     if (n <= 0) {
         delete v[type]; if (!Object.keys(v).length) delete visites[currentAddrId];
@@ -378,22 +398,20 @@ function isMobile() { return window.innerWidth <= 768; }
 function refreshPopup() {
     if (!currentAddrId) return;
     const a = ADDRESSES.find(x => x.id === currentAddrId); if (!a) return;
-    const v = visites[a.id] || {};
     if (isMobile()) {
         document.getElementById('mo-history').innerHTML = historyText(a.id);
-        document.getElementById('mo-undo-pap').style.display = v.pap ? '' : 'none';
-        document.getElementById('mo-undo-boi').style.display = v.boi ? '' : 'none';
+        document.getElementById('mo-undo-pap').style.display = canUndo(a.id,'pap') ? '' : 'none';
+        document.getElementById('mo-undo-boi').style.display = canUndo(a.id,'boi') ? '' : 'none';
     } else { const m = markers[a.id]; if (m && m.getPopup() && m.getPopup().isOpen()) m.getPopup().setContent(popupHTML(a)); }
 }
 function openAddrPopup(a) {
     currentAddrId = a.id;
     if (isMobile()) {
-        const v = visites[a.id] || {};
         document.getElementById('mo-title').textContent = a.adr;
         document.getElementById('mo-addr').textContent = `${a.rue} — ~${a.lgts||1} logement${(a.lgts||1)>1?'s':''}`;
         document.getElementById('mo-history').innerHTML = historyText(a.id);
-        document.getElementById('mo-undo-pap').style.display = v.pap ? '' : 'none';
-        document.getElementById('mo-undo-boi').style.display = v.boi ? '' : 'none';
+        document.getElementById('mo-undo-pap').style.display = canUndo(a.id,'pap') ? '' : 'none';
+        document.getElementById('mo-undo-boi').style.display = canUndo(a.id,'boi') ? '' : 'none';
         document.getElementById('mobile-overlay').style.display = 'block';
         document.getElementById('mobile-backdrop').style.display = 'block';
     }
@@ -403,18 +421,21 @@ function closeMobilePopup() {
     document.getElementById('mobile-backdrop').style.display = 'none';
     currentAddrId = null;
 }
+function canUndo(addrId, type) {
+    if (MODE === 'admin') return !!(visites[addrId] && visites[addrId][type]);
+    return (sessionAdded[addrId + ':' + type] || 0) > 0;
+}
 function popupHTML(a) {
-    const v = visites[a.id] || {};
     return `<div class="addr-popup"><h3>${a.adr}</h3>
         <div class="popup-rue">${a.rue} — ~${a.lgts||1} logement${(a.lgts||1)>1?'s':''}</div>
         <div class="popup-history">${historyText(a.id)}</div>
         <div class="btn-row">
             <div style="flex:1;text-align:center;">
                 <button class="btn-action pap" style="width:100%;" onclick="currentAddrId='${a.id}';addVisite('pap');">+ PàP</button>
-                ${v.pap?`<button class="btn-undo" onclick="currentAddrId='${a.id}';undoVisite('pap');">Annuler</button>`:''}
+                ${canUndo(a.id,'pap')?`<button class="btn-undo" onclick="currentAddrId='${a.id}';undoVisite('pap');">Annuler</button>`:''}
             </div><div style="flex:1;text-align:center;">
                 <button class="btn-action boi" style="width:100%;" onclick="currentAddrId='${a.id}';addVisite('boi');">+ Boîtage</button>
-                ${v.boi?`<button class="btn-undo" onclick="currentAddrId='${a.id}';undoVisite('boi');">Annuler</button>`:''}
+                ${canUndo(a.id,'boi')?`<button class="btn-undo" onclick="currentAddrId='${a.id}';undoVisite('boi');">Annuler</button>`:''}
             </div></div></div>`;
 }
 
@@ -469,7 +490,8 @@ function updateStatsPanel() {
 
 // === MAP ===
 function buildMap() {
-    map = L.map('map', { zoomControl: false }).setView([48.8925, 2.2052], 14);
+    const initZoom = isMobile() ? 13 : 14;
+    map = L.map('map', { zoomControl: false }).setView([48.8925, 2.2052], initZoom);
     L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
         { attribution: '&copy; OSM, CARTO', maxZoom: 19 }).addTo(map);
     map.on('click', e => {
@@ -505,7 +527,7 @@ function showBureaux() {
     }).addTo(map);
     currentBureau = null;
     document.getElementById('btn-back').style.display = 'none';
-    map.setView([48.8925, 2.2052], 14);
+    map.setView([48.8925, 2.2052], isMobile() ? 13 : 14);
     updateStatsPanel();
 }
 
@@ -529,7 +551,6 @@ function showAddresses(bId) {
     ADDRESSES.filter(a => a._bureau === bId).forEach(a => {
         const m = L.marker([a.lat, a.lon], { icon: L.divIcon({ className: getMarkerClass(a.id) }) });
         m.on('click', () => {
-            if (MODE === 'admin') return;
             if (isMobile()) openAddrPopup(a);
             else { currentAddrId = a.id; m.unbindPopup(); m.bindPopup(popupHTML(a), { maxWidth: 260 }).openPopup(); }
         });
@@ -654,7 +675,7 @@ document.getElementById('btn-locate').addEventListener('click', () => {
             }
         }
         map.setView([pt[1], pt[0]], 18);
-    }, () => alert('Géolocalisation impossible.'), { enableHighAccuracy: true });
+    }, () => alert('Géolocalisation impossible.\nSi vous êtes dans Messenger ou Instagram, ouvrez le lien dans votre navigateur (Safari/Chrome).'), { enableHighAccuracy: true });
 });
 
 function findBureauLayer(bId) {
