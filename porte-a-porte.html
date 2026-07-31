@@ -179,14 +179,18 @@ path.leaflet-interactive { -webkit-tap-highlight-color: transparent; }
 #mobile-overlay .btn-action.boi { border-color: var(--lfi-violet-light); color: var(--lfi-violet); }
 .btn-undo { background: none; border: none; color: var(--lfi-gris2); font-size: 12px; cursor: pointer; padding: 2px 6px; font-family: inherit; }
 
-/* Animation confirmation */
-@keyframes btn-confirm {
-    0% { transform: scale(1); }
-    20% { transform: scale(0.92); }
-    50% { transform: scale(1.08); background: var(--lfi-green); color: white; border-color: var(--lfi-green); }
-    100% { transform: scale(1); }
+/* Confetti sticker */
+.sticker-particle {
+    position: fixed; width: 36px; height: 36px; z-index: 9999;
+    background-image: url('sticker.png'); background-size: contain;
+    background-repeat: no-repeat; pointer-events: none;
+    animation: sticker-fly 0.8s ease-out forwards;
 }
-.btn-action.confirming { animation: btn-confirm 0.5s ease; }
+@keyframes sticker-fly {
+    0% { opacity: 1; transform: scale(0.3) rotate(0deg); }
+    50% { opacity: 1; transform: scale(1) rotate(var(--rot)); }
+    100% { opacity: 0; transform: scale(0.6) rotate(var(--rot)) translate(var(--tx), var(--ty)); }
+}
 
 /* Popup desktop */
 .addr-popup { font-family: 'Inter', sans-serif; min-width: 220px; }
@@ -368,10 +372,27 @@ async function loadVisites() {
 
 // === PERSISTENCE ===
 function animateAndAdd(btn, type) {
-    btn.classList.remove('confirming');
-    void btn.offsetWidth;
-    btn.classList.add('confirming');
-    btn.addEventListener('animationend', () => btn.classList.remove('confirming'), { once: true });
+    const rect = btn.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    const count = 8;
+    for (let i = 0; i < count; i++) {
+        const el = document.createElement('div');
+        el.className = 'sticker-particle';
+        const angle = (i / count) * Math.PI * 2 + (Math.random() - 0.5) * 0.5;
+        const dist = 60 + Math.random() * 80;
+        const tx = Math.cos(angle) * dist;
+        const ty = Math.sin(angle) * dist - 30;
+        const rot = (Math.random() - 0.5) * 60;
+        el.style.left = (cx - 18) + 'px';
+        el.style.top = (cy - 18) + 'px';
+        el.style.setProperty('--tx', tx + 'px');
+        el.style.setProperty('--ty', ty + 'px');
+        el.style.setProperty('--rot', rot + 'deg');
+        el.style.animationDelay = (Math.random() * 0.15) + 's';
+        document.body.appendChild(el);
+        el.addEventListener('animationend', () => el.remove());
+    }
     addVisite(type);
 }
 async function addVisite(type) {
