@@ -157,6 +157,20 @@ path.leaflet-interactive { -webkit-tap-highlight-color: transparent; }
 .marker-both { background: var(--lfi-noir); border: 2px solid white; border-radius: 50%; width: 12px; height: 12px; margin: -6px 0 0 -6px; }
 .marker-pending { background: var(--lfi-yellow); border: 2px solid white; border-radius: 50%; width: 12px; height: 12px; margin: -6px 0 0 -6px; }
 
+/* Admin pending badge on bureau */
+.pending-badge {
+    background: var(--lfi-red); color: white; font-family: 'Inter', sans-serif;
+    font-size: 12px; font-weight: 700; border-radius: 50%; min-width: 22px;
+    height: 22px; display: flex; align-items: center; justify-content: center;
+    border: 2px solid white; box-shadow: 0 2px 6px rgba(209,39,28,0.4);
+    padding: 0 4px;
+}
+@keyframes pulse-border {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+}
+.bureau-pending { animation: pulse-border 2s ease-in-out infinite; }
+
 /* Bottom sheet */
 #mobile-backdrop { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.3); z-index: 1999; }
 #mobile-overlay {
@@ -536,14 +550,15 @@ function bureauStats(bId) {
 }
 function globalStats() {
     const totalLgts = ADDRESSES.reduce((s,a) => s + (a.lgts||1), 0);
-    let lP=0, lB=0;
+    let lP=0, lB=0, totalPending=0;
     Object.entries(visites).forEach(([id,v]) => {
         const a = ADDRESSES.find(x => x.id===id); if (!a) return;
         const lg = a.lgts||1;
         if (v.pap && v.pap.status==='approved') lP += lg;
         if (v.boi && v.boi.status==='approved') lB += lg;
+        if ((v.pap && v.pap.status==='pending') || (v.boi && v.boi.status==='pending')) totalPending++;
     });
-    return { totalLgts, pctPap: totalLgts ? Math.round(lP/totalLgts*100) : 0,
+    return { totalLgts, totalPending, pctPap: totalLgts ? Math.round(lP/totalLgts*100) : 0,
         pctBoi: totalLgts ? Math.round(lB/totalLgts*100) : 0 };
 }
 function updateStatsPanel() {
@@ -559,7 +574,10 @@ function updateStatsPanel() {
     } else {
         const s = globalStats();
         document.getElementById('sp-title').textContent = `Nanterre — ~${s.totalLgts} logements`;
-        document.getElementById('sp-subtitle').textContent = '';
+        document.getElementById('sp-subtitle').textContent =
+            MODE === 'admin' && s.totalPending > 0
+                ? `${s.totalPending} visite${s.totalPending > 1 ? 's' : ''} en attente de validation`
+                : '';
         document.getElementById('bar-pap').style.width = s.pctPap + '%';
         document.getElementById('pct-pap').textContent = s.pctPap + '%';
         document.getElementById('bar-boi').style.width = s.pctBoi + '%';
@@ -583,20 +601,46 @@ function buildMap() {
     showBureaux();
 }
 
+let pendingMarkers = [];
+
 function showBureaux() {
     if (bureauLayer) map.removeLayer(bureauLayer);
     if (addressLayer) { map.removeLayer(addressLayer); addressLayer = null; }
     document.getElementById('admin-review').style.display = 'none';
+    pendingMarkers.forEach(m => map.removeLayer(m));
+    pendingMarkers = [];
 
     bureauLayer = L.geoJSON(BUREAUX, {
         style: f => {
             const s = bureauStats(f.properties.bureau);
             const pct = Math.max(s.pctPap, s.pctBoi);
-            let fillColor = pct > 0 ? '#2e7d32' : '#e0e0e0';
-            if (MODE === 'admin' && s.pending > 0) fillColor = '#ff9800';
-            return { fillColor, fillOpacity: Math.min(0.15 + pct/100*0.5, 0.7), color: '#555', weight: 1.5 };
+            let fillColor = pct > 0 ? 'var(--lfi-green)' : '#e0e0e0';
+            let color = '#555', weight = 1.5;
+            if (MODE === 'admin' && s.pending > 0) {
+                fillColor = var_lfi_violet_light;
+                color = var_lfi_violet;
+                weight = 2.5;
+            }
+            return { fillColor, fillOpacity: Math.min(0.15 + pct/100*0.5, 0.7), color, weight };
         },
         onEachFeature: (f, layer) => {
+            const s = bureauStats(f.properties.bureau);
+            if (MODE === 'admin' && s.pending > 0) {
+                layer.getElement && setTimeout(() => {
+                    const el = layer.getElement();
+                    if (el) el.classList.add('bureau-pending');
+                }, 100);
+                const center = layer.getBounds().getCenter();
+                const badge = L.marker(center, {
+                    icon: L.divIcon({
+                        className: '',
+                        html: `<div class="pending-badge">${s.pending}</div>`,
+                        iconSize: [22, 22], iconAnchor: [11, 11]
+                    }),
+                    interactive: false
+                }).addTo(map);
+                pendingMarkers.push(badge);
+            }
             layer.on('click', e => {
                 L.DomEvent.stopPropagation(e);
                 if (currentBureau && currentBureau !== f.properties.bureau) zoomOut();
@@ -609,6 +653,9 @@ function showBureaux() {
     map.setView([48.8925, 2.2052], isMobile() ? 13 : 14);
     updateStatsPanel();
 }
+
+const var_lfi_violet_light = '#E5CBFF';
+const var_lfi_violet = '#4C0297';
 
 function zoomToBureau(bId, layer) {
     currentBureau = bId;
