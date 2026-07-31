@@ -98,30 +98,34 @@ path.leaflet-interactive { -webkit-tap-highlight-color: transparent; }
 #search-bar { position: fixed; top: 10px; left: 50px; right: 50px; z-index: 1000; }
 #search-row { display: flex; gap: 6px; }
 #search-input {
-    flex: 1; padding: 10px 14px; border: 2px solid #ddd; border-radius: var(--radius);
-    font-size: 15px; font-family: inherit; background: white;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    flex: 1; padding: 10px 14px; border: 2px solid var(--lfi-violet-light);
+    border-radius: 50px; font-size: 15px; font-family: 'Inter', sans-serif;
+    background: white; box-shadow: 0 2px 8px rgba(76,2,151,0.1);
+    color: var(--lfi-noir);
 }
-#search-input:focus { outline: none; border-color: var(--lfi-violet); }
+#search-input::placeholder { color: var(--lfi-gris2); }
+#search-input:focus { outline: none; border-color: var(--lfi-violet); box-shadow: 0 2px 12px rgba(76,2,151,0.2); }
 #btn-locate {
-    width: 44px; height: 44px; border: none; border-radius: var(--radius);
-    background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    font-size: 20px; cursor: pointer; flex-shrink: 0;
+    width: 44px; height: 44px; border: none; border-radius: 50%;
+    background: var(--lfi-violet); color: white;
+    box-shadow: 0 2px 8px rgba(76,2,151,0.3);
+    font-size: 18px; cursor: pointer; flex-shrink: 0;
 }
 #search-results {
-    display: none; background: white; border-radius: 0 0 var(--radius) var(--radius);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15); max-height: 200px; overflow-y: auto;
-    margin-top: -2px;
+    display: none; background: white; border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+    box-shadow: 0 4px 12px rgba(76,2,151,0.15); max-height: 200px; overflow-y: auto;
+    margin-top: -4px; border: 1px solid var(--lfi-violet-light); border-top: none;
 }
-.search-item { padding: 10px 14px; cursor: pointer; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
-.search-item:hover { background: var(--lfi-gris); }
+.search-item { padding: 10px 14px; cursor: pointer; border-bottom: 1px solid var(--lfi-gris); font-size: 14px; font-family: 'Inter', sans-serif; }
+.search-item:hover { background: var(--lfi-violet-light); }
 .search-item .si-rue { color: var(--lfi-gris2); font-size: 12px; }
 
 /* Bouton retour */
 #btn-back {
     display: none; position: fixed; top: 10px; left: 6px; z-index: 1001;
-    width: 44px; height: 44px; border: none; border-radius: var(--radius);
-    background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    width: 44px; height: 44px; border: none; border-radius: 50%;
+    background: var(--lfi-violet); color: white;
+    box-shadow: 0 2px 8px rgba(76,2,151,0.3);
     font-size: 20px; cursor: pointer;
 }
 
@@ -174,6 +178,15 @@ path.leaflet-interactive { -webkit-tap-highlight-color: transparent; }
 #mobile-overlay .btn-action.pap { border-color: var(--lfi-red-light); color: var(--lfi-red); }
 #mobile-overlay .btn-action.boi { border-color: var(--lfi-violet-light); color: var(--lfi-violet); }
 .btn-undo { background: none; border: none; color: var(--lfi-gris2); font-size: 12px; cursor: pointer; padding: 2px 6px; font-family: inherit; }
+
+/* Animation confirmation */
+@keyframes btn-confirm {
+    0% { transform: scale(1); }
+    20% { transform: scale(0.92); }
+    50% { transform: scale(1.08); background: var(--lfi-green); color: white; border-color: var(--lfi-green); }
+    100% { transform: scale(1); }
+}
+.btn-action.confirming { animation: btn-confirm 0.5s ease; }
 
 /* Popup desktop */
 .addr-popup { font-family: 'Inter', sans-serif; min-width: 220px; }
@@ -281,11 +294,11 @@ path.leaflet-interactive { -webkit-tap-highlight-color: transparent; }
     <div class="mo-history" id="mo-history"></div>
     <div class="btn-row">
         <div style="flex:1;text-align:center;">
-            <button class="btn-action pap" style="width:100%;" onclick="addVisite('pap')">+ Porte-à-porte</button>
+            <button class="btn-action pap" style="width:100%;" onclick="animateAndAdd(this,'pap')">+ Porte-à-porte</button>
             <button class="btn-undo" id="mo-undo-pap" onclick="undoVisite('pap')" style="display:none;">Annuler</button>
         </div>
         <div style="flex:1;text-align:center;">
-            <button class="btn-action boi" style="width:100%;" onclick="addVisite('boi')">+ Boîtage</button>
+            <button class="btn-action boi" style="width:100%;" onclick="animateAndAdd(this,'boi')">+ Boîtage</button>
             <button class="btn-undo" id="mo-undo-boi" onclick="undoVisite('boi')" style="display:none;">Annuler</button>
         </div>
     </div>
@@ -354,6 +367,13 @@ async function loadVisites() {
 }
 
 // === PERSISTENCE ===
+function animateAndAdd(btn, type) {
+    btn.classList.remove('confirming');
+    void btn.offsetWidth;
+    btn.classList.add('confirming');
+    btn.addEventListener('animationend', () => btn.classList.remove('confirming'), { once: true });
+    addVisite(type);
+}
 async function addVisite(type) {
     if (!currentAddrId) return;
     if (!visites[currentAddrId]) visites[currentAddrId] = {};
@@ -469,10 +489,10 @@ function popupHTML(a) {
         <div class="popup-history">${historyText(a.id)}</div>
         <div class="btn-row">
             <div style="flex:1;text-align:center;">
-                <button class="btn-action pap" style="width:100%;" onclick="currentAddrId='${a.id}';addVisite('pap');">+ PàP</button>
+                <button class="btn-action pap" style="width:100%;" onclick="currentAddrId='${a.id}';animateAndAdd(this,'pap');">+ PàP</button>
                 ${canUndo(a.id,'pap')?`<button class="btn-undo" onclick="currentAddrId='${a.id}';undoVisite('pap');">Annuler</button>`:''}
             </div><div style="flex:1;text-align:center;">
-                <button class="btn-action boi" style="width:100%;" onclick="currentAddrId='${a.id}';addVisite('boi');">+ Boîtage</button>
+                <button class="btn-action boi" style="width:100%;" onclick="currentAddrId='${a.id}';animateAndAdd(this,'boi');">+ Boîtage</button>
                 ${canUndo(a.id,'boi')?`<button class="btn-undo" onclick="currentAddrId='${a.id}';undoVisite('boi');">Annuler</button>`:''}
             </div></div></div>`;
 }
