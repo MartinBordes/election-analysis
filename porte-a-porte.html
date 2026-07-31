@@ -659,6 +659,8 @@ const var_lfi_violet = '#4C0297';
 
 function zoomToBureau(bId, layer) {
     currentBureau = bId;
+    pendingMarkers.forEach(m => map.removeLayer(m));
+    pendingMarkers = [];
     map.fitBounds(layer.getBounds(), { padding: [20, 60] });
     bureauLayer.eachLayer(l => {
         if (l.feature.properties.bureau === bId) l.setStyle({ color: '#c62828', weight: 3, fillOpacity: 0.05 });
