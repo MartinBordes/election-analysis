@@ -5,9 +5,27 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Mélenchon 2027 — Nanterre</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
+@font-face {
+    font-family: 'Union Gothic';
+    src: url('https://melenchon2027.fr/wp-content/uploads/2026/04/union_gothic-variable.ttf') format('truetype');
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Stack Sans';
+    src: url('https://melenchon2027.fr/wp-content/uploads/2026/04/StackSansText-Regular.ttf') format('truetype');
+    font-weight: 400; font-display: swap;
+}
+@font-face {
+    font-family: 'Stack Sans';
+    src: url('https://melenchon2027.fr/wp-content/uploads/2026/04/StackSansText-Light.ttf') format('truetype');
+    font-weight: 300; font-display: swap;
+}
+@font-face {
+    font-family: 'Stack Sans';
+    src: url('https://melenchon2027.fr/wp-content/uploads/2026/04/StackSansText-Bold.ttf') format('truetype');
+    font-weight: 700; font-display: swap;
+}
 :root {
     --lfi-violet: #4C0297;
     --lfi-red: #D1271C;
@@ -24,7 +42,7 @@
     --radius-lg: 20px;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Inter', sans-serif; color: var(--lfi-noir); background: var(--lfi-blanc); }
+body { font-family: 'Stack Sans', 'Inter', sans-serif; color: var(--lfi-noir); background: var(--lfi-blanc); }
 #map { position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 1; }
 .leaflet-control-zoom { display: none !important; }
 .leaflet-interactive { outline: none !important; }
@@ -34,72 +52,72 @@ path.leaflet-interactive { -webkit-tap-highlight-color: transparent; }
 #welcome {
     position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 9999;
     display: flex; flex-direction: column;
-    align-items: center; justify-content: flex-end;
-    padding-bottom: 15vh; gap: 16px;
+    align-items: center; justify-content: space-between;
+    padding: 0; background-color: var(--lfi-blanc);
+}
+#welcome .w-image {
+    flex: 1; width: 100%; position: relative; overflow: hidden;
     background-image: url('bg.jpg');
     background-size: cover; background-position: right center;
-    background-color: var(--lfi-violet);
 }
-#welcome::before {
-    content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-    background: linear-gradient(
-        to bottom,
-        rgba(76,2,151,0.2) 0%,
-        rgba(76,2,151,0.5) 50%,
-        rgba(76,2,151,0.85) 100%
-    );
+#welcome .w-image::after {
+    content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 80px;
+    background: linear-gradient(to bottom, transparent, var(--lfi-blanc));
 }
-#welcome > * { position: relative; z-index: 1; }
+#welcome .w-content {
+    background: var(--lfi-blanc); padding: 24px 20px 40px; width: 100%;
+    display: flex; flex-direction: column; align-items: center; gap: 12px;
+}
 #welcome .w-overline {
-    font-family: 'Inter', sans-serif; color: var(--lfi-yellow); font-size: 13px;
+    font-family: 'Stack Sans', 'Inter', sans-serif; color: var(--lfi-violet); font-size: 12px;
     font-weight: 700; text-transform: uppercase; letter-spacing: 2px;
 }
 #welcome .w-title {
-    font-family: 'Oswald', sans-serif; color: white; font-size: 32px;
+    font-family: 'Union Gothic', 'Oswald', sans-serif; color: var(--lfi-noir); font-size: 28px;
     font-weight: 700; text-align: center; text-transform: uppercase;
-    line-height: 1.1; margin-bottom: 4px;
+    line-height: 1.1; margin-bottom: 2px;
 }
 #welcome .w-subtitle {
-    color: rgba(255,255,255,0.85); font-size: 15px;
-    text-align: center; max-width: 280px; line-height: 1.4;
+    color: var(--lfi-gris2); font-size: 14px;
+    text-align: center; max-width: 280px; line-height: 1.4; margin-bottom: 4px;
 }
 .welcome-btn {
-    width: 260px; padding: 18px; border: none; border-radius: 50px;
-    font-size: 17px; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif;
+    width: 260px; padding: 16px; border: none; border-radius: var(--radius);
+    font-size: 16px; font-weight: 700; cursor: pointer; font-family: 'Stack Sans', 'Inter', sans-serif;
     transition: all 0.15s; text-transform: uppercase; letter-spacing: 1px;
 }
 .welcome-btn:active { transform: scale(0.96); }
 .welcome-btn.militant {
     background: var(--lfi-red); color: white;
-    box-shadow: 0 6px 20px rgba(209,39,28,0.5);
+    box-shadow: 0 4px 16px rgba(209,39,28,0.3);
 }
 .welcome-btn.militant:hover { background: #b71c1c; }
 .welcome-btn.admin {
-    background: transparent; color: rgba(255,255,255,0.8);
-    border: 2px solid rgba(255,255,255,0.3);
+    background: var(--lfi-blanc); color: var(--lfi-violet);
+    border: 2px solid var(--lfi-violet-light);
     font-size: 14px; padding: 12px; width: 200px;
 }
 .welcome-btn.admin:hover { background: var(--lfi-violet); border-color: var(--lfi-violet); color: white; }
-#admin-pwd { display: none; margin-top: 6px; text-align: center; }
+#admin-pwd { display: none; margin-top: 4px; text-align: center; }
 #admin-pwd input {
-    padding: 10px 14px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50px;
+    padding: 10px 14px; border: 2px solid var(--lfi-violet-light); border-radius: var(--radius);
     font-size: 15px; font-family: inherit; width: 200px;
-    background: rgba(255,255,255,0.1); color: white; backdrop-filter: blur(4px);
+    background: white; color: var(--lfi-noir);
 }
-#admin-pwd input::placeholder { color: rgba(255,255,255,0.5); }
+#admin-pwd input::placeholder { color: var(--lfi-gris2); }
 #admin-pwd button {
-    padding: 10px 18px; border: none; border-radius: 50px; margin-left: 6px;
-    background: white; color: var(--lfi-violet); font-weight: 700; cursor: pointer;
+    padding: 10px 18px; border: none; border-radius: var(--radius); margin-left: 6px;
+    background: var(--lfi-violet); color: white; font-weight: 700; cursor: pointer;
     font-family: inherit; font-size: 14px;
 }
-#admin-pwd .error { color: var(--lfi-red-light); font-size: 13px; margin-top: 6px; }
+#admin-pwd .error { color: var(--lfi-red); font-size: 13px; margin-top: 6px; }
 
 /* Recherche */
 #search-bar { position: fixed; top: 10px; left: 50px; right: 50px; z-index: 1000; }
 #search-row { display: flex; gap: 6px; }
 #search-input {
     flex: 1; padding: 10px 14px; border: 2px solid var(--lfi-violet-light);
-    border-radius: 50px; font-size: 15px; font-family: 'Inter', sans-serif;
+    border-radius: 50px; font-size: 15px; font-family: 'Stack Sans', 'Inter', sans-serif;
     background: white; box-shadow: 0 2px 8px rgba(76,2,151,0.1);
     color: var(--lfi-noir);
 }
@@ -116,7 +134,7 @@ path.leaflet-interactive { -webkit-tap-highlight-color: transparent; }
     box-shadow: 0 4px 12px rgba(76,2,151,0.15); max-height: 200px; overflow-y: auto;
     margin-top: -4px; border: 1px solid var(--lfi-violet-light); border-top: none;
 }
-.search-item { padding: 10px 14px; cursor: pointer; border-bottom: 1px solid var(--lfi-gris); font-size: 14px; font-family: 'Inter', sans-serif; }
+.search-item { padding: 10px 14px; cursor: pointer; border-bottom: 1px solid var(--lfi-gris); font-size: 14px; font-family: 'Stack Sans', 'Inter', sans-serif; }
 .search-item:hover { background: var(--lfi-violet-light); }
 .search-item .si-rue { color: var(--lfi-gris2); font-size: 12px; }
 
@@ -136,7 +154,7 @@ path.leaflet-interactive { -webkit-tap-highlight-color: transparent; }
     box-shadow: 0 -2px 10px rgba(0,0,0,0.08); padding: 10px 16px 14px;
 }
 #stats-panel .sp-title {
-    font-family: 'Oswald', sans-serif; font-size: 15px; font-weight: 700;
+    font-family: 'Union Gothic', 'Oswald', sans-serif; font-size: 15px; font-weight: 700;
     color: var(--lfi-noir); margin-bottom: 4px;
 }
 #stats-panel .sp-subtitle { font-size: 12px; color: var(--lfi-gris2); margin-bottom: 8px; }
@@ -159,7 +177,7 @@ path.leaflet-interactive { -webkit-tap-highlight-color: transparent; }
 
 /* Admin pending badge on bureau */
 .pending-badge {
-    background: var(--lfi-red); color: white; font-family: 'Inter', sans-serif;
+    background: var(--lfi-red); color: white; font-family: 'Stack Sans', 'Inter', sans-serif;
     font-size: 12px; font-weight: 700; border-radius: 50%; min-width: 22px;
     height: 22px; display: flex; align-items: center; justify-content: center;
     border: 2px solid white; box-shadow: 0 2px 6px rgba(209,39,28,0.4);
@@ -180,7 +198,7 @@ path.leaflet-interactive { -webkit-tap-highlight-color: transparent; }
     max-height: 60vh; overflow-y: auto; -webkit-overflow-scrolling: touch;
 }
 #mobile-overlay .mo-handle { width: 40px; height: 4px; background: #ddd; border-radius: 2px; margin: 0 auto 12px; }
-#mobile-overlay h3 { font-family: 'Oswald', sans-serif; font-size: 18px; margin-bottom: 4px; }
+#mobile-overlay h3 { font-family: 'Union Gothic', 'Oswald', sans-serif; font-size: 18px; margin-bottom: 4px; }
 #mobile-overlay .mo-addr { color: var(--lfi-gris2); font-size: 14px; margin-bottom: 6px; }
 #mobile-overlay .mo-history { color: var(--lfi-gris2); font-size: 13px; margin-bottom: 12px; }
 #mobile-overlay .btn-row { display: flex; gap: 10px; }
@@ -207,8 +225,8 @@ path.leaflet-interactive { -webkit-tap-highlight-color: transparent; }
 }
 
 /* Popup desktop */
-.addr-popup { font-family: 'Inter', sans-serif; min-width: 220px; }
-.addr-popup h3 { font-family: 'Oswald', sans-serif; font-size: 15px; margin-bottom: 2px; }
+.addr-popup { font-family: 'Stack Sans', 'Inter', sans-serif; min-width: 220px; }
+.addr-popup h3 { font-family: 'Union Gothic', 'Oswald', sans-serif; font-size: 15px; margin-bottom: 2px; }
 .addr-popup .popup-rue { color: var(--lfi-gris2); font-size: 13px; margin-bottom: 4px; }
 .addr-popup .popup-history { color: var(--lfi-gris2); font-size: 12px; margin-bottom: 8px; }
 .addr-popup .btn-row { display: flex; gap: 6px; }
@@ -232,7 +250,7 @@ path.leaflet-interactive { -webkit-tap-highlight-color: transparent; }
     border-bottom: 1px solid #eee; display: flex; justify-content: space-between;
     align-items: center;
 }
-#admin-review .ar-header h3 { font-family: 'Oswald', sans-serif; font-size: 16px; }
+#admin-review .ar-header h3 { font-family: 'Union Gothic', 'Oswald', sans-serif; font-size: 16px; }
 .ar-btn {
     padding: 8px 16px; border: none; border-radius: var(--radius); font-weight: 700;
     font-family: inherit; font-size: 13px; cursor: pointer;
@@ -265,15 +283,18 @@ path.leaflet-interactive { -webkit-tap-highlight-color: transparent; }
 
 <!-- Écran d'accueil -->
 <div id="welcome">
-    <div class="w-overline">Nanterre Insoumise</div>
-    <div class="w-title">Porte-à-porte<br>&amp; Boîtage</div>
-    <div class="w-subtitle">Suivi du militantisme de terrain pour les présidentielles 2027</div>
-    <button class="welcome-btn militant" onclick="enterMode('militant')">Je suis militant</button>
-    <button class="welcome-btn admin" onclick="showAdminLogin()">Admin</button>
+    <div class="w-image"></div>
+    <div class="w-content">
+        <div class="w-overline">Nanterre Insoumise</div>
+        <div class="w-title">Porte-à-porte<br>&amp; Boîtage</div>
+        <div class="w-subtitle">Suivi du militantisme de terrain pour les présidentielles 2027</div>
+        <button class="welcome-btn militant" onclick="enterMode('militant')">Je suis militant</button>
+        <button class="welcome-btn admin" onclick="showAdminLogin()">Admin</button>
     <div id="admin-pwd">
         <input type="password" id="pwd-input" placeholder="Mot de passe admin">
         <button onclick="tryAdminLogin()">OK</button>
         <div class="error" id="pwd-error"></div>
+    </div>
     </div>
 </div>
 
