@@ -877,6 +877,12 @@ async function init() {
     buildMap();
     updateStatsPanel();
 }
+
+// Auto-login via URL param ?mode=admin
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.get('mode') === 'admin') {
+    enterMode('admin');
+}
 </script>
 </body>
 </html>
