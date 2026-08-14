@@ -271,23 +271,37 @@ path.leaflet-interactive { -webkit-tap-highlight-color: transparent; }
 .ar-item .ar-type.boi { background: var(--lfi-violet-light); color: var(--lfi-violet); }
 .ar-item .ar-date { color: var(--lfi-gris2); font-size: 12px; }
 
-/* Admin nav */
-#admin-nav {
-    display: none; position: fixed; top: 62px; left: 10px; z-index: 1001;
-    gap: 6px; align-items: center; flex-wrap: wrap;
+/* Navigation menu */
+.nav-menu-btn {
+    position: fixed; bottom: 10px; right: 10px; z-index: 10000;
+    width: 44px; height: 44px; border: 1.5px solid var(--lfi-violet-light);
+    border-radius: 50%; background: rgba(255,252,244,0.95); color: var(--lfi-violet);
+    font-size: 20px; cursor: pointer; display: flex; align-items: center;
+    justify-content: center; box-shadow: 0 2px 8px rgba(76,2,151,0.2);
+    font-family: inherit;
 }
-#admin-nav .admin-badge {
-    background: var(--lfi-violet); color: white; padding: 4px 12px;
-    border-radius: var(--radius); font-size: 11px; font-weight: 700;
-    text-transform: uppercase; letter-spacing: 0.5px;
+.nav-dropdown {
+    display: none; position: fixed; bottom: 62px; right: 10px; z-index: 10000;
+    background: rgba(255,252,244,0.97); border-radius: var(--radius);
+    border: 1.5px solid var(--lfi-violet-light);
+    box-shadow: 0 4px 16px rgba(76,2,151,0.2); overflow: hidden;
+    min-width: 160px;
 }
-#admin-nav a {
-    background: white; color: var(--lfi-violet); padding: 4px 10px;
-    border-radius: var(--radius); font-size: 11px; font-weight: 700;
-    text-decoration: none; border: 1.5px solid var(--lfi-violet-light);
-    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+.nav-dropdown.open { display: block; }
+.nav-dropdown a {
+    display: block; padding: 12px 16px; color: var(--lfi-violet);
+    text-decoration: none; font-size: 14px; font-weight: 600;
+    border-bottom: 1px solid var(--lfi-violet-light);
+    font-family: 'Stack Sans', 'Inter', sans-serif;
 }
-#admin-nav a:hover { background: var(--lfi-violet); color: white; border-color: var(--lfi-violet); }
+.nav-dropdown a:last-child { border-bottom: none; }
+.nav-dropdown a:hover { background: var(--lfi-violet-light); }
+.nav-dropdown a.current { background: var(--lfi-violet); color: white; }
+.nav-dropdown .nav-badge {
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1px; padding: 8px 16px; color: var(--lfi-gris2);
+    border-bottom: 1px solid var(--lfi-violet-light);
+}
 </style>
 </head>
 <body>
@@ -310,10 +324,12 @@ path.leaflet-interactive { -webkit-tap-highlight-color: transparent; }
 
 <div id="map"></div>
 <button id="btn-back" onclick="zoomOut()">&#8592;</button>
-<div id="admin-nav">
-    <span class="admin-badge">TERRAIN</span>
-    <a href="1er_tour.html" target="_blank">1er tour</a>
-    <a href="2nd_tour.html" target="_blank">2nd tour</a>
+<button class="nav-menu-btn" id="nav-menu-btn" onclick="document.getElementById('nav-dropdown').classList.toggle('open')" style="display:none;">&#9776;</button>
+<div class="nav-dropdown" id="nav-dropdown">
+    <div class="nav-badge">Navigation</div>
+    <a href="porte-a-porte.html?mode=admin" class="current">Terrain</a>
+    <a href="1er_tour.html">Carte 1er tour</a>
+    <a href="2nd_tour.html">Carte 2nd tour</a>
 </div>
 
 <div id="search-bar" style="display:none;">
@@ -399,7 +415,7 @@ async function enterMode(mode) {
     document.getElementById('welcome').style.display = 'none';
     document.getElementById('search-bar').style.display = '';
     document.getElementById('stats-panel').style.display = '';
-    if (mode === 'admin') document.getElementById('admin-nav').style.display = 'flex';
+    if (mode === 'admin') document.getElementById('nav-menu-btn').style.display = 'flex';
     await init();
 }
 
@@ -823,7 +839,11 @@ searchInput.addEventListener('input', function() {
     });
 });
 searchInput.addEventListener('keydown', e => { if (e.key==='Enter') { e.preventDefault(); searchInput.blur(); } });
-document.addEventListener('click', e => { if (!document.getElementById('search-bar').contains(e.target)) searchResultsEl.style.display = 'none'; });
+document.addEventListener('click', e => {
+    if (!document.getElementById('search-bar').contains(e.target)) searchResultsEl.style.display = 'none';
+    if (!document.getElementById('nav-menu-btn').contains(e.target) && !document.getElementById('nav-dropdown').contains(e.target))
+        document.getElementById('nav-dropdown').classList.remove('open');
+});
 
 document.getElementById('btn-locate').addEventListener('click', () => {
     if (!navigator.geolocation) return;
