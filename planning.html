@@ -93,13 +93,14 @@ const PORTES_IMM=50, PORTES_PAV=20;
 const JOURS=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
 const MOIS=['jan','fév','mars','avr','mai','juin','juil','août','sept','oct','nov','déc'];
 
-let sessions=[], addresses=[], bureauStats={}, visites={};
+let sessions=[], addresses=[], bureauStats={}, visites={}, planningRef=[];
 
 async function loadAll() {
-    const [sR,vR,aR,bR] = await Promise.all([
+    const [sR,vR,aR,bR,prR] = await Promise.all([
         fetch(`${SB_URL}/rest/v1/sessions?select=*&order=date`,{headers:SB_H}),
         fetch(`${SB_URL}/rest/v1/visites?select=*`,{headers:SB_H}),
         fetch('adresses_nanterre.json'), fetch('bureau_stats_calendrier.json'),
+        fetch(`${SB_URL}/rest/v1/planning_reference?select=*&order=date`,{headers:SB_H}),
     ]);
     sessions = await sR.json();
     const vRows = await vR.json();
@@ -109,6 +110,7 @@ async function loadAll() {
     });
     addresses = await aR.json();
     bureauStats = await bR.json();
+    planningRef = await prR.json();
 }
 
 // === ALGO DE PLANIFICATION (pool global, pas par bureau) ===
@@ -406,6 +408,31 @@ async function recalculate() {
     }
 
     sessions = await (await fetch(`${SB_URL}/rest/v1/sessions?select=*&order=date`,{headers:SB_H})).json();
+
+    // Sauvegarder la courbe de référence seulement si elle n'existe pas encore
+    if (!planningRef.length && newSessions.length) {
+        // Construire la courbe cumulée jour par jour
+        const byDate = {};
+        for (const s of newSessions) {
+            byDate[s.date] = (byDate[s.date] || 0) + s.portes_estimees;
+        }
+        const dates = Object.keys(byDate).sort();
+        let cumul = 0;
+        const refRows = [];
+        for (const d of dates) {
+            cumul += byDate[d];
+            refRows.push({ date: d, portes_cumulees: cumul });
+        }
+        // Insérer par batches
+        for (let i = 0; i < refRows.length; i += 50) {
+            await fetch(`${SB_URL}/rest/v1/planning_reference`, {
+                method: 'POST', headers: SB_H,
+                body: JSON.stringify(refRows.slice(i, i + 50))
+            });
+        }
+        planningRef = refRows;
+    }
+
     btn.disabled=false; btn.textContent='Mettre à jour le planning';
     render();
 }
@@ -449,17 +476,11 @@ function renderTimeline() {
         <span style="width:${p2W}%">→ ${fmt(T1)}</span>
         <span style="width:${t2W}%">→ ${fmt(END)}</span>`;
 
-    // Indicateur avance/retard
-    renderPaceIndicator(now, p2Start);
+    renderPaceIndicator(now);
 }
 
-function renderPaceIndicator(now, p2Start) {
-    if (now < START || now > END || !sessions.length) return;
-
-    // Sessions qui auraient dû être faites avant aujourd'hui
-    const sessionsBefore = sessions.filter(s => new Date(s.date) <= now);
-    const sessionsTotal = sessions.length;
-    const expectedPct = sessionsBefore.length / sessionsTotal * 100;
+function renderPaceIndicator(now) {
+    if (now < START || now > END) return;
 
     // Portes terrain réellement faites
     let portesFaites = 0;
@@ -469,13 +490,22 @@ function renderPaceIndicator(now, p2Start) {
             portesFaites += a ? (a.lgts || 1) : 1;
         }
     }
-    const portesTotal = sessions.reduce((s, x) => s + (x.portes_estimees || 0), 0);
-    const realPct = portesTotal ? portesFaites / portesTotal * 100 : 0;
 
-    // Comparer : on devrait avoir fait expectedPct% du total
-    const portesAttendues = Math.round(portesTotal * expectedPct / 100);
+    // Portes attendues selon la courbe de référence initiale
+    let portesAttendues = 0;
+    const todayStr = now.toISOString().split('T')[0];
+    if (planningRef.length) {
+        for (const r of planningRef) {
+            if (r.date <= todayStr) portesAttendues = r.portes_cumulees;
+            else break;
+        }
+    } else {
+        // Pas encore de référence — pas d'indicateur
+        return;
+    }
+
     const delta = portesFaites - portesAttendues;
-    const deltaSign = delta >= 0 ? '+' : '';
+    const totalRef = planningRef[planningRef.length - 1]?.portes_cumulees || 1;
 
     let statusColor, statusText;
     if (delta >= 0) {
@@ -486,7 +516,6 @@ function renderPaceIndicator(now, p2Start) {
         statusText = `En retard de ${Math.abs(delta).toLocaleString()} portes`;
     }
 
-    // Insérer après la timeline
     let paceEl = document.getElementById('pace-indicator');
     if (!paceEl) {
         paceEl = document.createElement('div');
@@ -495,7 +524,7 @@ function renderPaceIndicator(now, p2Start) {
         document.querySelector('.timeline').appendChild(paceEl);
     }
     paceEl.style.color = statusColor;
-    paceEl.innerHTML = `${statusText} — ${portesFaites.toLocaleString()} faites / ${portesAttendues.toLocaleString()} attendues à ce jour`;
+    paceEl.innerHTML = `${statusText} — ${portesFaites.toLocaleString()} faites / ${portesAttendues.toLocaleString()} prévues au plan initial`;
 }
 
 function renderStats() {
