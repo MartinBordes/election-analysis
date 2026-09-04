@@ -8,7 +8,6 @@
 @font-face { font-family: 'Union Gothic'; src: url('https://melenchon2027.fr/wp-content/uploads/2026/04/union_gothic-variable.ttf') format('truetype'); font-display: swap; }
 @font-face { font-family: 'Stack Sans'; src: url('https://melenchon2027.fr/wp-content/uploads/2026/04/StackSansText-Regular.ttf') format('truetype'); font-weight: 400; font-display: swap; }
 @font-face { font-family: 'Stack Sans'; src: url('https://melenchon2027.fr/wp-content/uploads/2026/04/StackSansText-Bold.ttf') format('truetype'); font-weight: 700; font-display: swap; }
-
 :root {
     --lfi-violet: #4C0297; --lfi-red: #D1271C; --lfi-yellow: #FFD301;
     --lfi-noir: #212320; --lfi-blanc: #FFFCF4; --lfi-gris: #F5F5F5;
@@ -17,12 +16,9 @@
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'Stack Sans', Arial, sans-serif; color: var(--lfi-noir); background: var(--lfi-blanc); }
-
 .header { background: var(--lfi-violet); color: white; padding: 16px 20px 12px; }
 .header h1 { font-family: 'Union Gothic', sans-serif; font-size: 22px; text-transform: uppercase; }
 .header .sub { font-size: 13px; opacity: 0.8; margin-top: 2px; }
-
-/* Timeline */
 .timeline { padding: 12px 20px; background: white; border-bottom: 1px solid #eee; overflow-x: auto; }
 .timeline-bar { display: flex; height: 28px; border-radius: 6px; overflow: hidden; min-width: 500px; position: relative; }
 .timeline-phase { display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: white; white-space: nowrap; }
@@ -31,29 +27,14 @@ body { font-family: 'Stack Sans', Arial, sans-serif; color: var(--lfi-noir); bac
 .timeline-phase.t2 { background: var(--lfi-noir); }
 .timeline-marker { position: absolute; top: -4px; width: 3px; height: 36px; background: var(--lfi-yellow); border-radius: 2px; }
 .timeline-dates { font-size: 10px; color: var(--lfi-gris2); margin-top: 4px; display: flex; justify-content: space-between; min-width: 500px; }
-
-/* Stats row */
 .stats { display: flex; gap: 8px; padding: 12px 20px; overflow-x: auto; }
-.stat-card { flex: 1; min-width: 90px; background: white; border: 1.5px solid var(--lfi-violet-light); border-radius: var(--radius); padding: 10px; text-align: center; }
-.stat-card .num { font-family: 'Union Gothic', sans-serif; font-size: 26px; color: var(--lfi-violet); }
-.stat-card .label { font-size: 11px; color: var(--lfi-gris2); margin-top: 2px; }
-.stat-card .bar { height: 5px; background: #eee; border-radius: 3px; margin-top: 6px; }
-.stat-card .bar-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
-.stat-card .bar-fill.violet { background: var(--lfi-violet); }
-.stat-card .bar-fill.green { background: var(--lfi-green); }
-
-/* Update button */
+.stat-card { flex: 1; min-width: 80px; background: white; border: 1.5px solid var(--lfi-violet-light); border-radius: var(--radius); padding: 10px; text-align: center; }
+.stat-card .num { font-family: 'Union Gothic', sans-serif; font-size: 24px; color: var(--lfi-violet); }
+.stat-card .label { font-size: 10px; color: var(--lfi-gris2); margin-top: 2px; }
 .update-row { padding: 10px 20px; }
-.update-btn {
-    width: 100%; padding: 14px; border: none; border-radius: var(--radius);
-    background: var(--lfi-violet); color: white; font-size: 15px; font-weight: 700;
-    font-family: inherit; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px;
-    box-shadow: 0 4px 12px rgba(76,2,151,0.3);
-}
+.update-btn { width: 100%; padding: 14px; border: none; border-radius: var(--radius); background: var(--lfi-violet); color: white; font-size: 15px; font-weight: 700; font-family: inherit; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 4px 12px rgba(76,2,151,0.3); }
 .update-btn:active { transform: scale(0.98); }
 .update-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-
-/* Sessions */
 .sessions { padding: 0 20px 100px; }
 .week-header { font-family: 'Union Gothic', sans-serif; font-size: 15px; color: var(--lfi-violet); margin: 14px 0 6px; padding-bottom: 3px; border-bottom: 2px solid var(--lfi-violet-light); }
 .session-card { background: white; border: 1.5px solid #eee; border-radius: var(--radius); padding: 10px 12px; margin-bottom: 6px; }
@@ -63,16 +44,14 @@ body { font-family: 'Stack Sans', Arial, sans-serif; color: var(--lfi-noir); bac
 .sc-badge.inscr { background: var(--lfi-red-light); color: var(--lfi-red); }
 .sc-badge.t1 { background: var(--lfi-violet-light); color: var(--lfi-violet); }
 .sc-badge.t2 { background: #eee; color: var(--lfi-noir); }
+.sc-badge.p1 { background: var(--lfi-green-light); color: var(--lfi-green); }
+.sc-badge.p2 { background: #FFF3E0; color: #E65100; }
 .sc-bureau { font-size: 12px; color: var(--lfi-gris2); margin-top: 3px; }
-.sc-addr { font-size: 12px; margin-top: 2px; line-height: 1.4; }
-.sc-portes { font-size: 12px; color: var(--lfi-gris2); margin-top: 3px; }
-.sc-portes b { color: var(--lfi-noir); }
-.sc-progress { display: flex; align-items: center; gap: 6px; margin-top: 4px; }
-.sc-progress .bar { flex: 1; height: 5px; background: #eee; border-radius: 3px; }
-.sc-progress .bar-fill { height: 100%; border-radius: 3px; background: var(--lfi-green); }
-.sc-progress .pct { font-size: 11px; font-weight: 700; color: var(--lfi-green); }
-
-/* Nav */
+.sc-addrs { font-size: 12px; margin-top: 4px; line-height: 1.5; }
+.sc-addrs .addr-item { padding: 2px 0; }
+.sc-addrs .addr-lgts { color: var(--lfi-gris2); }
+.sc-summary { font-size: 12px; color: var(--lfi-gris2); margin-top: 4px; }
+.sc-summary b { color: var(--lfi-noir); }
 .nav-menu-btn { position: fixed; top: 10px; right: 10px; z-index: 10000; width: 44px; height: 44px; border: 1.5px solid var(--lfi-violet-light); border-radius: 50%; background: rgba(255,252,244,0.95); color: var(--lfi-violet); font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(76,2,151,0.2); }
 .nav-dropdown { display: none; position: fixed; top: 62px; right: 10px; z-index: 10000; background: rgba(255,252,244,0.97); border-radius: 10px; border: 1.5px solid var(--lfi-violet-light); box-shadow: 0 4px 16px rgba(76,2,151,0.2); overflow: hidden; min-width: 160px; }
 .nav-dropdown.open { display: block; }
@@ -84,27 +63,14 @@ body { font-family: 'Stack Sans', Arial, sans-serif; color: var(--lfi-noir); bac
 </style>
 </head>
 <body>
-
 <div class="header">
     <h1>Planning PAP</h1>
-    <div class="sub">Nanterre — Septembre 2026 → Avril 2027</div>
+    <div class="sub">Nanterre — Présidentielles 2027</div>
 </div>
-
-<div class="timeline">
-    <div class="timeline-bar" id="timeline-bar"></div>
-    <div class="timeline-dates" id="timeline-dates"></div>
-</div>
-
+<div class="timeline"><div class="timeline-bar" id="tbar"></div><div class="timeline-dates" id="tdates"></div></div>
 <div class="stats" id="stats"></div>
-
-<div class="update-row">
-    <button class="update-btn" id="update-btn" onclick="recalculate()">
-        Mettre à jour le planning
-    </button>
-</div>
-
+<div class="update-row"><button class="update-btn" id="ubtn" onclick="recalculate()">Mettre à jour le planning</button></div>
 <div class="sessions" id="sessions"></div>
-
 <button class="nav-menu-btn" onclick="document.getElementById('nav-dropdown').classList.toggle('open')">&#9776;</button>
 <div class="nav-dropdown" id="nav-dropdown">
     <div class="nav-badge">Navigation</div>
@@ -113,338 +79,301 @@ body { font-family: 'Stack Sans', Arial, sans-serif; color: var(--lfi-noir); bac
     <a href="2nd_tour.html">Carte 2nd tour</a>
     <a href="planning.html" class="current">Planning</a>
 </div>
-
 <script>
 const SB_URL = 'https://htprfzzqjqfzyqcbjynz.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh0cHJmenpxanFmenlxY2JqeW56Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQyOTI1MTEsImV4cCI6MjA5OTg2ODUxMX0.HtHvc7_OGAidJ0XSnlKnx3d6tfrPTxbkFUaLsEv5nbE';
-const SB_H = { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Content-Type': 'application/json' };
+const SB_H = {'apikey':SB_KEY,'Authorization':`Bearer ${SB_KEY}`,'Content-Type':'application/json'};
 
-const START = new Date('2026-09-12');
-const T1 = new Date('2027-04-18');
-const END = new Date('2027-04-30');
-const INSCR_END = new Date('2027-03-07');
-const XMAS_START = new Date('2026-12-19');
-const XMAS_END = new Date('2027-01-04');
+const START=new Date('2026-09-12'), T1=new Date('2027-04-18'), END=new Date('2027-04-30');
+const INSCR_END=new Date('2027-03-07'), XMAS_S=new Date('2026-12-19'), XMAS_E=new Date('2027-01-04');
+const PORTES_IMM=50, PORTES_PAV=20;
+const JOURS=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+const MOIS=['jan','fév','mars','avr','mai','juin','juil','août','sept','oct','nov','déc'];
 
-const PORTES_IMM = 50, PORTES_PAV = 20;
-const SOIR_DAYS = [1, 2, 3, 4]; // lun-jeu
-const JOURS = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
-const MOIS = ['jan','fév','mars','avr','mai','juin','juil','août','sept','oct','nov','déc'];
-
-let sessions = [];
-let visites = {};
-let addresses = [];
-let bureauStats = {};
+let sessions=[], addresses=[], bureauStats={}, visites={};
 
 async function loadAll() {
-    const [sessR, visR, addrR, bsR] = await Promise.all([
-        fetch(`${SB_URL}/rest/v1/sessions?select=*&order=date`, { headers: SB_H }),
-        fetch(`${SB_URL}/rest/v1/visites?select=*`, { headers: SB_H }),
-        fetch('adresses_nanterre.json'),
-        fetch('bureau_stats_calendrier.json'),
+    const [sR,vR,aR,bR] = await Promise.all([
+        fetch(`${SB_URL}/rest/v1/sessions?select=*&order=date`,{headers:SB_H}),
+        fetch(`${SB_URL}/rest/v1/visites?select=*`,{headers:SB_H}),
+        fetch('adresses_nanterre.json'), fetch('bureau_stats_calendrier.json'),
     ]);
-    sessions = await sessR.json();
-    const visRows = await visR.json();
-    if (Array.isArray(visRows)) visRows.forEach(r => {
+    sessions = await sR.json();
+    const vRows = await vR.json();
+    if (Array.isArray(vRows)) vRows.forEach(r => {
         if (!visites[r.address_id]) visites[r.address_id] = {};
-        visites[r.address_id][r.type] = { count: r.count || 1, status: r.status || 'approved' };
+        visites[r.address_id][r.type] = {count:r.count||1, status:r.status||'approved'};
     });
-    addresses = await addrR.json();
-    bureauStats = await bsR.json();
+    addresses = await aR.json();
+    bureauStats = await bR.json();
 }
 
-// Portes déjà faites (approuvées) par bureau
-function portesFaites(bureau) {
-    let total = 0;
-    for (const [id, v] of Object.entries(visites)) {
-        const a = addresses.find(x => x.id === id);
-        if (!a) continue;
-        // On utilise le bureau pré-calculé si disponible
-        const aBureau = a.bv;
-        if (aBureau !== undefined && aBureau !== bureau) continue;
-        if (aBureau === undefined) continue;
-        if (v.pap && v.pap.status === 'approved') total += (a.lgts || 1);
+// === ALGO DE PLANIFICATION ===
+function visitCount(addrId) {
+    const v = visites[addrId];
+    if (!v || !v.pap || v.pap.status !== 'approved') return 0;
+    return v.pap.count;
+}
+
+function computeBureauNeeds() {
+    const needs = {};
+    for (const [bid, s] of Object.entries(bureauStats)) {
+        const bAddrs = addresses.filter(a => a.bv === parseInt(bid));
+        const pass1 = bAddrs.filter(a => visitCount(a.id) === 0 && (a.lgts||1) >= 6);
+        const pass2 = bAddrs.filter(a => visitCount(a.id) === 1 && (a.lgts||1) >= 6);
+        const pass1pav = bAddrs.filter(a => visitCount(a.id) === 0 && (a.lgts||1) < 6);
+        const pass2pav = bAddrs.filter(a => visitCount(a.id) === 1 && (a.lgts||1) < 6);
+        const lgtsP1 = pass1.reduce((s,a)=>s+(a.lgts||1),0) + pass1pav.reduce((s,a)=>s+(a.lgts||1),0);
+        const lgtsP2 = pass2.reduce((s,a)=>s+(a.lgts||1),0) + pass2pav.reduce((s,a)=>s+(a.lgts||1),0);
+        const isT2 = s.le_pen_pct < 12 && s.gain_voix > 50;
+        needs[bid] = {
+            pass1_imm: pass1.sort((a,b)=>(b.lgts||1)-(a.lgts||1)),
+            pass1_pav: pass1pav,
+            pass2_imm: pass2.sort((a,b)=>(b.lgts||1)-(a.lgts||1)),
+            pass2_pav: pass2pav,
+            lgtsP1, lgtsP2,
+            score: s.score_recup,
+            scoreT2: s.gain_voix,
+            efficacite: s.score_recup * (lgtsP1 + lgtsP2 * 0.5),
+            isT2,
+        };
     }
-    return total;
+    return needs;
 }
 
-function sessionsPerWeek(date) {
-    if (date >= XMAS_START && date <= XMAS_END) return 1;
-    const w = (T1 - date) / (7 * 86400000);
-    if (w > 28) return 3;
-    if (w > 20) return 3;
-    if (w > 12) return 5;
-    if (w > 4) return 10;
-    return 20;
+function sessionsPerWeek(d) {
+    if (d>=XMAS_S && d<=XMAS_E) return 1;
+    const w=(T1-d)/(7*864e5);
+    if (w>28) return 3; if (w>20) return 3; if (w>12) return 5;
+    if (w>4) return 10; return 20;
+}
+function milPerSession(d, isWe) {
+    const w=(T1-d)/(7*864e5);
+    if (isWe) return w>20?6:w>8?7:8;
+    return w>20?3:w>8?4:5;
 }
 
-function militantsPerSession(date, isWeekend) {
-    const w = (T1 - date) / (7 * 86400000);
-    if (isWeekend) return w > 20 ? 6 : w > 8 ? 7 : 8;
-    return w > 20 ? 3 : w > 8 ? 4 : 5;
+function buildSessionAddresses(needs, bid, capacity, passageNum) {
+    const n = needs[bid];
+    const pool = passageNum === 1
+        ? [...n.pass1_imm, ...n.pass1_pav]
+        : [...n.pass2_imm, ...n.pass2_pav];
+
+    const selected = [];
+    let portesLeft = capacity;
+    for (const a of pool) {
+        if (portesLeft <= 0) break;
+        const lgts = a.lgts || 1;
+        selected.push(a);
+        portesLeft -= lgts;
+    }
+    // Remove selected from pool
+    for (const a of selected) {
+        const removeFrom = passageNum === 1
+            ? (a.lgts||1) >= 6 ? n.pass1_imm : n.pass1_pav
+            : (a.lgts||1) >= 6 ? n.pass2_imm : n.pass2_pav;
+        const idx = removeFrom.indexOf(a);
+        if (idx >= 0) removeFrom.splice(idx, 1);
+    }
+    // Update lgts counts
+    const removedLgts = selected.reduce((s,a)=>s+(a.lgts||1),0);
+    if (passageNum===1) n.lgtsP1 -= removedLgts; else n.lgtsP2 -= removedLgts;
+    n.efficacite = n.score * (n.lgtsP1 + n.lgtsP2 * 0.5);
+
+    return selected;
 }
 
-function scheduleWeek(weekStart, n) {
+function scheduleWeek(ws, n) {
     const slots = [];
     // Samedi
-    const sam = new Date(weekStart); sam.setDate(sam.getDate() + (6 - sam.getDay()));
-    slots.push({ date: new Date(sam), isWeekend: true });
-    // Soirs lun-ven
+    const sam = new Date(ws); sam.setDate(sam.getDate()+(6-sam.getDay()));
+    slots.push({date:new Date(sam), isWe:true});
+    // Lun-Ven
     for (const d of [1,2,3,4,5]) {
-        const dt = new Date(weekStart);
-        dt.setDate(dt.getDate() + ((d - dt.getDay() + 7) % 7));
-        if (dt >= weekStart) slots.push({ date: dt, isWeekend: false });
+        const dt=new Date(ws); dt.setDate(dt.getDate()+((d-dt.getDay()+7)%7));
+        if (dt>=ws) slots.push({date:dt, isWe:false});
     }
-    // Dupliquer si besoin
-    if (n > 6) {
+    if (n>6) for (const d of [1,2,3,4,5]) {
+        const dt=new Date(ws); dt.setDate(dt.getDate()+((d-dt.getDay()+7)%7));
+        slots.push({date:new Date(dt), isWe:false});
+    }
+    if (n>11) {
+        const dim=new Date(ws); dim.setDate(dim.getDate()+(7-dim.getDay()));
+        slots.push({date:dim, isWe:true});
         for (const d of [1,2,3,4,5]) {
-            const dt = new Date(weekStart);
-            dt.setDate(dt.getDate() + ((d - dt.getDay() + 7) % 7));
-            slots.push({ date: new Date(dt), isWeekend: false });
+            const dt=new Date(ws); dt.setDate(dt.getDate()+((d-dt.getDay()+7)%7));
+            slots.push({date:new Date(dt), isWe:false});
         }
     }
-    if (n > 11) {
-        const dim = new Date(weekStart); dim.setDate(dim.getDate() + (7 - dim.getDay()));
-        slots.push({ date: dim, isWeekend: true });
-        for (const d of [1,2,3,4,5]) {
-            const dt = new Date(weekStart);
-            dt.setDate(dt.getDate() + ((d - dt.getDay() + 7) % 7));
-            slots.push({ date: new Date(dt), isWeekend: false });
-        }
+    // Extra samedi simultanés en fin de campagne
+    const wToT1=(T1-ws)/(7*864e5);
+    if (wToT1<=6 && wToT1>0) {
+        const extra = wToT1<=3?2:1;
+        for (let i=0;i<extra;i++) slots.push({date:new Date(sam), isWe:true});
     }
-    return slots.slice(0, n);
+    return slots.slice(0, Math.max(n, slots.length > n ? n : slots.length));
 }
 
 async function recalculate() {
-    const btn = document.getElementById('update-btn');
-    btn.disabled = true;
-    btn.textContent = 'Calcul en cours...';
+    const btn=document.getElementById('ubtn');
+    btn.disabled=true; btn.textContent='Calcul en cours...';
 
-    // Supprimer toutes les sessions existantes
-    await fetch(`${SB_URL}/rest/v1/sessions?id=gt.0`, { method: 'DELETE', headers: SB_H });
+    // 1. Supprimer toutes les sessions
+    await fetch(`${SB_URL}/rest/v1/sessions?id=gt.0`,{method:'DELETE',headers:SB_H});
 
-    const today = new Date();
-    today.setHours(0,0,0,0);
+    const today=new Date(); today.setHours(0,0,0,0);
     const startDate = today > START ? today : START;
-
-    // Calculer les portes restantes par bureau
-    const remaining = {};
-    for (const [bid, s] of Object.entries(bureauStats)) {
-        const fait = portesFaites(parseInt(bid));
-        const total = s.lgts_immeubles + s.nb_pavillons;
-        remaining[bid] = Math.max(0, total - fait);
-    }
-
-    // Trier les bureaux par priorité (score récup pour T1, gain voix pour T2)
-    const t1sorted = Object.keys(bureauStats).sort((a, b) => {
-        const ra = remaining[a] > 0 ? bureauStats[b].score_recup - bureauStats[a].score_recup : Infinity;
-        return bureauStats[b].score_recup * (remaining[b] > 0 ? 1 : 0.1)
-             - bureauStats[a].score_recup * (remaining[a] > 0 ? 1 : 0.1);
-    }).slice(0, 20);
-
-    const t2sorted = Object.keys(bureauStats).sort((a, b) =>
-        bureauStats[b].gain_voix - bureauStats[a].gain_voix
-    ).slice(0, 15);
+    const needs = computeBureauNeeds();
 
     const newSessions = [];
-    let t1idx = 0, t2idx = 0;
-
-    // Semaine par semaine
     let ws = new Date(startDate);
     ws.setDate(ws.getDate() - ws.getDay() + 1); // lundi
 
     while (ws < END) {
+        if (ws.getTime() + 6*864e5 < startDate.getTime()) { ws.setDate(ws.getDate()+7); continue; }
+
         const isPostT1 = ws >= T1;
         const n = isPostT1 ? 20 : sessionsPerWeek(ws);
         const slots = scheduleWeek(ws, n);
-        const priority = isPostT1 ? t2sorted : t1sorted;
-        const idxRef = isPostT1 ? 't2' : 't1';
+        const bureauxThisWeek = new Set();
 
-        // Ajouter des samedis simultanés les dernières semaines
-        const wToT1 = (T1 - ws) / (7 * 86400000);
-        if (!isPostT1 && wToT1 <= 6) {
-            const extra = wToT1 <= 3 ? 2 : 1;
-            for (let i = 0; i < extra; i++) {
-                const sam = new Date(ws);
-                sam.setDate(sam.getDate() + (6 - sam.getDay()));
-                slots.push({ date: new Date(sam), isWeekend: true });
-            }
-        }
+        // Trier les bureaux par efficacité
+        const sortedBureaux = Object.keys(needs).sort((a,b) => {
+            if (isPostT1) return (needs[b].scoreT2||0) - (needs[a].scoreT2||0);
+            return needs[b].efficacite - needs[a].efficacite;
+        });
 
         for (const slot of slots) {
             if (slot.date < startDate || slot.date > END) continue;
 
-            const idx = isPostT1 ? t2idx++ : t1idx++;
-            const bid = priority[idx % priority.length];
-            const s = bureauStats[bid];
-            const isImm = s.lgts_immeubles > s.total_lgts * 0.4;
-            const nMil = isPostT1 ? (slot.isWeekend ? 8 : 5) : militantsPerSession(slot.date, slot.isWeekend);
-            const portes = nMil * (isImm ? PORTES_IMM : PORTES_PAV);
+            // Choisir le bureau : le plus prioritaire pas encore dans cette semaine
+            let chosenBid = null;
+            let passage = 1;
+            for (const bid of sortedBureaux) {
+                // Varier les quartiers : pas 2x le même bureau par semaine (sauf >10 sessions)
+                if (bureauxThisWeek.has(bid) && n <= 10) continue;
+                const nd = needs[bid];
+                if (nd.lgtsP1 > 0) { chosenBid = bid; passage = 1; break; }
+                if (nd.lgtsP2 > 0) { chosenBid = bid; passage = 2; break; }
+            }
+            if (!chosenBid) {
+                // Tout est couvert, prendre le 1er avec du restant
+                for (const bid of sortedBureaux) {
+                    if (needs[bid].lgtsP1>0||needs[bid].lgtsP2>0) { chosenBid=bid; passage=needs[bid].lgtsP1>0?1:2; break; }
+                }
+            }
+            if (!chosenBid) continue;
+
+            bureauxThisWeek.add(chosenBid);
+            const nMil = milPerSession(slot.date, slot.isWe);
+            const isImm = (bureauStats[chosenBid]?.lgts_immeubles||0) > (bureauStats[chosenBid]?.total_lgts||1)*0.4;
+            const capacity = nMil * (isImm ? PORTES_IMM : PORTES_PAV);
+
+            const selectedAddrs = buildSessionAddresses(needs, chosenBid, capacity, passage);
+            if (selectedAddrs.length === 0) continue;
+
+            const totalLgts = selectedAddrs.reduce((s,a)=>s+(a.lgts||1),0);
+            const addrList = selectedAddrs.slice(0,5).map(a=>`${a.adr} (~${a.lgts||1})`).join(', ');
+            const extra = selectedAddrs.length > 5 ? ` +${selectedAddrs.length-5} adresses` : '';
 
             const phase = isPostT1 ? 'Entre-deux-tours — Front républicain'
                 : slot.date < INSCR_END ? 'Inscriptions + sensibilisation'
                 : '1er tour — Vote utile Mélenchon';
 
-            const top = s.top_immeubles || [];
-            const cibles = top.length
-                ? top.slice(0, 3).map(i => `${i.adr} (~${i.lgts} lgts)`).join(', ')
-                : `Zone bureau ${bid}`;
-
-            const isoDate = slot.date.toISOString().split('T')[0];
-
             newSessions.push({
-                date: isoDate,
-                bureau: parseInt(bid),
-                phase: phase,
-                type: slot.isWeekend ? 'Weekend' : 'Soir',
-                adresses_cibles: cibles,
-                portes_estimees: portes,
+                date: slot.date.toISOString().split('T')[0],
+                bureau: parseInt(chosenBid),
+                phase,
+                type: slot.isWe ? 'Weekend' : 'Soir',
+                adresses_cibles: addrList + extra,
+                portes_estimees: totalLgts,
                 statut: 'planned',
+                notes: `Passage ${passage} · ${selectedAddrs.length} adresses · ${nMil} militants`,
             });
         }
-        ws.setDate(ws.getDate() + 7);
+        ws.setDate(ws.getDate()+7);
     }
 
     // Insérer par batches
-    for (let i = 0; i < newSessions.length; i += 50) {
-        const chunk = newSessions.slice(i, i + 50);
-        await fetch(`${SB_URL}/rest/v1/sessions`, {
-            method: 'POST', headers: SB_H, body: JSON.stringify(chunk)
+    for (let i=0; i<newSessions.length; i+=50) {
+        await fetch(`${SB_URL}/rest/v1/sessions`,{
+            method:'POST', headers:SB_H, body:JSON.stringify(newSessions.slice(i,i+50))
         });
     }
 
     // Recharger
-    const resp = await fetch(`${SB_URL}/rest/v1/sessions?select=*&order=date`, { headers: SB_H });
-    sessions = await resp.json();
-
-    btn.disabled = false;
-    btn.textContent = 'Mettre à jour le planning';
+    sessions = await (await fetch(`${SB_URL}/rest/v1/sessions?select=*&order=date`,{headers:SB_H})).json();
+    btn.disabled=false; btn.textContent='Mettre à jour le planning';
     render();
 }
 
 // === RENDER ===
-function render() {
-    renderTimeline();
-    renderStats();
-    renderSessions();
-}
+function render() { renderTimeline(); renderStats(); renderSessions(); }
 
 function renderTimeline() {
-    const total = END - START;
-    const inscrW = (INSCR_END - START) / total * 100;
-    const t1W = (T1 - INSCR_END) / total * 100;
-    const t2W = (END - T1) / total * 100;
-    const now = new Date();
-    const nowW = Math.max(0, Math.min(100, (now - START) / total * 100));
-
-    document.getElementById('timeline-bar').innerHTML = `
-        <div class="timeline-phase inscr" style="width:${inscrW}%">Inscriptions</div>
+    const total=END-START;
+    const iW=(INSCR_END-START)/total*100, t1W=(T1-INSCR_END)/total*100, t2W=(END-T1)/total*100;
+    const now=new Date(), nW=Math.max(0,Math.min(100,(now-START)/total*100));
+    document.getElementById('tbar').innerHTML=`
+        <div class="timeline-phase inscr" style="width:${iW}%">Inscriptions</div>
         <div class="timeline-phase t1" style="width:${t1W}%">1er tour</div>
         <div class="timeline-phase t2" style="width:${t2W}%">2nd tour</div>
-        ${now >= START && now <= END ? `<div class="timeline-marker" style="left:${nowW}%"></div>` : ''}
-    `;
-    document.getElementById('timeline-dates').innerHTML =
-        '<span>Sept 2026</span><span>Déc</span><span>Mars 2027</span><span>18 avr</span><span>30 avr</span>';
+        ${now>=START&&now<=END?`<div class="timeline-marker" style="left:${nW}%"></div>`:''}`;
+    document.getElementById('tdates').innerHTML='<span>Sept 2026</span><span>Déc</span><span>Mars 2027</span><span>18 avr</span><span>30 avr</span>';
 }
 
 function renderStats() {
-    const total = sessions.length;
-    const portesTotal = sessions.reduce((s, x) => s + (x.portes_estimees || 0), 0);
-
-    // Portes terrain (toutes les visites approuvées)
-    let portesTerrain = 0;
-    for (const [id, v] of Object.entries(visites)) {
-        if (v.pap && v.pap.status === 'approved') {
-            const a = addresses.find(x => x.id === id);
-            portesTerrain += a ? (a.lgts || 1) : 1;
-        }
+    const nSess=sessions.length;
+    const portesP=sessions.reduce((s,x)=>s+(x.portes_estimees||0),0);
+    let portesFaites=0;
+    for (const [id,v] of Object.entries(visites)) {
+        if (v.pap&&v.pap.status==='approved') { const a=addresses.find(x=>x.id===id); portesFaites+=a?(a.lgts||1):1; }
     }
-
-    // Bureaux couverts
-    const bureauxWithVisits = new Set();
-    for (const [id, v] of Object.entries(visites)) {
-        if (v.pap && v.pap.status === 'approved') {
-            const a = addresses.find(x => x.id === id);
-            if (a && a.bv) bureauxWithVisits.add(a.bv);
-        }
-    }
-
-    document.getElementById('stats').innerHTML = `
-        <div class="stat-card">
-            <div class="num">${total}</div>
-            <div class="label">Sessions planifiées</div>
-        </div>
-        <div class="stat-card">
-            <div class="num">${portesTotal.toLocaleString()}</div>
-            <div class="label">Portes planifiées</div>
-        </div>
-        <div class="stat-card">
-            <div class="num">${portesTerrain.toLocaleString()}</div>
-            <div class="label">Portes faites (terrain)</div>
-            <div class="bar"><div class="bar-fill green" style="width:${portesTotal ? portesTerrain/portesTotal*100 : 0}%"></div></div>
-        </div>
-        <div class="stat-card">
-            <div class="num">${bureauxWithVisits.size}</div>
-            <div class="label">Bureaux couverts</div>
-        </div>
-    `;
+    document.getElementById('stats').innerHTML=`
+        <div class="stat-card"><div class="num">${nSess}</div><div class="label">Sessions</div></div>
+        <div class="stat-card"><div class="num">${portesP.toLocaleString()}</div><div class="label">Portes planifiées</div></div>
+        <div class="stat-card"><div class="num">${portesFaites.toLocaleString()}</div><div class="label">Portes terrain</div></div>`;
 }
 
 function renderSessions() {
-    let html = '';
-    let lastWeek = '';
-
+    let html='', lastW='';
     for (const s of sessions) {
-        const d = new Date(s.date);
-        const wn = Math.floor((d - START) / (7 * 86400000)) + 1;
-        const wk = `S${wn}`;
-
-        if (wk !== lastWeek) {
-            const ws = new Date(START.getTime() + (wn - 1) * 7 * 86400000);
-            const we = new Date(ws.getTime() + 6 * 86400000);
-            const fmt = dt => `${dt.getDate()} ${MOIS[dt.getMonth()]}`;
-            html += `<div class="week-header">${wk} — ${fmt(ws)} au ${fmt(we)}</div>`;
-            lastWeek = wk;
+        const d=new Date(s.date);
+        const wn=Math.floor((d-START)/(7*864e5))+1, wk=`S${wn}`;
+        if (wk!==lastW) {
+            const ws2=new Date(START.getTime()+(wn-1)*7*864e5);
+            const we2=new Date(ws2.getTime()+6*864e5);
+            const fmt=dt=>`${dt.getDate()} ${MOIS[dt.getMonth()]}`;
+            html+=`<div class="week-header">${wk} — ${fmt(ws2)} au ${fmt(we2)}</div>`;
+            lastW=wk;
         }
+        const jour=JOURS[d.getDay()], dateStr=`${jour} ${d.getDate()} ${MOIS[d.getMonth()]}`;
+        const pCls=s.phase.includes('Inscr')?'inscr':s.phase.includes('1er')?'t1':'t2';
+        const pShort=s.phase.includes('Inscr')?'Inscriptions':s.phase.includes('1er')?'1er tour':'Front rép.';
+        const passageNum = s.notes && s.notes.includes('Passage 2') ? 2 : 1;
 
-        const jour = JOURS[d.getDay()];
-        const dateStr = `${jour} ${d.getDate()} ${MOIS[d.getMonth()]}`;
-        const pClass = s.phase.includes('Inscr') ? 'inscr' : s.phase.includes('1er') ? 't1' : 't2';
-        const phaseShort = s.phase.includes('Inscr') ? 'Inscriptions' : s.phase.includes('1er') ? '1er tour' : 'Front rép.';
-
-        // Portes déjà faites dans ce bureau
-        const fait = portesFaites(s.bureau);
-        const bsInfo = bureauStats[s.bureau] || {};
-        const totalBureau = (bsInfo.total_lgts || 0);
-        const pctDone = totalBureau ? Math.min(100, Math.round(fait / totalBureau * 100)) : 0;
-
-        html += `<div class="session-card">
+        html+=`<div class="session-card">
             <div class="sc-top">
                 <span class="sc-date">${dateStr} · ${s.type}</span>
-                <span class="sc-badge ${pClass}">${phaseShort}</span>
+                <span class="sc-badge ${pCls}">${pShort}</span>
             </div>
-            <div class="sc-bureau">Bureau ${s.bureau}</div>
-            <div class="sc-addr">${s.adresses_cibles || ''}</div>
-            <div class="sc-portes"><b>${s.portes_estimees}</b> portes à faire</div>
-            ${fait > 0 ? `<div class="sc-progress">
-                <div class="bar"><div class="bar-fill" style="width:${pctDone}%"></div></div>
-                <span class="pct">${pctDone}% couvert</span>
-            </div>` : ''}
+            <div class="sc-top" style="margin-top:2px;">
+                <span class="sc-bureau">Bureau ${s.bureau}</span>
+                <span class="sc-badge ${passageNum===1?'p1':'p2'}">Passage ${passageNum}</span>
+            </div>
+            <div class="sc-addrs">${(s.adresses_cibles||'').split(', ').map(a=>`<div class="addr-item">${a}</div>`).join('')}</div>
+            <div class="sc-summary"><b>${s.portes_estimees}</b> logements · ${s.notes||''}</div>
         </div>`;
     }
-
-    document.getElementById('sessions').innerHTML = html || '<p style="padding:20px;color:#999;">Aucune session. Cliquez "Mettre à jour" pour générer le planning.</p>';
+    document.getElementById('sessions').innerHTML=html||'<p style="padding:20px;color:#999;">Cliquez "Mettre à jour" pour générer le planning.</p>';
 }
 
-document.addEventListener('click', e => {
-    if (!e.target.closest('.nav-menu-btn') && !e.target.closest('.nav-dropdown'))
+document.addEventListener('click',e=>{
+    if(!e.target.closest('.nav-menu-btn')&&!e.target.closest('.nav-dropdown'))
         document.getElementById('nav-dropdown').classList.remove('open');
 });
 
-async function init() {
-    await loadAll();
-    render();
-}
+async function init() { await loadAll(); render(); }
 init();
 </script>
 </body>
