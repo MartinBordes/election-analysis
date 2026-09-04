@@ -263,13 +263,14 @@ async function recalculate() {
 
     const today=new Date(); today.setHours(0,0,0,0);
     const startDate = today > START ? today : START;
-    // 3 pools indépendants :
+    // 3 pools :
     // - Phase 1 (sept → jan) : meilleures adresses T1, passage 1
     // - Phase 2 (fév → 18 avr) : MÊMES adresses T1 remises à 0, passage 2
-    // - Phase 3 (18 → 30 avr) : adresses T2 (front républicain), 1 seul passage
+    // - Phase 3 (18 → 30 avr) : adresses T2 qui ne sont PAS dans le pool T1 (pas de 3e visite)
     const poolPhase1 = buildPoolT1();
-    const poolPhase2 = buildPoolT1(); // même pool, repart de 0
-    const poolPhase3 = buildPoolT2();
+    const poolPhase2 = buildPoolT1();
+    const t1Ids = new Set(poolPhase1.map(a => a.id));
+    const poolPhase3 = buildPoolT2().filter(a => !t1Ids.has(a.id));
 
     const newSessions = [];
     let ws = new Date(startDate);
