@@ -183,35 +183,58 @@ function milPerSession(d, isWe) {
     return w>20?3:w>8?4:5;
 }
 
+let weekCounter = 0;
 function scheduleWeek(ws, n) {
     const slots = [];
-    // Samedi
+    // Samedi toujours inclus
     const sam = new Date(ws); sam.setDate(sam.getDate()+(6-sam.getDay()));
     slots.push({date:new Date(sam), isWe:true});
-    // Lun-Ven
-    for (const d of [1,2,3,4,5]) {
-        const dt=new Date(ws); dt.setDate(dt.getDate()+((d-dt.getDay()+7)%7));
-        if (dt>=ws) slots.push({date:dt, isWe:false});
+
+    // Soirs lun-ven : rotation d'une semaine à l'autre
+    // Semaine 0: lun, mer, ven | Semaine 1: mar, jeu | Semaine 2: lun, mer, ven | etc.
+    const soirPatterns = [
+        [1, 3, 5],  // lun, mer, ven
+        [2, 4],     // mar, jeu
+        [1, 4, 5],  // lun, jeu, ven
+        [2, 3],     // mar, mer
+        [1, 2, 5],  // lun, mar, ven
+        [3, 4],     // mer, jeu
+    ];
+    const pattern = soirPatterns[weekCounter % soirPatterns.length];
+    weekCounter++;
+
+    for (const d of pattern) {
+        const dt = new Date(ws);
+        dt.setDate(dt.getDate() + ((d - dt.getDay() + 7) % 7));
+        slots.push({date: new Date(dt), isWe: false});
     }
-    if (n>6) for (const d of [1,2,3,4,5]) {
-        const dt=new Date(ws); dt.setDate(dt.getDate()+((d-dt.getDay()+7)%7));
-        slots.push({date:new Date(dt), isWe:false});
-    }
-    if (n>11) {
-        const dim=new Date(ws); dim.setDate(dim.getDate()+(7-dim.getDay()));
-        slots.push({date:dim, isWe:true});
+
+    // Si > 6 sessions : ajouter les jours manquants
+    if (n > slots.length) {
         for (const d of [1,2,3,4,5]) {
-            const dt=new Date(ws); dt.setDate(dt.getDate()+((d-dt.getDay()+7)%7));
-            slots.push({date:new Date(dt), isWe:false});
+            const dt = new Date(ws);
+            dt.setDate(dt.getDate() + ((d - dt.getDay() + 7) % 7));
+            if (!slots.some(s => s.date.getTime() === dt.getTime()))
+                slots.push({date: new Date(dt), isWe: false});
         }
     }
-    // Extra samedi simultanés en fin de campagne
-    const wToT1=(T1-ws)/(7*864e5);
-    if (wToT1<=6 && wToT1>0) {
-        const extra = wToT1<=3?2:1;
-        for (let i=0;i<extra;i++) slots.push({date:new Date(sam), isWe:true});
+    // Si > 6 sessions : dupliquer (sessions simultanées)
+    if (n > 6) {
+        const base = slots.filter(s => !s.isWe);
+        for (const s of base) slots.push({date: new Date(s.date), isWe: false});
     }
-    return slots.slice(0, Math.max(n, slots.length > n ? n : slots.length));
+    // Si > 12 : dimanche
+    if (n > 12) {
+        const dim = new Date(ws); dim.setDate(dim.getDate()+(7-dim.getDay()));
+        slots.push({date: dim, isWe: true});
+    }
+    // Extra samedis simultanés en fin de campagne
+    const wToT1 = (T1-ws)/(7*864e5);
+    if (wToT1 <= 6 && wToT1 > 0) {
+        const extra = wToT1 <= 3 ? 2 : 1;
+        for (let i = 0; i < extra; i++) slots.push({date: new Date(sam), isWe: true});
+    }
+    return slots.slice(0, n);
 }
 
 async function recalculate() {
