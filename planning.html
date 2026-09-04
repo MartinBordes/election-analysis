@@ -65,7 +65,7 @@ body { font-family: 'Stack Sans', Arial, sans-serif; color: var(--lfi-noir); bac
 </style>
 </head>
 <body>
-<div class="header">
+<div class="header" style="padding-left:62px;">
     <h1>Planning PAP</h1>
     <div class="sub">Nanterre — Présidentielles 2027</div>
 </div>
@@ -414,22 +414,34 @@ function render() { renderTimeline(); renderStats(); renderSessions(); }
 
 function renderTimeline() {
     const total = END - START;
-    const iW = (INSCR_END - START) / total * 100;
-    const t1W = (T1 - INSCR_END) / total * 100;
-    const t2W = (END - T1) / total * 100;
     const now = new Date();
     const nW = Math.max(0, Math.min(100, (now - START) / total * 100));
 
+    // Trouver la vraie date de bascule P1→P2 depuis les sessions
+    let p2Start = T1; // fallback
+    for (const s of sessions) {
+        if (s.notes && s.notes.includes('Passage 2')) {
+            p2Start = new Date(s.date);
+            break;
+        }
+    }
+
+    const p1W = (p2Start - START) / total * 100;
+    const p2W = (T1 - p2Start) / total * 100;
+    const t2W = (END - T1) / total * 100;
+
+    const fmt = d => `${d.getDate()}/${d.getMonth()+1}`;
+
     document.getElementById('tbar').innerHTML = `
-        <div class="timeline-phase inscr" style="width:${iW}%">Inscriptions</div>
-        <div class="timeline-phase t1" style="width:${t1W}%">1er tour</div>
-        <div class="timeline-phase t2" style="width:${t2W}%">2nd tour</div>
+        <div class="timeline-phase inscr" style="width:${p1W}%">Passage 1</div>
+        <div class="timeline-phase t1" style="width:${p2W}%">Passage 2</div>
+        <div class="timeline-phase t2" style="width:${t2W}%">Front rép.</div>
         ${now >= START && now <= END ? `<div class="timeline-marker" style="left:${nW}%"></div>` : ''}`;
 
     document.getElementById('tlabels').innerHTML = `
-        <span style="width:${iW}%">12 sept → 7 mars</span>
-        <span style="width:${t1W}%">7 mars → 18 avr</span>
-        <span style="width:${t2W}%">→ 30 avr</span>`;
+        <span style="width:${p1W}%">${fmt(START)} → ${fmt(p2Start)}</span>
+        <span style="width:${p2W}%">→ ${fmt(T1)}</span>
+        <span style="width:${t2W}%">→ ${fmt(END)}</span>`;
 }
 
 function renderStats() {
