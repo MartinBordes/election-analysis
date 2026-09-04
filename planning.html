@@ -263,12 +263,12 @@ async function recalculate() {
 
     const today=new Date(); today.setHours(0,0,0,0);
     const startDate = today > START ? today : START;
-    // 3 pools :
-    // - Phase 1 (sept → jan) : meilleures adresses T1, passage 1
-    // - Phase 2 (fév → 18 avr) : MÊMES adresses T1 remises à 0, passage 2
-    // - Phase 3 (18 → 30 avr) : adresses T2 qui ne sont PAS dans le pool T1 (pas de 3e visite)
+    // Phase 1 (sept → 18 avr) : P1 puis P2 avec 3 mois de délai
+    // Phase 3 (18 → 30 avr) : adresses T2 pas dans T1
     const poolPhase1 = buildPoolT1();
-    const poolPhase2 = buildPoolT1();
+    const p1PlannedDates = {}; // addrId -> date planifiée en P1
+    const p2Used = new Set(); // adresses déjà planifiées en P2
+    const GAP_MS = 90 * 24 * 3600 * 1000; // 3 mois en ms
     const t1Ids = new Set(poolPhase1.map(a => a.id));
     const poolPhase3 = buildPoolT2().filter(a => !t1Ids.has(a.id));
 
@@ -292,12 +292,28 @@ async function recalculate() {
             if (isPostT1) {
                 pool = poolPhase3; passage = 1;
                 phaseLabel = 'Entre-deux-tours — Front républicain';
-            } else if (slot.date < BASCULE_P2) {
-                pool = poolPhase1; passage = 1;
-                phaseLabel = slot.date < INSCR_END ? 'Inscriptions + sensibilisation' : '1er tour — Vote utile Mélenchon';
             } else {
-                pool = poolPhase2; passage = 2;
-                phaseLabel = '1er tour — Vote utile Mélenchon';
+                // Construire le pool P2 dynamique : adresses planifiées en P1 il y a 3+ mois
+                const poolP2now = [];
+                for (const [addrId, p1Date] of Object.entries(p1PlannedDates)) {
+                    if (p2Used.has(addrId)) continue;
+                    if (slot.date.getTime() - p1Date.getTime() >= GAP_MS) {
+                        const a = addresses.find(x => x.id === addrId);
+                        if (!a || (a.lgts||1) < SEUIL_LGTS) continue;
+                        const bs = bureauStats[a.bv];
+                        if (!bs) continue;
+                        poolP2now.push({...a, score: bs.score_recup * (a.lgts||1), bureau: a.bv});
+                    }
+                }
+                poolP2now.sort((a,b) => b.score - a.score);
+
+                // Alterner P1 et P2 : P2 si disponible, sinon P1
+                if (poolP2now.length > 0) {
+                    pool = poolP2now; passage = 2;
+                } else {
+                    pool = poolPhase1; passage = 1;
+                }
+                phaseLabel = slot.date < INSCR_END ? 'Inscriptions + sensibilisation' : '1er tour — Vote utile Mélenchon';
             }
             if (!pool.length) continue;
 
@@ -307,6 +323,15 @@ async function recalculate() {
 
             const selected = pickSession(pool, capacity, usedZones);
             if (!selected.length) continue;
+
+            // Enregistrer les dates P1 et marquer les P2
+            for (const a of selected) {
+                if (passage === 1 && !isPostT1) {
+                    p1PlannedDates[a.id] = new Date(slot.date);
+                } else if (passage === 2) {
+                    p2Used.add(a.id);
+                }
+            }
 
             const totalLgts = selected.reduce((s,a)=>s+(a.lgts||1),0);
             const addrList = selected.slice(0,5).map(a=>`${a.adr} (~${a.lgts||1})`).join(', ');
