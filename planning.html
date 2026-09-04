@@ -362,9 +362,9 @@ async function recalculate() {
             }
             if (!pool.length) continue;
 
-            // Estimer la capacité : regarder le 1er candidat pour savoir si c'est immeuble ou pavillon
+            // Capacité + 40% de marge pour que les militants aient toujours un bâtiment suivant
             const firstLgts = pool[0]?.lgts || 1;
-            const capacity = nMil * (firstLgts >= 6 ? PORTES_IMM : PORTES_PAV);
+            const capacity = Math.round(nMil * (firstLgts >= 6 ? PORTES_IMM : PORTES_PAV) * 1.4);
 
             const selected = pickSession(pool, capacity, usedZones);
             if (!selected.length) continue;
