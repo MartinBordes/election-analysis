@@ -193,12 +193,14 @@ function scheduleWeek(ws, n) {
     // Soirs lun-ven : rotation d'une semaine à l'autre
     // Semaine 0: lun, mer, ven | Semaine 1: mar, jeu | Semaine 2: lun, mer, ven | etc.
     const soirPatterns = [
-        [1, 3, 5],  // lun, mer, ven
-        [2, 4],     // mar, jeu
-        [1, 4, 5],  // lun, jeu, ven
-        [2, 3],     // mar, mer
-        [1, 2, 5],  // lun, mar, ven
+        [1, 3],     // lun, mer
+        [2, 5],     // mar, ven
         [3, 4],     // mer, jeu
+        [1, 5],     // lun, ven
+        [2, 4],     // mar, jeu
+        [4, 5],     // jeu, ven
+        [1, 2],     // lun, mar
+        [3, 5],     // mer, ven
     ];
     const pattern = soirPatterns[weekCounter % soirPatterns.length];
     weekCounter++;
