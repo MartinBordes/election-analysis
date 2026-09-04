@@ -120,31 +120,35 @@ function dist(a,b) { return Math.sqrt((a.lat-b.lat)**2+(a.lon-b.lon)**2); }
 const SEUIL_LGTS = 10;
 const BASCULE_P2 = new Date('2027-02-01');
 
-function buildGlobalPools() {
-    // Top 20 bureaux 1er tour + top 15 2nd tour
-    const allBids = Object.keys(bureauStats);
-    const topT1 = new Set(allBids.sort((a,b) => bureauStats[b].score_recup - bureauStats[a].score_recup).slice(0, 20));
-    const topT2 = new Set(allBids.sort((a,b) => (bureauStats[b].gain_voix||0) - (bureauStats[a].gain_voix||0)).slice(0, 15));
-    // Avant le T1 : seulement les bureaux 1er tour. Les bureaux T2 uniquement entre les deux tours.
-    const prioBureaux = topT1;
-
-    const pool1=[], pool2=[];
+function buildPoolT1() {
+    // Toutes les adresses 10+ lgts, triées par score_recup_bureau × logements
+    // Pas de filtre par bureau — les meilleures adresses de toute la ville
+    const pool = [];
     for (const a of addresses) {
         if (!a.bv || !bureauStats[a.bv]) continue;
-        if (!prioBureaux.has(String(a.bv))) continue;
-        const lgts = a.lgts||1;
+        const lgts = a.lgts || 1;
         if (lgts < SEUIL_LGTS) continue;
         const bs = bureauStats[a.bv];
-        const score = bs.score_recup * lgts;
-        const scoreT2 = (bs.gain_voix||0) * lgts;
-        const entry = {...a, score, scoreT2, bureau:a.bv};
-        const vc = visitCount(a.id);
-        if (vc===0) pool1.push(entry);
-        else if (vc===1) pool2.push(entry);
+        pool.push({...a, score: bs.score_recup * lgts, bureau: a.bv});
     }
-    pool1.sort((a,b)=>b.score-a.score);
-    pool2.sort((a,b)=>b.score-a.score);
-    return {pool1, pool2};
+    pool.sort((a, b) => b.score - a.score);
+    return pool;
+}
+
+function buildPoolT2() {
+    // Toutes les adresses 10+ lgts, triées par gain_voix_bureau × logements
+    const pool = [];
+    for (const a of addresses) {
+        if (!a.bv || !bureauStats[a.bv]) continue;
+        const lgts = a.lgts || 1;
+        if (lgts < SEUIL_LGTS) continue;
+        const bs = bureauStats[a.bv];
+        const scoreT2 = (bs.gain_voix || 0) * lgts;
+        if (scoreT2 <= 0) continue;
+        pool.push({...a, score: scoreT2, scoreT2, bureau: a.bv});
+    }
+    pool.sort((a, b) => b.score - a.score);
+    return pool;
 }
 
 function pickSession(pool, capacity, usedZones) {
@@ -259,18 +263,13 @@ async function recalculate() {
 
     const today=new Date(); today.setHours(0,0,0,0);
     const startDate = today > START ? today : START;
-    const {pool1, pool2} = buildGlobalPools();
-    // Pool séparé pour l'entre-deux-tours (bureaux front républicain)
-    const poolT2 = [];
-    const allBids2 = Object.keys(bureauStats);
-    const t2Bureaux = new Set(allBids2.sort((a,b) => (bureauStats[b].gain_voix||0) - (bureauStats[a].gain_voix||0)).slice(0, 15));
-    for (const a of addresses) {
-        if (!a.bv || !t2Bureaux.has(String(a.bv))) continue;
-        if ((a.lgts||1) < SEUIL_LGTS) continue;
-        const bs = bureauStats[a.bv];
-        poolT2.push({...a, score: (bs.gain_voix||0)*(a.lgts||1), scoreT2: (bs.gain_voix||0)*(a.lgts||1), bureau: a.bv});
-    }
-    poolT2.sort((a,b) => b.scoreT2 - a.scoreT2);
+    // 3 pools indépendants :
+    // - Phase 1 (sept → jan) : meilleures adresses T1, passage 1
+    // - Phase 2 (fév → 18 avr) : MÊMES adresses T1 remises à 0, passage 2
+    // - Phase 3 (18 → 30 avr) : adresses T2 (front républicain), 1 seul passage
+    const poolPhase1 = buildPoolT1();
+    const poolPhase2 = buildPoolT1(); // même pool, repart de 0
+    const poolPhase3 = buildPoolT2();
 
     const newSessions = [];
     let ws = new Date(startDate);
@@ -288,19 +287,16 @@ async function recalculate() {
             if (slot.date < startDate || slot.date > END) continue;
 
             const nMil = milPerSession(slot.date, slot.isWe);
-            // Choisir le pool selon la date
-            let pool, passage;
+            let pool, passage, phaseLabel;
             if (isPostT1) {
-                // Entre-deux-tours : pool dédié bureaux front républicain
-                pool = poolT2;
-                passage = 1;
+                pool = poolPhase3; passage = 1;
+                phaseLabel = 'Entre-deux-tours — Front républicain';
             } else if (slot.date < BASCULE_P2) {
-                // Avant février : passage 1 uniquement
-                pool = pool1; passage = 1;
+                pool = poolPhase1; passage = 1;
+                phaseLabel = slot.date < INSCR_END ? 'Inscriptions + sensibilisation' : '1er tour — Vote utile Mélenchon';
             } else {
-                // Après février : passage 2 en priorité, passage 1 si plus rien en P2
-                if (pool2.length) { pool = pool2; passage = 2; }
-                else { pool = pool1; passage = 1; }
+                pool = poolPhase2; passage = 2;
+                phaseLabel = '1er tour — Vote utile Mélenchon';
             }
             if (!pool.length) continue;
 
@@ -316,13 +312,9 @@ async function recalculate() {
             const extra = selected.length>5 ? ` +${selected.length-5} adresses` : '';
             const bureau = selected[0].bureau;
 
-            const phase = isPostT1 ? 'Entre-deux-tours — Front républicain'
-                : slot.date < INSCR_END ? 'Inscriptions + sensibilisation'
-                : '1er tour — Vote utile Mélenchon';
-
             newSessions.push({
                 date: slot.date.toISOString().split('T')[0],
-                bureau, phase,
+                bureau, phase: phaseLabel,
                 type: slot.isWe ? 'Weekend' : 'Soir',
                 adresses_cibles: addrList + extra,
                 portes_estimees: totalLgts,
