@@ -119,23 +119,19 @@ function computeBureauNeeds() {
     const needs = {};
     for (const [bid, s] of Object.entries(bureauStats)) {
         const bAddrs = addresses.filter(a => a.bv === parseInt(bid));
-        const pass1 = bAddrs.filter(a => visitCount(a.id) === 0 && (a.lgts||1) >= 6);
-        const pass2 = bAddrs.filter(a => visitCount(a.id) === 1 && (a.lgts||1) >= 6);
-        const pass1pav = bAddrs.filter(a => visitCount(a.id) === 0 && (a.lgts||1) < 6);
-        const pass2pav = bAddrs.filter(a => visitCount(a.id) === 1 && (a.lgts||1) < 6);
-        const lgtsP1 = pass1.reduce((s,a)=>s+(a.lgts||1),0) + pass1pav.reduce((s,a)=>s+(a.lgts||1),0);
-        const lgtsP2 = pass2.reduce((s,a)=>s+(a.lgts||1),0) + pass2pav.reduce((s,a)=>s+(a.lgts||1),0);
-        const isT2 = s.le_pen_pct < 12 && s.gain_voix > 50;
+        const pass1 = bAddrs.filter(a => visitCount(a.id) === 0).sort((a,b)=>(b.lgts||1)-(a.lgts||1));
+        const pass2 = bAddrs.filter(a => visitCount(a.id) === 1).sort((a,b)=>(b.lgts||1)-(a.lgts||1));
+        const lgtsP1 = pass1.reduce((s,a)=>s+(a.lgts||1),0);
+        const lgtsP2 = pass2.reduce((s,a)=>s+(a.lgts||1),0);
+        // Densité = logements moyens par adresse (favorise les bureaux avec gros immeubles)
+        const densite = pass1.length > 0 ? lgtsP1 / pass1.length : 1;
         needs[bid] = {
-            pass1_imm: pass1.sort((a,b)=>(b.lgts||1)-(a.lgts||1)),
-            pass1_pav: pass1pav,
-            pass2_imm: pass2.sort((a,b)=>(b.lgts||1)-(a.lgts||1)),
-            pass2_pav: pass2pav,
+            pool1: pass1, pool2: pass2,
             lgtsP1, lgtsP2,
-            score: s.score_recup,
-            scoreT2: s.gain_voix,
-            efficacite: s.score_recup * (lgtsP1 + lgtsP2 * 0.5),
-            isT2,
+            score: s.score_recup, scoreT2: s.gain_voix,
+            // Efficacité = score × logements restants × densité
+            // Un bureau avec 500 lgts dans 5 tours (densité 100) >> 500 lgts dans 500 pavillons (densité 1)
+            efficacite: s.score_recup * (lgtsP1 + lgtsP2 * 0.5) * Math.sqrt(densite),
         };
     }
     return needs;
@@ -153,32 +149,57 @@ function milPerSession(d, isWe) {
     return w>20?3:w>8?4:5;
 }
 
+function dist(a, b) {
+    return Math.sqrt((a.lat-b.lat)**2 + (a.lon-b.lon)**2);
+}
+
 function buildSessionAddresses(needs, bid, capacity, passageNum) {
     const n = needs[bid];
-    const pool = passageNum === 1
-        ? [...n.pass1_imm, ...n.pass1_pav]
-        : [...n.pass2_imm, ...n.pass2_pav];
+    const pool = passageNum === 1 ? n.pool1 : n.pool2;
+    if (pool.length === 0) return [];
 
-    const selected = [];
-    let portesLeft = capacity;
-    for (const a of pool) {
-        if (portesLeft <= 0) break;
-        const lgts = a.lgts || 1;
-        selected.push(a);
-        portesLeft -= lgts;
+    // Seed : l'adresse avec le plus de logements
+    const seed = pool[0];
+    const selected = [seed];
+    let portesLeft = capacity - (seed.lgts || 1);
+
+    // Greedy nearest neighbor : toujours prendre l'adresse la plus proche
+    // parmi celles avec le plus de logements (top 30% du pool restant, triées par distance)
+    const used = new Set([pool.indexOf(seed)]);
+
+    while (portesLeft > 0 && used.size < pool.length) {
+        const lastAddr = selected[selected.length - 1];
+        let bestIdx = -1, bestScore = -Infinity;
+
+        for (let i = 0; i < pool.length; i++) {
+            if (used.has(i)) continue;
+            const a = pool[i];
+            const lgts = a.lgts || 1;
+            const d = dist(lastAddr, a);
+            // Score = logements / (distance + epsilon) — favorise les gros immeubles proches
+            const score = lgts / (d + 0.0001);
+            if (score > bestScore) { bestScore = score; bestIdx = i; }
+        }
+        if (bestIdx < 0) break;
+
+        const chosen = pool[bestIdx];
+        // Si trop loin (>500m environ), arrêter pour garder la session compacte
+        if (dist(lastAddr, chosen) > 0.005) break;
+
+        selected.push(chosen);
+        used.add(bestIdx);
+        portesLeft -= (chosen.lgts || 1);
     }
-    // Remove selected from pool
-    for (const a of selected) {
-        const removeFrom = passageNum === 1
-            ? (a.lgts||1) >= 6 ? n.pass1_imm : n.pass1_pav
-            : (a.lgts||1) >= 6 ? n.pass2_imm : n.pass2_pav;
-        const idx = removeFrom.indexOf(a);
-        if (idx >= 0) removeFrom.splice(idx, 1);
-    }
-    // Update lgts counts
-    const removedLgts = selected.reduce((s,a)=>s+(a.lgts||1),0);
-    if (passageNum===1) n.lgtsP1 -= removedLgts; else n.lgtsP2 -= removedLgts;
-    n.efficacite = n.score * (n.lgtsP1 + n.lgtsP2 * 0.5);
+
+    // Retirer les sélectionnées du pool (en partant de la fin pour ne pas décaler les index)
+    const usedIndices = [...used].sort((a,b) => b-a);
+    for (const idx of usedIndices) pool.splice(idx, 1);
+
+    // Recalculer
+    const removedLgts = selected.reduce((s,a) => s + (a.lgts||1), 0);
+    if (passageNum === 1) n.lgtsP1 -= removedLgts; else n.lgtsP2 -= removedLgts;
+    const densite = n.pool1.length > 0 ? n.lgtsP1 / n.pool1.length : 1;
+    n.efficacite = n.score * (n.lgtsP1 + n.lgtsP2 * 0.5) * Math.sqrt(Math.max(densite, 1));
 
     return selected;
 }
