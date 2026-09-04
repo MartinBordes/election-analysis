@@ -263,12 +263,42 @@ async function recalculate() {
 
     const today=new Date(); today.setHours(0,0,0,0);
     const startDate = today > START ? today : START;
-    // Phase 1 (sept → 18 avr) : P1 puis P2 avec 3 mois de délai
-    // Phase 3 (18 → 30 avr) : adresses T2 pas dans T1
     const poolPhase1 = buildPoolT1();
-    const p1PlannedDates = {}; // addrId -> date planifiée en P1
-    const p2Used = new Set(); // adresses déjà planifiées en P2
-    const GAP_MS = 90 * 24 * 3600 * 1000; // 3 mois en ms
+    const p1PlannedDates = {};
+    const p2Used = new Set();
+    const GAP_MS = 90 * 24 * 3600 * 1000; // 3 mois
+
+    // Calculer le budget total en logements (somme de toutes les sessions possibles)
+    let totalBudget = 0;
+    let tempWs = new Date(startDate);
+    tempWs.setDate(tempWs.getDate() - tempWs.getDay() + 1);
+    while (tempWs < T1) {
+        if (tempWs.getTime() + 6*864e5 >= startDate.getTime()) {
+            const n = sessionsPerWeek(tempWs);
+            const slots = scheduleWeek(tempWs, n);
+            for (const sl of slots) {
+                if (sl.date >= startDate && sl.date < T1) {
+                    const nm = milPerSession(sl.date, sl.isWe);
+                    totalBudget += nm * PORTES_IMM; // estimation haute
+                }
+            }
+        }
+        tempWs.setDate(tempWs.getDate() + 7);
+    }
+    weekCounter = 0; // reset le compteur de semaines après le calcul
+
+    // Budget P1 = 50% du total - portes déjà faites sur le terrain
+    let portesTerrain = 0;
+    for (const [id, v] of Object.entries(visites)) {
+        if (v.pap && v.pap.status === 'approved') {
+            const a = addresses.find(x => x.id === id);
+            if (a && (a.lgts||1) >= SEUIL_LGTS) portesTerrain += (a.lgts||1);
+        }
+    }
+    const budgetP1 = Math.max(0, Math.round(totalBudget / 2) - portesTerrain);
+    let p1Remaining = budgetP1;
+    let inP2 = false;
+
     const t1Ids = new Set(poolPhase1.map(a => a.id));
     const poolPhase3 = buildPoolT2().filter(a => !t1Ids.has(a.id));
 
@@ -293,23 +323,28 @@ async function recalculate() {
                 pool = poolPhase3; passage = 1;
                 phaseLabel = 'Entre-deux-tours — Front républicain';
             } else {
-                // Construire le pool P2 dynamique : adresses planifiées en P1 il y a 3+ mois
-                const poolP2now = [];
-                for (const [addrId, p1Date] of Object.entries(p1PlannedDates)) {
-                    if (p2Used.has(addrId)) continue;
-                    if (slot.date.getTime() - p1Date.getTime() >= GAP_MS) {
-                        const a = addresses.find(x => x.id === addrId);
-                        if (!a || (a.lgts||1) < SEUIL_LGTS) continue;
-                        const bs = bureauStats[a.bv];
-                        if (!bs) continue;
-                        poolP2now.push({...a, score: bs.score_recup * (a.lgts||1), bureau: a.bv});
-                    }
-                }
-                poolP2now.sort((a,b) => b.score - a.score);
+                // Bascule P1→P2 quand le budget P1 est épuisé
+                if (!inP2 && p1Remaining <= 0) inP2 = true;
 
-                // Alterner P1 et P2 : P2 si disponible, sinon P1
-                if (poolP2now.length > 0) {
-                    pool = poolP2now; passage = 2;
+                if (inP2) {
+                    // P2 : adresses dont le P1 date de 3+ mois
+                    const poolP2now = [];
+                    for (const [addrId, p1Date] of Object.entries(p1PlannedDates)) {
+                        if (p2Used.has(addrId)) continue;
+                        if (slot.date.getTime() - p1Date.getTime() >= GAP_MS) {
+                            const a = addresses.find(x => x.id === addrId);
+                            if (!a || (a.lgts||1) < SEUIL_LGTS) continue;
+                            const bs = bureauStats[a.bv];
+                            if (!bs) continue;
+                            poolP2now.push({...a, score: bs.score_recup * (a.lgts||1), bureau: a.bv});
+                        }
+                    }
+                    poolP2now.sort((a,b) => b.score - a.score);
+                    if (poolP2now.length > 0) {
+                        pool = poolP2now; passage = 2;
+                    } else {
+                        pool = poolPhase1; passage = 1; // fallback si rien éligible en P2
+                    }
                 } else {
                     pool = poolPhase1; passage = 1;
                 }
@@ -324,10 +359,11 @@ async function recalculate() {
             const selected = pickSession(pool, capacity, usedZones);
             if (!selected.length) continue;
 
-            // Enregistrer les dates P1 et marquer les P2
+            // Enregistrer les dates P1, décrémenter le budget, marquer P2
             for (const a of selected) {
                 if (passage === 1 && !isPostT1) {
                     p1PlannedDates[a.id] = new Date(slot.date);
+                    p1Remaining -= (a.lgts || 1);
                 } else if (passage === 2) {
                     p2Used.add(a.id);
                 }
