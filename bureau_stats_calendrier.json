@@ -1,0 +1,1754 @@
+{
+  "3": {
+    "nom": "Ecole maternelle Victor Hugo",
+    "adresse_bv": "45 RUE VICTOR HUGO 92000 Nanterre",
+    "score_recup": 387.4062849162011,
+    "gain_voix": 117.34086502793298,
+    "melenchon_pct": 24.24581005586592,
+    "le_pen_pct": 8.379888268156424,
+    "abst_pct": 18.28054298642534,
+    "inscrits": 1105,
+    "pct_gauche": 41.00558659217877,
+    "total_lgts": 623,
+    "nb_immeubles": 5,
+    "lgts_immeubles": 95,
+    "nb_pavillons": 444,
+    "top_immeubles": [
+      {
+        "adr": "2 Rue Rigault",
+        "lgts": 24
+      },
+      {
+        "adr": "4 Rue Rigault",
+        "lgts": 24
+      },
+      {
+        "adr": "1bis Rue Rigault",
+        "lgts": 24
+      },
+      {
+        "adr": "5 Rue Rigault",
+        "lgts": 13
+      },
+      {
+        "adr": "8 Rue Rigault",
+        "lgts": 10
+      }
+    ]
+  },
+  "29": {
+    "nom": "Ecole maternelle Romain Rolland",
+    "adresse_bv": "7 RUE ROMAIN ROLLAND 92000 Nanterre",
+    "score_recup": 294.6372734248895,
+    "gain_voix": 126.18323965141599,
+    "melenchon_pct": 18.954248366013072,
+    "le_pen_pct": 8.932461873638346,
+    "abst_pct": 20.69256756756757,
+    "inscrits": 1184,
+    "pct_gauche": 28.75816993464052,
+    "total_lgts": 823,
+    "nb_immeubles": 6,
+    "lgts_immeubles": 119,
+    "nb_pavillons": 621,
+    "top_immeubles": [
+      {
+        "adr": "100bis Rue de Suresnes",
+        "lgts": 29
+      },
+      {
+        "adr": "102 Rue de Suresnes",
+        "lgts": 29
+      },
+      {
+        "adr": "118 Rue de Suresnes",
+        "lgts": 19
+      },
+      {
+        "adr": "112 Route des Fusillés de la Résistance",
+        "lgts": 14
+      },
+      {
+        "adr": "300 Rue Paul Vaillant-Couturier",
+        "lgts": 14
+      }
+    ]
+  },
+  "9": {
+    "nom": "Ecole elementaire Henri Wallon A",
+    "adresse_bv": "3 RUE DE ZILINA 92000 Nanterre",
+    "score_recup": 472.7166144200627,
+    "gain_voix": 71.88636206896541,
+    "melenchon_pct": 54.2319749216301,
+    "le_pen_pct": 7.210031347962382,
+    "abst_pct": 28.869374313940728,
+    "inscrits": 911,
+    "pct_gauche": 62.06896551724138,
+    "total_lgts": 542,
+    "nb_immeubles": 5,
+    "lgts_immeubles": 504,
+    "nb_pavillons": 14,
+    "top_immeubles": [
+      {
+        "adr": "10 Rue de Zilina",
+        "lgts": 114
+      },
+      {
+        "adr": "6 Rue de Zilina",
+        "lgts": 114
+      },
+      {
+        "adr": "8 Rue de Zilina",
+        "lgts": 114
+      },
+      {
+        "adr": "4 Allée des Erables",
+        "lgts": 81
+      },
+      {
+        "adr": "2 Allée des Erables",
+        "lgts": 81
+      }
+    ]
+  },
+  "11": {
+    "nom": "Ecole elementaire Voltaire B",
+    "adresse_bv": "39 RUE VOLTAIRE 92000 Nanterre",
+    "score_recup": 636.6810720516723,
+    "gain_voix": 73.56653020527892,
+    "melenchon_pct": 65.10263929618768,
+    "le_pen_pct": 9.090909090909092,
+    "abst_pct": 35.634328358208954,
+    "inscrits": 1072,
+    "pct_gauche": 69.06158357771261,
+    "total_lgts": 838,
+    "nb_immeubles": 16,
+    "lgts_immeubles": 664,
+    "nb_pavillons": 108,
+    "top_immeubles": [
+      {
+        "adr": "13 Rue de l'Union",
+        "lgts": 114
+      },
+      {
+        "adr": "19 Rue de l'Union",
+        "lgts": 114
+      },
+      {
+        "adr": "2 Rue des Sorbiers",
+        "lgts": 114
+      },
+      {
+        "adr": "4 Rue des Sorbiers",
+        "lgts": 81
+      },
+      {
+        "adr": "6 Rue des Sorbiers",
+        "lgts": 81
+      }
+    ]
+  },
+  "2": {
+    "nom": "Hotel de Ville - Salle des Congres 2",
+    "adresse_bv": "90 RUE DU 8 MAI 1945 92000 Nanterre",
+    "score_recup": 492.13317067466136,
+    "gain_voix": 92.36536316472132,
+    "melenchon_pct": 39.16990920881972,
+    "le_pen_pct": 8.819714656290532,
+    "abst_pct": 25.26215443279314,
+    "inscrits": 1049,
+    "pct_gauche": 53.30739299610895,
+    "total_lgts": 830,
+    "nb_immeubles": 15,
+    "lgts_immeubles": 509,
+    "nb_pavillons": 252,
+    "top_immeubles": [
+      {
+        "adr": "130 Rue du 8 Mai 1945",
+        "lgts": 76
+      },
+      {
+        "adr": "64 Rue du 8 Mai 1945",
+        "lgts": 62
+      },
+      {
+        "adr": "80 Rue du 8 Mai 1945",
+        "lgts": 62
+      },
+      {
+        "adr": "2 Allée Henri Wallon",
+        "lgts": 47
+      },
+      {
+        "adr": "5 Allée Henri Wallon",
+        "lgts": 38
+      }
+    ]
+  },
+  "38": {
+    "nom": "Ecole elementaire La Fontaine",
+    "adresse_bv": "5 RUE DE L'AGRICULTURE 92000 Nanterre",
+    "score_recup": 541.8092508350084,
+    "gain_voix": 51.32953800383899,
+    "melenchon_pct": 75.43186180422265,
+    "le_pen_pct": 8.061420345489443,
+    "abst_pct": 33.16519546027743,
+    "inscrits": 793,
+    "pct_gauche": 79.07869481765835,
+    "total_lgts": 771,
+    "nb_immeubles": 18,
+    "lgts_immeubles": 762,
+    "nb_pavillons": 9,
+    "top_immeubles": [
+      {
+        "adr": "8 Résidence des Glycines",
+        "lgts": 96
+      },
+      {
+        "adr": "1 Allée des Bruyères",
+        "lgts": 87
+      },
+      {
+        "adr": "31 Rue de Strasbourg",
+        "lgts": 67
+      },
+      {
+        "adr": "2 Résidence des Glycines",
+        "lgts": 60
+      },
+      {
+        "adr": "16 Rue de Metz",
+        "lgts": 48
+      }
+    ]
+  },
+  "41": {
+    "nom": "Ecole primaire Pablo Neruda A",
+    "adresse_bv": "18 RUE PABLO NERUDA 92000 Nanterre",
+    "score_recup": 459.46910112359546,
+    "gain_voix": 77.98714985955053,
+    "melenchon_pct": 49.57865168539326,
+    "le_pen_pct": 7.443820224719102,
+    "abst_pct": 24.610591900311526,
+    "inscrits": 963,
+    "pct_gauche": 59.269662921348306,
+    "total_lgts": 1892,
+    "nb_immeubles": 47,
+    "lgts_immeubles": 1778,
+    "nb_pavillons": 89,
+    "top_immeubles": [
+      {
+        "adr": "18 Rue Salvador Allende",
+        "lgts": 143
+      },
+      {
+        "adr": "53 Rue des Trois Fontanot",
+        "lgts": 48
+      },
+      {
+        "adr": "29 Rue des Trois Fontanot",
+        "lgts": 48
+      },
+      {
+        "adr": "65 Rue des Trois Fontanot",
+        "lgts": 48
+      },
+      {
+        "adr": "180 Avenue Frédéric et Irène Joliot Curie",
+        "lgts": 43
+      }
+    ]
+  },
+  "25": {
+    "nom": "Salle mairie de quartier du Mont-Valerien",
+    "adresse_bv": "207 RUE PAUL VAILLANT COUTURIER 92000 Nanterre",
+    "score_recup": 383.8161639272248,
+    "gain_voix": 106.84773002159847,
+    "melenchon_pct": 28.401727861771057,
+    "le_pen_pct": 13.390928725701945,
+    "abst_pct": 20.675105485232066,
+    "inscrits": 1185,
+    "pct_gauche": 38.33693304535637,
+    "total_lgts": 657,
+    "nb_immeubles": 1,
+    "lgts_immeubles": 17,
+    "nb_pavillons": 545,
+    "top_immeubles": [
+      {
+        "adr": "1 Rue Jean Moulin",
+        "lgts": 17
+      }
+    ]
+  },
+  "23": {
+    "nom": "Ecole elementaire Jules Ferry B",
+    "adresse_bv": "1 RUE DES CHAILLIERS 92000 Nanterre",
+    "score_recup": 505.00393696977517,
+    "gain_voix": 128.94862871842872,
+    "melenchon_pct": 30.121608980355475,
+    "le_pen_pct": 7.764265668849392,
+    "abst_pct": 19.836552748885588,
+    "inscrits": 1346,
+    "pct_gauche": 42.56314312441534,
+    "total_lgts": 808,
+    "nb_immeubles": 16,
+    "lgts_immeubles": 303,
+    "nb_pavillons": 402,
+    "top_immeubles": [
+      {
+        "adr": "69 Avenue du Maréchal Joffre",
+        "lgts": 33
+      },
+      {
+        "adr": "67 Avenue du Maréchal Joffre",
+        "lgts": 33
+      },
+      {
+        "adr": "1 Rue Joseph Terneau",
+        "lgts": 32
+      },
+      {
+        "adr": "11 Rue Joseph Terneau",
+        "lgts": 29
+      },
+      {
+        "adr": "11 Avenue du Maréchal Joffre",
+        "lgts": 19
+      }
+    ]
+  },
+  "49": {
+    "nom": "Groupe scolaire Miriam Makeba",
+    "adresse_bv": "190 BOULEVARD ABDENBI GUEMIAH 92000 Nanterre",
+    "score_recup": 415.9107834449686,
+    "gain_voix": 66.5072225755165,
+    "melenchon_pct": 51.51033386327504,
+    "le_pen_pct": 6.995230524642289,
+    "abst_pct": 23.002421307506054,
+    "inscrits": 826,
+    "pct_gauche": 60.413354531001595,
+    "total_lgts": 1850,
+    "nb_immeubles": 49,
+    "lgts_immeubles": 1699,
+    "nb_pavillons": 69,
+    "top_immeubles": [
+      {
+        "adr": "101 Allée de Corse",
+        "lgts": 60
+      },
+      {
+        "adr": "16 Allée de l'Ile de France",
+        "lgts": 56
+      },
+      {
+        "adr": "82 Allée de Corse",
+        "lgts": 43
+      },
+      {
+        "adr": "89 Allée de Corse",
+        "lgts": 43
+      },
+      {
+        "adr": "95 Allée de Corse",
+        "lgts": 43
+      }
+    ]
+  },
+  "27": {
+    "nom": "Ecole maternelle Jules Ferry",
+    "adresse_bv": "5 RUE DES CHAILLIERS 92000 Nanterre",
+    "score_recup": 431.6275826868109,
+    "gain_voix": 54.23999177419353,
+    "melenchon_pct": 47.41935483870968,
+    "le_pen_pct": 19.193548387096772,
+    "abst_pct": 28.45714285714286,
+    "inscrits": 875,
+    "pct_gauche": 56.935483870967744,
+    "total_lgts": 360,
+    "nb_immeubles": 8,
+    "lgts_immeubles": 251,
+    "nb_pavillons": 99,
+    "top_immeubles": [
+      {
+        "adr": "14 Allée des Damades",
+        "lgts": 143
+      },
+      {
+        "adr": "25 Allée des Damades",
+        "lgts": 19
+      },
+      {
+        "adr": "27 Allée des Damades",
+        "lgts": 19
+      },
+      {
+        "adr": "12 Allée Camelinat",
+        "lgts": 14
+      },
+      {
+        "adr": "14 Allée Camelinat",
+        "lgts": 14
+      }
+    ]
+  },
+  "22": {
+    "nom": "Groupe scolaire Abdelmalek Sayad",
+    "adresse_bv": "56 RUE ABDELMALEK SAYAD 92000 Nanterre",
+    "score_recup": 702.8128818061089,
+    "gain_voix": 147.68641872509977,
+    "melenchon_pct": 41.27490039840637,
+    "le_pen_pct": 6.294820717131475,
+    "abst_pct": 19.8870765370138,
+    "inscrits": 1594,
+    "pct_gauche": 52.191235059760956,
+    "total_lgts": 342,
+    "nb_immeubles": 6,
+    "lgts_immeubles": 182,
+    "nb_pavillons": 81,
+    "top_immeubles": [
+      {
+        "adr": "44 Avenue du Maréchal Joffre",
+        "lgts": 79
+      },
+      {
+        "adr": "161 Rue Abdelmalek Sayad",
+        "lgts": 29
+      },
+      {
+        "adr": "203 Rue Abdelmalek Sayad",
+        "lgts": 29
+      },
+      {
+        "adr": "165 Rue Abdelmalek Sayad",
+        "lgts": 23
+      },
+      {
+        "adr": "209 Rue Abdelmalek Sayad",
+        "lgts": 12
+      }
+    ]
+  },
+  "31": {
+    "nom": "Salle de quartier Romain Rolland",
+    "adresse_bv": "1 RUE ROMAIN ROLLAND 92000 Nanterre",
+    "score_recup": 539.5737442922374,
+    "gain_voix": 140.3275444748857,
+    "melenchon_pct": 33.60730593607306,
+    "le_pen_pct": 8.949771689497716,
+    "abst_pct": 25.201072386058982,
+    "inscrits": 1492,
+    "pct_gauche": 42.64840182648402,
+    "total_lgts": 753,
+    "nb_immeubles": 29,
+    "lgts_immeubles": 581,
+    "nb_pavillons": 89,
+    "top_immeubles": [
+      {
+        "adr": "89 Rue Pierre Curie",
+        "lgts": 33
+      },
+      {
+        "adr": "89 Avenue Félix Faure",
+        "lgts": 30
+      },
+      {
+        "adr": "340 Avenue Georges Clemenceau",
+        "lgts": 29
+      },
+      {
+        "adr": "348 Avenue Georges Clemenceau",
+        "lgts": 29
+      },
+      {
+        "adr": "360 Avenue Georges Clemenceau",
+        "lgts": 29
+      }
+    ]
+  },
+  "47": {
+    "nom": "Ecole elementaire Maxime Gorki",
+    "adresse_bv": "43 ALLEE MARYSE CONDE 92000 Nanterre",
+    "score_recup": 749.048820132424,
+    "gain_voix": 82.35484643799498,
+    "melenchon_pct": 70.44854881266491,
+    "le_pen_pct": 6.596306068601583,
+    "abst_pct": 35.27454242928453,
+    "inscrits": 1202,
+    "pct_gauche": 74.53825857519789,
+    "total_lgts": 407,
+    "nb_immeubles": 4,
+    "lgts_immeubles": 395,
+    "nb_pavillons": 12,
+    "top_immeubles": [
+      {
+        "adr": "17 Allée de l'Arlequin",
+        "lgts": 143
+      },
+      {
+        "adr": "11 Allée de l'Arlequin",
+        "lgts": 95
+      },
+      {
+        "adr": "2 Allée de l'Arlequin",
+        "lgts": 95
+      },
+      {
+        "adr": "24 Allée de l'Arlequin",
+        "lgts": 62
+      }
+    ]
+  },
+  "46": {
+    "nom": "Ecole maternelle Maxime Gorki",
+    "adresse_bv": "43 ALLEE MARYSE CONDE 92000 Nanterre",
+    "score_recup": 585.5847844680122,
+    "gain_voix": 69.18851518987361,
+    "melenchon_pct": 64.24050632911393,
+    "le_pen_pct": 9.49367088607595,
+    "abst_pct": 34.7870182555781,
+    "inscrits": 986,
+    "pct_gauche": 69.77848101265823,
+    "total_lgts": 742,
+    "nb_immeubles": 8,
+    "lgts_immeubles": 742,
+    "nb_pavillons": 0,
+    "top_immeubles": [
+      {
+        "adr": "19 Allée des Demoiselles d'Avignon",
+        "lgts": 143
+      },
+      {
+        "adr": "11 Allée des Demoiselles d'Avignon",
+        "lgts": 95
+      },
+      {
+        "adr": "29 Allée de l'Arlequin",
+        "lgts": 95
+      },
+      {
+        "adr": "35 Allée de l'Arlequin",
+        "lgts": 95
+      },
+      {
+        "adr": "15 Allée des Demoiselles d'Avignon",
+        "lgts": 95
+      }
+    ]
+  },
+  "32": {
+    "nom": "Ecole elementaire Joliot Curie A",
+    "adresse_bv": "15 RUE DE LA COTE DES AMANDIERS 92000 Nanterre",
+    "score_recup": 318.5411608329641,
+    "gain_voix": 39.2895608899297,
+    "melenchon_pct": 58.07962529274005,
+    "le_pen_pct": 10.772833723653395,
+    "abst_pct": 26.182432432432435,
+    "inscrits": 592,
+    "pct_gauche": 62.295081967213115,
+    "total_lgts": 380,
+    "nb_immeubles": 11,
+    "lgts_immeubles": 341,
+    "nb_pavillons": 31,
+    "top_immeubles": [
+      {
+        "adr": "39 Avenue de la Liberté",
+        "lgts": 40
+      },
+      {
+        "adr": "29 Avenue de la Liberté",
+        "lgts": 38
+      },
+      {
+        "adr": "25 Avenue de la Liberté",
+        "lgts": 38
+      },
+      {
+        "adr": "35 Avenue de la Liberté",
+        "lgts": 38
+      },
+      {
+        "adr": "37 Avenue de la Liberté",
+        "lgts": 38
+      }
+    ]
+  },
+  "12": {
+    "nom": "Salle municipale de l'ecole Voltaire",
+    "adresse_bv": "39 RUE VOLTAIRE 92000 Nanterre",
+    "score_recup": 483.9307784504124,
+    "gain_voix": 71.06573926380355,
+    "melenchon_pct": 55.828220858895705,
+    "le_pen_pct": 7.515337423312883,
+    "abst_pct": 26.19311875693674,
+    "inscrits": 901,
+    "pct_gauche": 63.036809815950924,
+    "total_lgts": 987,
+    "nb_immeubles": 38,
+    "lgts_immeubles": 853,
+    "nb_pavillons": 88,
+    "top_immeubles": [
+      {
+        "adr": "4 Allée Vladimir Komarov",
+        "lgts": 48
+      },
+      {
+        "adr": "2 Allée Vladimir Komarov",
+        "lgts": 47
+      },
+      {
+        "adr": "37 Avenue Hoche",
+        "lgts": 38
+      },
+      {
+        "adr": "4 Boulevard de la Seine",
+        "lgts": 33
+      },
+      {
+        "adr": "79 Avenue Hoche",
+        "lgts": 29
+      }
+    ]
+  },
+  "34": {
+    "nom": "Ecole elementaire Robespierre",
+    "adresse_bv": "18 ALLEE FERNAND LEGER 92000 Nanterre",
+    "score_recup": 528.5827190379509,
+    "gain_voix": 62.18773056379831,
+    "melenchon_pct": 64.39169139465875,
+    "le_pen_pct": 9.940652818991099,
+    "abst_pct": 28.48167539267016,
+    "inscrits": 955,
+    "pct_gauche": 68.24925816023739,
+    "total_lgts": 421,
+    "nb_immeubles": 5,
+    "lgts_immeubles": 415,
+    "nb_pavillons": 6,
+    "top_immeubles": [
+      {
+        "adr": "13 Allée Fernand Léger",
+        "lgts": 143
+      },
+      {
+        "adr": "1 Allée Fernand Léger",
+        "lgts": 86
+      },
+      {
+        "adr": "7 Allée Fernand Léger",
+        "lgts": 86
+      },
+      {
+        "adr": "17 Allée Fernand Léger",
+        "lgts": 86
+      },
+      {
+        "adr": "18 Allée Fernand Léger",
+        "lgts": 14
+      }
+    ]
+  },
+  "10": {
+    "nom": "Ecole elementaire Voltaire A",
+    "adresse_bv": "39 RUE VOLTAIRE 92000 Nanterre",
+    "score_recup": 612.0595898067666,
+    "gain_voix": 84.09329986996102,
+    "melenchon_pct": 55.2665799739922,
+    "le_pen_pct": 9.102730819245773,
+    "abst_pct": 28.884826325411332,
+    "inscrits": 1094,
+    "pct_gauche": 63.198959687906374,
+    "total_lgts": 1044,
+    "nb_immeubles": 25,
+    "lgts_immeubles": 837,
+    "nb_pavillons": 171,
+    "top_immeubles": [
+      {
+        "adr": "85 Boulevard du Général Leclerc",
+        "lgts": 114
+      },
+      {
+        "adr": "82 Rue Paul Morin",
+        "lgts": 114
+      },
+      {
+        "adr": "96 Rue Paul Morin",
+        "lgts": 114
+      },
+      {
+        "adr": "79 Boulevard du Général Leclerc",
+        "lgts": 81
+      },
+      {
+        "adr": "2 Boulevard du Général Leclerc",
+        "lgts": 24
+      }
+    ]
+  },
+  "19": {
+    "nom": "Ecole elementaire Paul Langevin",
+    "adresse_bv": "11 RUE PAUL LANGEVIN 92000 Nanterre",
+    "score_recup": 467.9851099830795,
+    "gain_voix": 64.88537868020296,
+    "melenchon_pct": 53.299492385786806,
+    "le_pen_pct": 9.983079526226735,
+    "abst_pct": 31.2,
+    "inscrits": 875,
+    "pct_gauche": 62.43654822335025,
+    "total_lgts": 372,
+    "nb_immeubles": 8,
+    "lgts_immeubles": 137,
+    "nb_pavillons": 219,
+    "top_immeubles": [
+      {
+        "adr": "39 Rue Lamartine",
+        "lgts": 19
+      },
+      {
+        "adr": "35bis Rue Lamartine",
+        "lgts": 19
+      },
+      {
+        "adr": "100 Rue du Vieux-Pont",
+        "lgts": 19
+      },
+      {
+        "adr": "102 Rue du Vieux-Pont",
+        "lgts": 19
+      },
+      {
+        "adr": "104 Rue du Vieux-Pont",
+        "lgts": 19
+      }
+    ]
+  },
+  "8": {
+    "nom": "Ecole elementaire Henri Wallon B",
+    "adresse_bv": "3 RUE DE ZILINA 92000 Nanterre",
+    "score_recup": 479.3741643530158,
+    "gain_voix": 65.91841465798058,
+    "melenchon_pct": 55.048859934853425,
+    "le_pen_pct": 11.726384364820847,
+    "abst_pct": 31.956521739130434,
+    "inscrits": 920,
+    "pct_gauche": 62.052117263843655,
+    "total_lgts": 1317,
+    "nb_immeubles": 32,
+    "lgts_immeubles": 997,
+    "nb_pavillons": 290,
+    "top_immeubles": [
+      {
+        "adr": "21 Avenue Henri Martin",
+        "lgts": 143
+      },
+      {
+        "adr": "29bis Avenue Henri Martin",
+        "lgts": 119
+      },
+      {
+        "adr": "1 Rue de Zilina",
+        "lgts": 114
+      },
+      {
+        "adr": "13 Rue Louis Lecuyer",
+        "lgts": 96
+      },
+      {
+        "adr": "7 Rue de la Chasse",
+        "lgts": 33
+      }
+    ]
+  },
+  "5": {
+    "nom": "Maison des associations",
+    "adresse_bv": "11 RUE DES ANCIENNES MAIRIES 92000 Nanterre",
+    "score_recup": 509.1403771727809,
+    "gain_voix": 109.78249902386119,
+    "melenchon_pct": 40.130151843817785,
+    "le_pen_pct": 4.989154013015185,
+    "abst_pct": 19.010416666666664,
+    "inscrits": 1152,
+    "pct_gauche": 53.579175704989154,
+    "total_lgts": 1533,
+    "nb_immeubles": 69,
+    "lgts_immeubles": 1081,
+    "nb_pavillons": 207,
+    "top_immeubles": [
+      {
+        "adr": "66 Rue de Stalingrad",
+        "lgts": 29
+      },
+      {
+        "adr": "64 Rue de Stalingrad",
+        "lgts": 29
+      },
+      {
+        "adr": "20 Rue des Anciennes Mairies",
+        "lgts": 24
+      },
+      {
+        "adr": "4 Place Gabriel Péri",
+        "lgts": 22
+      },
+      {
+        "adr": "11bis Place Gabriel Péri",
+        "lgts": 21
+      }
+    ]
+  },
+  "42": {
+    "nom": "Ecole primaire Pablo Neruda B",
+    "adresse_bv": "18 RUE PABLO NERUDA 92000 Nanterre",
+    "score_recup": 430.3014331501188,
+    "gain_voix": 82.97186666666659,
+    "melenchon_pct": 41.70403587443946,
+    "le_pen_pct": 5.680119581464873,
+    "abst_pct": 25.438596491228072,
+    "inscrits": 912,
+    "pct_gauche": 54.26008968609865,
+    "total_lgts": 518,
+    "nb_immeubles": 15,
+    "lgts_immeubles": 453,
+    "nb_pavillons": 36,
+    "top_immeubles": [
+      {
+        "adr": "34 Rue Salvador Allende",
+        "lgts": 51
+      },
+      {
+        "adr": "2 Allée de la Danse",
+        "lgts": 38
+      },
+      {
+        "adr": "4 Allée de la Danse",
+        "lgts": 38
+      },
+      {
+        "adr": "54 Rue Salvador Allende",
+        "lgts": 38
+      },
+      {
+        "adr": "9 Allée de la Danse",
+        "lgts": 33
+      }
+    ]
+  },
+  "21": {
+    "nom": "Ecole maternelle France Bloch",
+    "adresse_bv": "52 BOULEVARD NATIONAL 92000 Nanterre",
+    "score_recup": 306.6048756933439,
+    "gain_voix": 73.1689793977813,
+    "melenchon_pct": 30.744849445324878,
+    "le_pen_pct": 12.361331220285262,
+    "abst_pct": 19.11392405063291,
+    "inscrits": 790,
+    "pct_gauche": 43.42313787638668,
+    "total_lgts": 193,
+    "nb_immeubles": 2,
+    "lgts_immeubles": 114,
+    "nb_pavillons": 29,
+    "top_immeubles": [
+      {
+        "adr": "84 Boulevard National",
+        "lgts": 62
+      },
+      {
+        "adr": "86 Boulevard National",
+        "lgts": 52
+      }
+    ]
+  },
+  "33": {
+    "nom": "Ecole elementaire Joliot Curie B",
+    "adresse_bv": "15 RUE DE LA COTE DES AMANDIERS 92000 Nanterre",
+    "score_recup": 640.8698253074359,
+    "gain_voix": 96.33638451327442,
+    "melenchon_pct": 55.530973451327434,
+    "le_pen_pct": 7.411504424778761,
+    "abst_pct": 25.363489499192244,
+    "inscrits": 1238,
+    "pct_gauche": 61.83628318584071,
+    "total_lgts": 1590,
+    "nb_immeubles": 49,
+    "lgts_immeubles": 1496,
+    "nb_pavillons": 72,
+    "top_immeubles": [
+      {
+        "adr": "56 Avenue de la Liberté",
+        "lgts": 53
+      },
+      {
+        "adr": "9 Rue de l'Egalité",
+        "lgts": 53
+      },
+      {
+        "adr": "10 Avenue de la Liberté",
+        "lgts": 49
+      },
+      {
+        "adr": "5 Rue de l'Abbé Hazard",
+        "lgts": 47
+      },
+      {
+        "adr": "1 Rue de l'Egalité",
+        "lgts": 43
+      }
+    ]
+  },
+  "7": {
+    "nom": "Ecole elementaire du Centre",
+    "adresse_bv": "31 BOULEVARD DU MIDI 92000 Nanterre",
+    "score_recup": 492.6761587036816,
+    "gain_voix": 109.31367229437205,
+    "melenchon_pct": 37.01298701298701,
+    "le_pen_pct": 6.8181818181818175,
+    "abst_pct": 17.395104895104897,
+    "inscrits": 1144,
+    "pct_gauche": 51.298701298701296,
+    "total_lgts": 1190,
+    "nb_immeubles": 44,
+    "lgts_immeubles": 773,
+    "nb_pavillons": 211,
+    "top_immeubles": [
+      {
+        "adr": "13 Rue de Chanzy",
+        "lgts": 58
+      },
+      {
+        "adr": "6 Rue de l'Ouest",
+        "lgts": 29
+      },
+      {
+        "adr": "49 Rue Henri Barbusse",
+        "lgts": 24
+      },
+      {
+        "adr": "51 Rue Henri Barbusse",
+        "lgts": 24
+      },
+      {
+        "adr": "2 Rue de l'Ouest",
+        "lgts": 24
+      }
+    ]
+  },
+  "43": {
+    "nom": "Ecole primaire Elsa Triolet",
+    "adresse_bv": "130 RUE SALVADOR ALLENDE 92000 Nanterre",
+    "score_recup": 290.82685096530474,
+    "gain_voix": 65.81361290322582,
+    "melenchon_pct": 37.95066413662239,
+    "le_pen_pct": 5.502846299810247,
+    "abst_pct": 23.17596566523605,
+    "inscrits": 699,
+    "pct_gauche": 49.33586337760911,
+    "total_lgts": 179,
+    "nb_immeubles": 4,
+    "lgts_immeubles": 127,
+    "nb_pavillons": 10,
+    "top_immeubles": [
+      {
+        "adr": "100 Rue Salvador Allende",
+        "lgts": 47
+      },
+      {
+        "adr": "9 Allée Le Corbusier",
+        "lgts": 33
+      },
+      {
+        "adr": "11 Allée Le Corbusier",
+        "lgts": 33
+      },
+      {
+        "adr": "130 Rue Salvador Allende",
+        "lgts": 14
+      }
+    ]
+  },
+  "39": {
+    "nom": "Ecole elementaire des Paquerettes",
+    "adresse_bv": "10 RUE DES AUBEPINES 92000 Nanterre",
+    "score_recup": 608.1419292426755,
+    "gain_voix": 62.26009850746266,
+    "melenchon_pct": 68.35820895522387,
+    "le_pen_pct": 8.805970149253731,
+    "abst_pct": 29.4238683127572,
+    "inscrits": 972,
+    "pct_gauche": 72.83582089552239,
+    "total_lgts": 478,
+    "nb_immeubles": 12,
+    "lgts_immeubles": 273,
+    "nb_pavillons": 141,
+    "top_immeubles": [
+      {
+        "adr": "17 Place des Muguets",
+        "lgts": 38
+      },
+      {
+        "adr": "328 Avenue de la République",
+        "lgts": 29
+      },
+      {
+        "adr": "2 Allée des Lauriers",
+        "lgts": 29
+      },
+      {
+        "adr": "326 Avenue de la République",
+        "lgts": 29
+      },
+      {
+        "adr": "6 Place des Merisiers",
+        "lgts": 26
+      }
+    ]
+  },
+  "44": {
+    "nom": "Ecole primaire Pablo Picasso",
+    "adresse_bv": "75 AVENUE PABLO PICASSO 92000 Nanterre",
+    "score_recup": 556.6501236943375,
+    "gain_voix": 66.30986464174464,
+    "melenchon_pct": 63.70716510903427,
+    "le_pen_pct": 10.59190031152648,
+    "abst_pct": 32.785200411099694,
+    "inscrits": 973,
+    "pct_gauche": 69.62616822429906,
+    "total_lgts": 1039,
+    "nb_immeubles": 34,
+    "lgts_immeubles": 1024,
+    "nb_pavillons": 15,
+    "top_immeubles": [
+      {
+        "adr": "35 Avenue Pablo Picasso",
+        "lgts": 86
+      },
+      {
+        "adr": "67 Avenue Pablo Picasso",
+        "lgts": 47
+      },
+      {
+        "adr": "61 Avenue Pablo Picasso",
+        "lgts": 38
+      },
+      {
+        "adr": "65 Avenue Pablo Picasso",
+        "lgts": 38
+      },
+      {
+        "adr": "65bis Avenue Pablo Picasso",
+        "lgts": 38
+      }
+    ]
+  },
+  "48": {
+    "nom": "Salle de quartier Le Corbusier",
+    "adresse_bv": "49 ESPLANADE CHARLES DE GAULLE 92000 Nanterre",
+    "score_recup": 476.704609929078,
+    "gain_voix": 86.27061973333292,
+    "melenchon_pct": 49.2,
+    "le_pen_pct": 9.066666666666666,
+    "abst_pct": 26.33107454017425,
+    "inscrits": 1033,
+    "pct_gauche": 56.666666666666664,
+    "total_lgts": 2114,
+    "nb_immeubles": 44,
+    "lgts_immeubles": 2026,
+    "nb_pavillons": 70,
+    "top_immeubles": [
+      {
+        "adr": "687 Boulevard Aimé Césaire",
+        "lgts": 143
+      },
+      {
+        "adr": "41 Rue des Coudraies",
+        "lgts": 143
+      },
+      {
+        "adr": "136 Rue Salvador Allende",
+        "lgts": 86
+      },
+      {
+        "adr": "142 Rue Salvador Allende",
+        "lgts": 86
+      },
+      {
+        "adr": "138 Rue Salvador Allende",
+        "lgts": 86
+      }
+    ]
+  },
+  "45": {
+    "nom": "Ecole elementaire Jacques Decour B",
+    "adresse_bv": "8 RUE JACQUES DECOUR 92000 Nanterre",
+    "score_recup": 607.4101503759398,
+    "gain_voix": 69.45047714285698,
+    "melenchon_pct": 66.5079365079365,
+    "le_pen_pct": 8.253968253968253,
+    "abst_pct": 34.38133874239351,
+    "inscrits": 986,
+    "pct_gauche": 72.06349206349206,
+    "total_lgts": 889,
+    "nb_immeubles": 25,
+    "lgts_immeubles": 880,
+    "nb_pavillons": 9,
+    "top_immeubles": [
+      {
+        "adr": "7 Allée des Demoiselles d'Avignon",
+        "lgts": 95
+      },
+      {
+        "adr": "95 Rue des Rosiers",
+        "lgts": 95
+      },
+      {
+        "adr": "121 Avenue Pablo Picasso",
+        "lgts": 62
+      },
+      {
+        "adr": "123 Avenue Pablo Picasso",
+        "lgts": 62
+      },
+      {
+        "adr": "1 Allée des Demoiselles d'Avignon",
+        "lgts": 62
+      }
+    ]
+  },
+  "4": {
+    "nom": "Foyer restaurant du square",
+    "adresse_bv": "6 RUE FRANKLIN 92000 Nanterre",
+    "score_recup": 418.81431859084097,
+    "gain_voix": 100.76429787234025,
+    "melenchon_pct": 35.1063829787234,
+    "le_pen_pct": 7.5650118203309695,
+    "abst_pct": 19.68430826369545,
+    "inscrits": 1077,
+    "pct_gauche": 47.39952718676123,
+    "total_lgts": 732,
+    "nb_immeubles": 16,
+    "lgts_immeubles": 349,
+    "nb_pavillons": 261,
+    "top_immeubles": [
+      {
+        "adr": "1 Avenue Frédéric et Irène Joliot Curie",
+        "lgts": 62
+      },
+      {
+        "adr": "10 Boulevard Hérold",
+        "lgts": 40
+      },
+      {
+        "adr": "22 Avenue Louis Meunier",
+        "lgts": 27
+      },
+      {
+        "adr": "4 Boulevard du Levant",
+        "lgts": 24
+      },
+      {
+        "adr": "12 Rue Waldeck Rochet",
+        "lgts": 20
+      }
+    ]
+  },
+  "16": {
+    "nom": "Ecole maternelle Balzac",
+    "adresse_bv": "4 BOULEVARD BALZAC 92000 Nanterre",
+    "score_recup": 610.8745681953544,
+    "gain_voix": 77.44321972602745,
+    "melenchon_pct": 61.50684931506849,
+    "le_pen_pct": 11.643835616438356,
+    "abst_pct": 33.51158645276293,
+    "inscrits": 1122,
+    "pct_gauche": 67.3972602739726,
+    "total_lgts": 512,
+    "nb_immeubles": 15,
+    "lgts_immeubles": 445,
+    "nb_pavillons": 64,
+    "top_immeubles": [
+      {
+        "adr": "12 Allée Lucien Sampaix",
+        "lgts": 93
+      },
+      {
+        "adr": "2 Allée d'Estienne d'Orves",
+        "lgts": 43
+      },
+      {
+        "adr": "15 Allée René Descartes",
+        "lgts": 42
+      },
+      {
+        "adr": "25 Boulevard Emile Zola",
+        "lgts": 29
+      },
+      {
+        "adr": "23 Boulevard Emile Zola",
+        "lgts": 29
+      }
+    ]
+  },
+  "6": {
+    "nom": "Villa des Tourelles",
+    "adresse_bv": "9 RUE DES ANCIENNES MAIRIES 92000 Nanterre",
+    "score_recup": 471.58698896623,
+    "gain_voix": 103.50006922155677,
+    "melenchon_pct": 38.56287425149701,
+    "le_pen_pct": 5.508982035928144,
+    "abst_pct": 19.770773638968482,
+    "inscrits": 1047,
+    "pct_gauche": 52.215568862275454,
+    "total_lgts": 1081,
+    "nb_immeubles": 42,
+    "lgts_immeubles": 790,
+    "nb_pavillons": 159,
+    "top_immeubles": [
+      {
+        "adr": "88 Rue Henri Barbusse",
+        "lgts": 127
+      },
+      {
+        "adr": "16 Rue du Bois Joly",
+        "lgts": 33
+      },
+      {
+        "adr": "18 Rue du Bois Joly",
+        "lgts": 31
+      },
+      {
+        "adr": "86 Rue Henri Barbusse",
+        "lgts": 24
+      },
+      {
+        "adr": "12 Rue du Bois Joly",
+        "lgts": 24
+      }
+    ]
+  },
+  "37": {
+    "nom": "Ecole maternelle La Fontaine",
+    "adresse_bv": "5 RUE DE L'AGRICULTURE 92000 Nanterre",
+    "score_recup": 502.7035413509164,
+    "gain_voix": 54.54860662020906,
+    "melenchon_pct": 68.1184668989547,
+    "le_pen_pct": 7.317073170731707,
+    "abst_pct": 27.054361567635905,
+    "inscrits": 791,
+    "pct_gauche": 72.29965156794425,
+    "total_lgts": 976,
+    "nb_immeubles": 33,
+    "lgts_immeubles": 939,
+    "nb_pavillons": 15,
+    "top_immeubles": [
+      {
+        "adr": "4 Rue de l'Agriculture",
+        "lgts": 73
+      },
+      {
+        "adr": "2 Résidence des Tulipes",
+        "lgts": 40
+      },
+      {
+        "adr": "1 Rue de Strasbourg",
+        "lgts": 35
+      },
+      {
+        "adr": "6 Résidence des Tulipes",
+        "lgts": 33
+      },
+      {
+        "adr": "22 Allée Eugène Claudius-Petit",
+        "lgts": 33
+      }
+    ]
+  },
+  "30": {
+    "nom": "Ecole elementaire Romain Rolland",
+    "adresse_bv": "5 RUE ROMAIN ROLLAND 92000 Nanterre",
+    "score_recup": 313.22246408597437,
+    "gain_voix": 114.24065983112177,
+    "melenchon_pct": 21.47165259348613,
+    "le_pen_pct": 7.720144752714113,
+    "abst_pct": 19.500480307396735,
+    "inscrits": 1041,
+    "pct_gauche": 34.016887816646566,
+    "total_lgts": 835,
+    "nb_immeubles": 22,
+    "lgts_immeubles": 365,
+    "nb_pavillons": 380,
+    "top_immeubles": [
+      {
+        "adr": "104 Route des Fusillés de la Résistance",
+        "lgts": 20
+      },
+      {
+        "adr": "70 Route des Fusillés de la Résistance",
+        "lgts": 19
+      },
+      {
+        "adr": "68 Route des Fusillés de la Résistance",
+        "lgts": 19
+      },
+      {
+        "adr": "72 Route des Fusillés de la Résistance",
+        "lgts": 19
+      },
+      {
+        "adr": "82 Route des Fusillés de la Résistance",
+        "lgts": 19
+      }
+    ]
+  },
+  "28": {
+    "nom": "College des Chenevreux B",
+    "adresse_bv": "20 RUE DES CHENEVREUX 92000 Nanterre",
+    "score_recup": 376.8387799831196,
+    "gain_voix": 93.29456388140142,
+    "melenchon_pct": 32.47978436657682,
+    "le_pen_pct": 11.320754716981133,
+    "abst_pct": 26.484907497565725,
+    "inscrits": 1027,
+    "pct_gauche": 42.58760107816711,
+    "total_lgts": 1181,
+    "nb_immeubles": 35,
+    "lgts_immeubles": 728,
+    "nb_pavillons": 382,
+    "top_immeubles": [
+      {
+        "adr": "38 Rue de la Source",
+        "lgts": 33
+      },
+      {
+        "adr": "68 Avenue Georges Clemenceau",
+        "lgts": 29
+      },
+      {
+        "adr": "99 Avenue Georges Clemenceau",
+        "lgts": 29
+      },
+      {
+        "adr": "105 Avenue Georges Clemenceau",
+        "lgts": 29
+      },
+      {
+        "adr": "107 Avenue Georges Clemenceau",
+        "lgts": 29
+      }
+    ]
+  },
+  "36": {
+    "nom": "Ecole elementaire Jacques Decour A",
+    "adresse_bv": "2 RUE JACQUES DECOUR 92000 Nanterre",
+    "score_recup": 625.4633699633699,
+    "gain_voix": 65.2618205128208,
+    "melenchon_pct": 67.94871794871796,
+    "le_pen_pct": 10.256410256410255,
+    "abst_pct": 35.728542914171655,
+    "inscrits": 1002,
+    "pct_gauche": 72.43589743589743,
+    "total_lgts": 831,
+    "nb_immeubles": 14,
+    "lgts_immeubles": 824,
+    "nb_pavillons": 7,
+    "top_immeubles": [
+      {
+        "adr": "3 Rue de Watford",
+        "lgts": 114
+      },
+      {
+        "adr": "38 Rue Charles Lorilleux",
+        "lgts": 81
+      },
+      {
+        "adr": "1 Rue de Watford",
+        "lgts": 81
+      },
+      {
+        "adr": "7 Rue de Watford",
+        "lgts": 81
+      },
+      {
+        "adr": "6 Rue de la Paix",
+        "lgts": 81
+      }
+    ]
+  },
+  "1": {
+    "nom": "Hotel de Ville - Salle des Congres 1",
+    "adresse_bv": "90 RUE DU 8 MAI 1945 92000 Nanterre",
+    "score_recup": 490.4419501003728,
+    "gain_voix": 63.57820946372226,
+    "melenchon_pct": 48.42271293375394,
+    "le_pen_pct": 16.561514195583594,
+    "abst_pct": 32.21052631578947,
+    "inscrits": 950,
+    "pct_gauche": 58.99053627760252,
+    "total_lgts": 585,
+    "nb_immeubles": 11,
+    "lgts_immeubles": 553,
+    "nb_pavillons": 32,
+    "top_immeubles": [
+      {
+        "adr": "89 Avenue Frédéric et Irène Joliot Curie",
+        "lgts": 119
+      },
+      {
+        "adr": "55 Avenue Frédéric et Irène Joliot Curie",
+        "lgts": 87
+      },
+      {
+        "adr": "32 Place du 27 Mars 2002",
+        "lgts": 76
+      },
+      {
+        "adr": "45 Avenue Frédéric et Irène Joliot Curie",
+        "lgts": 62
+      },
+      {
+        "adr": "83 Avenue Frédéric et Irène Joliot Curie",
+        "lgts": 43
+      }
+    ]
+  },
+  "18": {
+    "nom": "Ecole primaire Lucie Aubrac",
+    "adresse_bv": "1 ALLEE DE SAVOIE 92000 Nanterre",
+    "score_recup": 729.5613730701143,
+    "gain_voix": 103.02185745140355,
+    "melenchon_pct": 56.371490280777536,
+    "le_pen_pct": 10.151187904967603,
+    "abst_pct": 31.062271062271062,
+    "inscrits": 1365,
+    "pct_gauche": 63.498920086393085,
+    "total_lgts": 1664,
+    "nb_immeubles": 40,
+    "lgts_immeubles": 1414,
+    "nb_pavillons": 220,
+    "top_immeubles": [
+      {
+        "adr": "30 Rue Adélaïde Tablon",
+        "lgts": 81
+      },
+      {
+        "adr": "20 Rue Adélaïde Tablon",
+        "lgts": 81
+      },
+      {
+        "adr": "38 Rue Adélaïde Tablon",
+        "lgts": 81
+      },
+      {
+        "adr": "1 Rue Gerty Archimède",
+        "lgts": 81
+      },
+      {
+        "adr": "34 Rue Adélaïde Tablon",
+        "lgts": 81
+      }
+    ]
+  },
+  "35": {
+    "nom": "Ecole elementaire J. Decour - refectoire",
+    "adresse_bv": "2 RUE JACQUES DECOUR 92000 Nanterre",
+    "score_recup": 674.2523698523698,
+    "gain_voix": 80.72611944055927,
+    "melenchon_pct": 67.6923076923077,
+    "le_pen_pct": 7.6923076923076925,
+    "abst_pct": 35.32513181019332,
+    "inscrits": 1138,
+    "pct_gauche": 71.32867132867133,
+    "total_lgts": 898,
+    "nb_immeubles": 25,
+    "lgts_immeubles": 879,
+    "nb_pavillons": 9,
+    "top_immeubles": [
+      {
+        "adr": "5 Allée Fernand Léger",
+        "lgts": 86
+      },
+      {
+        "adr": "3 Allée Fernand Léger",
+        "lgts": 86
+      },
+      {
+        "adr": "11 Rue de Craiova",
+        "lgts": 81
+      },
+      {
+        "adr": "2 Rue de la Paix",
+        "lgts": 81
+      },
+      {
+        "adr": "275 Avenue Georges Clemenceau",
+        "lgts": 33
+      }
+    ]
+  },
+  "15": {
+    "nom": "Ecole elementaire Balzac",
+    "adresse_bv": "4 BOULEVARD BALZAC 92000 Nanterre",
+    "score_recup": 400.2129651390521,
+    "gain_voix": 64.25130740740735,
+    "melenchon_pct": 46.05475040257649,
+    "le_pen_pct": 15.136876006441224,
+    "abst_pct": 31.060606060606062,
+    "inscrits": 924,
+    "pct_gauche": 53.62318840579711,
+    "total_lgts": 521,
+    "nb_immeubles": 11,
+    "lgts_immeubles": 421,
+    "nb_pavillons": 62,
+    "top_immeubles": [
+      {
+        "adr": "12 Allée George Sand",
+        "lgts": 74
+      },
+      {
+        "adr": "11 Allée Claude Bernard",
+        "lgts": 69
+      },
+      {
+        "adr": "8 Allée Pierre Lescot",
+        "lgts": 48
+      },
+      {
+        "adr": "2 Allée Théophile Gautier",
+        "lgts": 43
+      },
+      {
+        "adr": "11 Allée Pierre Corneille",
+        "lgts": 42
+      }
+    ]
+  },
+  "14": {
+    "nom": "Ecole elementaire Joinville",
+    "adresse_bv": "50 RUE ROUGET DE LISLE 92000 Nanterre",
+    "score_recup": 99.8546788263283,
+    "gain_voix": 41.626400412371154,
+    "melenchon_pct": 10.103092783505154,
+    "le_pen_pct": 29.27835051546392,
+    "abst_pct": 23.692307692307693,
+    "inscrits": 650,
+    "pct_gauche": 18.969072164948454,
+    "total_lgts": 2,
+    "nb_immeubles": 0,
+    "lgts_immeubles": 0,
+    "nb_pavillons": 2,
+    "top_immeubles": []
+  },
+  "24": {
+    "nom": "Ecole elementaire Jules Ferry A",
+    "adresse_bv": "1 RUE DES CHAILLIERS 92000 Nanterre",
+    "score_recup": 481.72421996253684,
+    "gain_voix": 107.10105383783781,
+    "melenchon_pct": 36.54054054054054,
+    "le_pen_pct": 12.0,
+    "abst_pct": 24.758064516129032,
+    "inscrits": 1240,
+    "pct_gauche": 45.62162162162162,
+    "total_lgts": 529,
+    "nb_immeubles": 4,
+    "lgts_immeubles": 52,
+    "nb_pavillons": 409,
+    "top_immeubles": [
+      {
+        "adr": "33 Rue Georges Enesco",
+        "lgts": 16
+      },
+      {
+        "adr": "112 Rue de Saint-Cloud",
+        "lgts": 16
+      },
+      {
+        "adr": "114 Rue de Saint-Cloud",
+        "lgts": 10
+      },
+      {
+        "adr": "116 Rue de Saint-Cloud",
+        "lgts": 10
+      }
+    ]
+  },
+  "20": {
+    "nom": "Lycee professionnel Paul Langevin",
+    "adresse_bv": "9 RUE PAUL LANGEVIN 92000 Nanterre",
+    "score_recup": 497.2282641509434,
+    "gain_voix": 95.81361962264134,
+    "melenchon_pct": 42.64150943396226,
+    "le_pen_pct": 6.037735849056604,
+    "abst_pct": 21.03213242453749,
+    "inscrits": 1027,
+    "pct_gauche": 55.72327044025157,
+    "total_lgts": 371,
+    "nb_immeubles": 10,
+    "lgts_immeubles": 140,
+    "nb_pavillons": 151,
+    "top_immeubles": [
+      {
+        "adr": "111 Rue Raymond Poincaré",
+        "lgts": 19
+      },
+      {
+        "adr": "109 Rue Raymond Poincaré",
+        "lgts": 19
+      },
+      {
+        "adr": "92 Avenue Vladimir Ilitch Lénine",
+        "lgts": 18
+      },
+      {
+        "adr": "42 Avenue Vladimir Ilitch Lénine",
+        "lgts": 17
+      },
+      {
+        "adr": "67 Rue Thomas Lemaître",
+        "lgts": 14
+      }
+    ]
+  },
+  "17": {
+    "nom": "Salle polyvalente Anatole France",
+    "adresse_bv": "7 RUE ANATOLE FRANCE 92000 Nanterre",
+    "score_recup": 586.0922723521321,
+    "gain_voix": 78.58453177441527,
+    "melenchon_pct": 60.24759284731774,
+    "le_pen_pct": 10.591471801925723,
+    "abst_pct": 32.36627379873073,
+    "inscrits": 1103,
+    "pct_gauche": 65.74965612104539,
+    "total_lgts": 744,
+    "nb_immeubles": 18,
+    "lgts_immeubles": 627,
+    "nb_pavillons": 102,
+    "top_immeubles": [
+      {
+        "adr": "174 Avenue de la République",
+        "lgts": 62
+      },
+      {
+        "adr": "176bis Avenue de la République",
+        "lgts": 62
+      },
+      {
+        "adr": "176 Avenue de la République",
+        "lgts": 62
+      },
+      {
+        "adr": "172 Avenue de la République",
+        "lgts": 62
+      },
+      {
+        "adr": "17 Rue Anatole France",
+        "lgts": 62
+      }
+    ]
+  },
+  "13": {
+    "nom": "Centre de loisirs Rouget de Lisle",
+    "adresse_bv": "20 RUE ROUGET DE LISLE 92000 Nanterre",
+    "score_recup": 604.7790042233732,
+    "gain_voix": 114.14119156159086,
+    "melenchon_pct": 45.1988360814743,
+    "le_pen_pct": 8.050436469447138,
+    "abst_pct": 20.15209125475285,
+    "inscrits": 1315,
+    "pct_gauche": 57.613967022308444,
+    "total_lgts": 693,
+    "nb_immeubles": 21,
+    "lgts_immeubles": 506,
+    "nb_pavillons": 102,
+    "top_immeubles": [
+      {
+        "adr": "65 Rue Rouget de Lisle",
+        "lgts": 52
+      },
+      {
+        "adr": "42 Avenue de la République",
+        "lgts": 40
+      },
+      {
+        "adr": "50 Avenue de la République",
+        "lgts": 40
+      },
+      {
+        "adr": "7 Rue de l'Industrie",
+        "lgts": 40
+      },
+      {
+        "adr": "1bis Avenue du Général Gallieni",
+        "lgts": 33
+      }
+    ]
+  },
+  "26": {
+    "nom": "College des Chenevreux A",
+    "adresse_bv": "20 RUE DES CHENEVREUX 92000 Nanterre",
+    "score_recup": 403.52089834286267,
+    "gain_voix": 75.90727199341018,
+    "melenchon_pct": 43.986820428336074,
+    "le_pen_pct": 8.731466227347612,
+    "abst_pct": 28.65429234338747,
+    "inscrits": 862,
+    "pct_gauche": 55.18945634266886,
+    "total_lgts": 391,
+    "nb_immeubles": 6,
+    "lgts_immeubles": 160,
+    "nb_pavillons": 173,
+    "top_immeubles": [
+      {
+        "adr": "30 Avenue Georges Clemenceau",
+        "lgts": 47
+      },
+      {
+        "adr": "4 Avenue Gabriel",
+        "lgts": 33
+      },
+      {
+        "adr": "10 Rue de la Source",
+        "lgts": 31
+      },
+      {
+        "adr": "15 Rue des Suisses",
+        "lgts": 21
+      },
+      {
+        "adr": "2 Place Nathalie Lemel",
+        "lgts": 15
+      }
+    ]
+  },
+  "40": {
+    "nom": "Ecole maternelle des Paquerettes",
+    "adresse_bv": "10 RUE DES AUBEPINES 92000 Nanterre",
+    "score_recup": 601.6496937838115,
+    "gain_voix": 67.3841259204712,
+    "melenchon_pct": 62.15022091310751,
+    "le_pen_pct": 13.696612665684832,
+    "abst_pct": 33.23699421965318,
+    "inscrits": 1038,
+    "pct_gauche": 68.04123711340206,
+    "total_lgts": 1286,
+    "nb_immeubles": 42,
+    "lgts_immeubles": 1228,
+    "nb_pavillons": 55,
+    "top_immeubles": [
+      {
+        "adr": "7 Résidence des Jonquilles",
+        "lgts": 60
+      },
+      {
+        "adr": "12 Résidence des Coquelicots",
+        "lgts": 60
+      },
+      {
+        "adr": "7 Résidence des Lilas",
+        "lgts": 60
+      },
+      {
+        "adr": "99 Rue François Hanriot",
+        "lgts": 52
+      },
+      {
+        "adr": "7 Résidence des Iris",
+        "lgts": 43
+      }
+    ]
+  }
+}
