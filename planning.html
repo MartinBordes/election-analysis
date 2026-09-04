@@ -26,6 +26,7 @@ body { font-family: 'Stack Sans', Arial, sans-serif; color: var(--lfi-noir); bac
 .timeline-phase.t1 { background: var(--lfi-violet); }
 .timeline-phase.t2 { background: var(--lfi-noir); }
 .timeline-marker { position: absolute; top: -4px; width: 3px; height: 36px; background: var(--lfi-yellow); border-radius: 2px; z-index: 1; }
+.timeline-cursor-label { position: absolute; top: -16px; left: 50%; transform: translateX(-50%); font-size: 8px; font-weight: 700; color: var(--lfi-noir); white-space: nowrap; background: var(--lfi-yellow); padding: 1px 4px; border-radius: 3px; }
 .timeline-labels { display: flex; font-size: 9px; color: var(--lfi-gris2); margin-top: 3px; }
 .timeline-labels span { text-align: center; }
 .stats { display: flex; gap: 8px; padding: 12px 20px; overflow-x: auto; }
@@ -418,7 +419,7 @@ function renderTimeline() {
     const nW = Math.max(0, Math.min(100, (now - START) / total * 100));
 
     // Trouver la vraie date de bascule P1→P2 depuis les sessions
-    let p2Start = T1; // fallback
+    let p2Start = T1;
     for (const s of sessions) {
         if (s.notes && s.notes.includes('Passage 2')) {
             p2Start = new Date(s.date);
@@ -429,19 +430,72 @@ function renderTimeline() {
     const p1W = (p2Start - START) / total * 100;
     const p2W = (T1 - p2Start) / total * 100;
     const t2W = (END - T1) / total * 100;
-
     const fmt = d => `${d.getDate()}/${d.getMonth()+1}`;
+
+    // Curseur "Aujourd'hui"
+    const cursorHTML = now >= START && now <= END
+        ? `<div class="timeline-marker" style="left:${nW}%">
+             <div class="timeline-cursor-label">Aujourd'hui</div>
+           </div>` : '';
 
     document.getElementById('tbar').innerHTML = `
         <div class="timeline-phase inscr" style="width:${p1W}%">Passage 1</div>
         <div class="timeline-phase t1" style="width:${p2W}%">Passage 2</div>
         <div class="timeline-phase t2" style="width:${t2W}%">Front rép.</div>
-        ${now >= START && now <= END ? `<div class="timeline-marker" style="left:${nW}%"></div>` : ''}`;
+        ${cursorHTML}`;
 
     document.getElementById('tlabels').innerHTML = `
         <span style="width:${p1W}%">${fmt(START)} → ${fmt(p2Start)}</span>
         <span style="width:${p2W}%">→ ${fmt(T1)}</span>
         <span style="width:${t2W}%">→ ${fmt(END)}</span>`;
+
+    // Indicateur avance/retard
+    renderPaceIndicator(now, p2Start);
+}
+
+function renderPaceIndicator(now, p2Start) {
+    if (now < START || now > END || !sessions.length) return;
+
+    // Sessions qui auraient dû être faites avant aujourd'hui
+    const sessionsBefore = sessions.filter(s => new Date(s.date) <= now);
+    const sessionsTotal = sessions.length;
+    const expectedPct = sessionsBefore.length / sessionsTotal * 100;
+
+    // Portes terrain réellement faites
+    let portesFaites = 0;
+    for (const [id, v] of Object.entries(visites)) {
+        if (v.pap && v.pap.status === 'approved') {
+            const a = addresses.find(x => x.id === id);
+            portesFaites += a ? (a.lgts || 1) : 1;
+        }
+    }
+    const portesTotal = sessions.reduce((s, x) => s + (x.portes_estimees || 0), 0);
+    const realPct = portesTotal ? portesFaites / portesTotal * 100 : 0;
+
+    // Comparer : on devrait avoir fait expectedPct% du total
+    const portesAttendues = Math.round(portesTotal * expectedPct / 100);
+    const delta = portesFaites - portesAttendues;
+    const deltaSign = delta >= 0 ? '+' : '';
+
+    let statusColor, statusText;
+    if (delta >= 0) {
+        statusColor = 'var(--lfi-green)';
+        statusText = `En avance de ${delta.toLocaleString()} portes`;
+    } else {
+        statusColor = 'var(--lfi-red)';
+        statusText = `En retard de ${Math.abs(delta).toLocaleString()} portes`;
+    }
+
+    // Insérer après la timeline
+    let paceEl = document.getElementById('pace-indicator');
+    if (!paceEl) {
+        paceEl = document.createElement('div');
+        paceEl.id = 'pace-indicator';
+        paceEl.style.cssText = 'padding:6px 20px;font-size:12px;font-weight:600;text-align:center;';
+        document.querySelector('.timeline').appendChild(paceEl);
+    }
+    paceEl.style.color = statusColor;
+    paceEl.innerHTML = `${statusText} — ${portesFaites.toLocaleString()} faites / ${portesAttendues.toLocaleString()} attendues à ce jour`;
 }
 
 function renderStats() {
