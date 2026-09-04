@@ -333,31 +333,21 @@ async function recalculate() {
                 if (!inP2 && p1Remaining <= 0) inP2 = true;
 
                 if (inP2) {
-                    // P2 : adresses planifiées en P1 il y a 3+ mois
-                    //     + adresses faites sur le terrain (visitCount=1)
+                    // P2 : tout le pool 10+ lgts sauf :
+                    // - déjà planifié en P2 cette session
+                    // - visitCount >= 2 (déjà 2 passages terrain)
+                    // - planifié en P1 il y a moins de 3 mois (gap)
                     const poolP2now = [];
-                    const seen = new Set();
-                    // Depuis le planning P1
-                    for (const [addrId, p1Date] of Object.entries(p1PlannedDates)) {
-                        if (p2Used.has(addrId) || seen.has(addrId)) continue;
-                        if (slot.date.getTime() - p1Date.getTime() >= GAP_MS) {
-                            const a = addresses.find(x => x.id === addrId);
-                            if (!a || (a.lgts||1) < SEUIL_LGTS) continue;
-                            const bs = bureauStats[a.bv];
-                            if (!bs) continue;
-                            poolP2now.push({...a, score: bs.score_recup * (a.lgts||1), bureau: a.bv});
-                            seen.add(addrId);
-                        }
-                    }
-                    // Depuis le terrain (visitées 1 fois, pas encore en P2)
                     for (const a of addresses) {
-                        if (p2Used.has(a.id) || seen.has(a.id)) continue;
-                        if ((a.lgts||1) < SEUIL_LGTS || !a.bv || !bureauStats[a.bv]) continue;
-                        if (visitCount(a.id) === 1) {
-                            const bs = bureauStats[a.bv];
-                            poolP2now.push({...a, score: bs.score_recup * (a.lgts||1), bureau: a.bv});
-                            seen.add(a.id);
-                        }
+                        if (p2Used.has(a.id)) continue;
+                        if (!a.bv || !bureauStats[a.bv]) continue;
+                        if ((a.lgts||1) < SEUIL_LGTS) continue;
+                        if (visitCount(a.id) >= 2) continue;
+                        // Vérifier le gap de 3 mois si planifié en P1
+                        const p1Date = p1PlannedDates[a.id];
+                        if (p1Date && slot.date.getTime() - p1Date.getTime() < GAP_MS) continue;
+                        const bs = bureauStats[a.bv];
+                        poolP2now.push({...a, score: bs.score_recup * (a.lgts||1), bureau: a.bv});
                     }
                     poolP2now.sort((a,b) => b.score - a.score);
                     if (poolP2now.length > 0) {
