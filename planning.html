@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Planning PAP — Nanterre</title>
+<style>
+@font-face { font-family: 'Union Gothic'; src: url('https://melenchon2027.fr/wp-content/uploads/2026/04/union_gothic-variable.ttf') format('truetype'); font-display: swap; }
+@font-face { font-family: 'Stack Sans'; src: url('https://melenchon2027.fr/wp-content/uploads/2026/04/StackSansText-Regular.ttf') format('truetype'); font-weight: 400; font-display: swap; }
+@font-face { font-family: 'Stack Sans'; src: url('https://melenchon2027.fr/wp-content/uploads/2026/04/StackSansText-Bold.ttf') format('truetype'); font-weight: 700; font-display: swap; }
+
+:root {
+    --lfi-violet: #4C0297; --lfi-red: #D1271C; --lfi-yellow: #FFD301;
+    --lfi-noir: #212320; --lfi-blanc: #FFFCF4; --lfi-gris: #F5F5F5;
+    --lfi-gris2: #707070; --lfi-violet-light: #E5CBFF; --lfi-red-light: #FFD2CF;
+    --lfi-green: #186842; --lfi-green-light: #EDFBF3; --radius: 10px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Stack Sans', Arial, sans-serif; color: var(--lfi-noir); background: var(--lfi-blanc); }
+
+/* Header */
+.header { background: var(--lfi-violet); color: white; padding: 16px 20px; }
+.header h1 { font-family: 'Union Gothic', sans-serif; font-size: 22px; text-transform: uppercase; }
+.header .sub { font-size: 13px; opacity: 0.8; margin-top: 2px; }
+
+/* Timeline */
+.timeline { padding: 16px 20px; background: white; border-bottom: 1px solid #eee; overflow-x: auto; }
+.timeline-bar { display: flex; height: 32px; border-radius: 6px; overflow: hidden; min-width: 600px; position: relative; }
+.timeline-phase { display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: white; white-space: nowrap; }
+.timeline-phase.inscr { background: var(--lfi-red); }
+.timeline-phase.t1 { background: var(--lfi-violet); }
+.timeline-phase.t2 { background: var(--lfi-noir); }
+.timeline-marker { position: absolute; top: -4px; width: 2px; height: 40px; background: var(--lfi-yellow); }
+.timeline-label { font-size: 10px; color: var(--lfi-gris2); margin-top: 4px; display: flex; justify-content: space-between; min-width: 600px; }
+
+/* Stats */
+.stats { display: flex; gap: 10px; padding: 12px 20px; overflow-x: auto; }
+.stat-card { flex: 1; min-width: 100px; background: white; border: 1.5px solid var(--lfi-violet-light); border-radius: var(--radius); padding: 12px; text-align: center; }
+.stat-card .num { font-family: 'Union Gothic', sans-serif; font-size: 28px; color: var(--lfi-violet); }
+.stat-card .label { font-size: 11px; color: var(--lfi-gris2); margin-top: 2px; }
+.stat-card .bar { height: 6px; background: #eee; border-radius: 3px; margin-top: 6px; }
+.stat-card .bar-fill { height: 100%; border-radius: 3px; background: var(--lfi-violet); transition: width 0.3s; }
+
+/* Phase filter */
+.filters { display: flex; gap: 8px; padding: 8px 20px; overflow-x: auto; }
+.filter-btn { padding: 6px 14px; border: 1.5px solid var(--lfi-violet-light); border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer; background: white; color: var(--lfi-violet); font-family: inherit; white-space: nowrap; }
+.filter-btn.active { background: var(--lfi-violet); color: white; border-color: var(--lfi-violet); }
+
+/* Sessions list */
+.sessions { padding: 0 20px 100px; }
+.week-header { font-family: 'Union Gothic', sans-serif; font-size: 16px; color: var(--lfi-violet); margin: 16px 0 8px; padding-bottom: 4px; border-bottom: 2px solid var(--lfi-violet-light); }
+.session-card { background: white; border: 1.5px solid #eee; border-radius: var(--radius); padding: 12px; margin-bottom: 8px; }
+.session-card.done { border-color: var(--lfi-green); background: var(--lfi-green-light); }
+.session-card.cancelled { opacity: 0.5; border-color: #ddd; }
+.session-card .sc-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.session-card .sc-date { font-weight: 700; font-size: 15px; }
+.session-card .sc-badge { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px; }
+.sc-badge.inscr { background: var(--lfi-red-light); color: var(--lfi-red); }
+.sc-badge.t1 { background: var(--lfi-violet-light); color: var(--lfi-violet); }
+.sc-badge.t2 { background: #eee; color: var(--lfi-noir); }
+.sc-badge.done { background: var(--lfi-green-light); color: var(--lfi-green); }
+.sc-badge.cancelled { background: #eee; color: #999; }
+.session-card .sc-bureau { font-size: 13px; color: var(--lfi-gris2); }
+.session-card .sc-addr { font-size: 13px; margin-top: 4px; }
+.session-card .sc-portes { font-size: 13px; color: var(--lfi-gris2); margin-top: 4px; }
+.session-card .sc-portes b { color: var(--lfi-noir); }
+.session-card .sc-actions { display: flex; gap: 6px; margin-top: 8px; }
+.sc-btn { padding: 8px 14px; border: none; border-radius: var(--radius); font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit; }
+.sc-btn.done { background: var(--lfi-green); color: white; }
+.sc-btn.cancel { background: #eee; color: var(--lfi-gris2); }
+.sc-btn.reopen { background: var(--lfi-violet-light); color: var(--lfi-violet); }
+.sc-realised { display: flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 13px; color: var(--lfi-green); font-weight: 600; }
+
+/* Nav */
+.nav-menu-btn { position: fixed; top: 10px; right: 10px; z-index: 10000; width: 44px; height: 44px; border: 1.5px solid var(--lfi-violet-light); border-radius: 50%; background: rgba(255,252,244,0.95); color: var(--lfi-violet); font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(76,2,151,0.2); }
+.nav-dropdown { display: none; position: fixed; top: 62px; right: 10px; z-index: 10000; background: rgba(255,252,244,0.97); border-radius: 10px; border: 1.5px solid var(--lfi-violet-light); box-shadow: 0 4px 16px rgba(76,2,151,0.2); overflow: hidden; min-width: 160px; }
+.nav-dropdown.open { display: block; }
+.nav-dropdown a { display: block; padding: 12px 16px; color: var(--lfi-violet); text-decoration: none; font-size: 14px; font-weight: 600; border-bottom: 1px solid var(--lfi-violet-light); }
+.nav-dropdown a:last-child { border-bottom: none; }
+.nav-dropdown a:hover { background: var(--lfi-violet-light); }
+.nav-dropdown a.current { background: var(--lfi-violet); color: white; }
+.nav-dropdown .nav-badge { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; padding: 8px 16px; color: var(--lfi-gris2); border-bottom: 1px solid var(--lfi-violet-light); }
+</style>
+</head>
+<body>
+
+<div class="header">
+    <h1>Planning PAP — Nanterre</h1>
+    <div class="sub">Septembre 2026 → Avril 2027</div>
+</div>
+
+<div class="timeline">
+    <div class="timeline-bar" id="timeline-bar"></div>
+    <div class="timeline-label" id="timeline-label"></div>
+</div>
+
+<div class="stats" id="stats"></div>
+
+<div class="filters" id="filters">
+    <button class="filter-btn active" data-filter="all" onclick="setFilter('all',this)">Toutes</button>
+    <button class="filter-btn" data-filter="planned" onclick="setFilter('planned',this)">À venir</button>
+    <button class="filter-btn" data-filter="done" onclick="setFilter('done',this)">Faites</button>
+    <button class="filter-btn" data-filter="cancelled" onclick="setFilter('cancelled',this)">Annulées</button>
+</div>
+
+<div class="sessions" id="sessions"></div>
+
+<button class="nav-menu-btn" onclick="document.getElementById('nav-dropdown').classList.toggle('open')">&#9776;</button>
+<div class="nav-dropdown" id="nav-dropdown">
+    <div class="nav-badge">Navigation</div>
+    <a href="porte-a-porte.html?mode=admin">Terrain</a>
+    <a href="1er_tour.html">Carte 1er tour</a>
+    <a href="2nd_tour.html">Carte 2nd tour</a>
+    <a href="planning.html" class="current">Planning</a>
+</div>
+
+<script>
+const SB_URL = 'https://htprfzzqjqfzyqcbjynz.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh0cHJmenpxanFmenlxY2JqeW56Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQyOTI1MTEsImV4cCI6MjA5OTg2ODUxMX0.HtHvc7_OGAidJ0XSnlKnx3d6tfrPTxbkFUaLsEv5nbE';
+const SB_H = { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Content-Type': 'application/json' };
+
+let sessions = [];
+let visites = {};
+let addresses = [];
+let currentFilter = 'all';
+
+const START = new Date('2026-09-12');
+const T1 = new Date('2027-04-18');
+const T2 = new Date('2027-05-02');
+const END = new Date('2027-04-30');
+const INSCR_END = new Date('2027-03-07');
+
+async function loadAll() {
+    const [sessResp, visResp, addrResp] = await Promise.all([
+        fetch(`${SB_URL}/rest/v1/sessions?select=*&order=date`, { headers: SB_H }),
+        fetch(`${SB_URL}/rest/v1/visites?select=*`, { headers: SB_H }),
+        fetch('adresses_nanterre.json'),
+    ]);
+    sessions = await sessResp.json();
+    const visRows = await visResp.json();
+    if (Array.isArray(visRows)) visRows.forEach(r => {
+        if (!visites[r.address_id]) visites[r.address_id] = {};
+        visites[r.address_id][r.type] = { count: r.count || 1, status: r.status || 'approved' };
+    });
+    addresses = await addrResp.json();
+}
+
+// Portes réalisées par bureau (depuis la carte terrain)
+function portesRealisees(bureau) {
+    let total = 0;
+    Object.entries(visites).forEach(([id, v]) => {
+        const a = addresses.find(x => x.id === id);
+        if (!a || a._bureau !== bureau) return;
+        if (v.pap && v.pap.status === 'approved') total += (a.lgts || 1);
+    });
+    return total;
+}
+
+// Pré-calculer _bureau
+function precomputeBureaux() {
+    // Simplifié : on utilise le champ _bureau s'il existe déjà dans le JSON
+    // Sinon on skip (les adresses du JSON exporté n'ont pas _bureau)
+}
+
+function renderTimeline() {
+    const total = END - START;
+    const inscrW = (INSCR_END - START) / total * 100;
+    const t1W = (T1 - INSCR_END) / total * 100;
+    const t2W = (END - T1) / total * 100;
+    const now = new Date();
+    const nowW = Math.max(0, Math.min(100, (now - START) / total * 100));
+
+    document.getElementById('timeline-bar').innerHTML = `
+        <div class="timeline-phase inscr" style="width:${inscrW}%">Inscriptions</div>
+        <div class="timeline-phase t1" style="width:${t1W}%">1er tour</div>
+        <div class="timeline-phase t2" style="width:${t2W}%">Entre-deux-tours</div>
+        ${now >= START && now <= END ? `<div class="timeline-marker" style="left:${nowW}%" title="Aujourd'hui"></div>` : ''}
+    `;
+    document.getElementById('timeline-label').innerHTML = `
+        <span>Sept 2026</span><span>Déc</span><span>Mars 2027</span><span>18 avr (T1)</span><span>30 avr</span>
+    `;
+}
+
+function renderStats() {
+    const total = sessions.length;
+    const done = sessions.filter(s => s.statut === 'done').length;
+    const planned = sessions.filter(s => s.statut === 'planned').length;
+    const cancelled = sessions.filter(s => s.statut === 'cancelled').length;
+    const portesEst = sessions.filter(s => s.statut !== 'cancelled').reduce((s, x) => s + (x.portes_estimees || 0), 0);
+    const portesReal = sessions.filter(s => s.statut === 'done').reduce((s, x) => s + (x.portes_realisees || x.portes_estimees || 0), 0);
+
+    document.getElementById('stats').innerHTML = `
+        <div class="stat-card">
+            <div class="num">${done}</div>
+            <div class="label">Sessions faites</div>
+            <div class="bar"><div class="bar-fill" style="width:${total ? done/total*100 : 0}%"></div></div>
+        </div>
+        <div class="stat-card">
+            <div class="num">${planned}</div>
+            <div class="label">À venir</div>
+        </div>
+        <div class="stat-card">
+            <div class="num">${portesReal.toLocaleString()}</div>
+            <div class="label">Portes faites</div>
+            <div class="bar"><div class="bar-fill" style="width:${portesEst ? portesReal/portesEst*100 : 0}%"></div></div>
+        </div>
+    `;
+}
+
+function phaseClass(phase) {
+    if (phase.includes('Inscr')) return 'inscr';
+    if (phase.includes('1er')) return 't1';
+    return 't2';
+}
+
+function renderSessions() {
+    const filtered = currentFilter === 'all' ? sessions : sessions.filter(s => s.statut === currentFilter);
+    let html = '';
+    let lastWeek = '';
+
+    filtered.forEach(s => {
+        const d = new Date(s.date);
+        const weekNum = Math.floor((d - START) / (7 * 86400000)) + 1;
+        const weekKey = `S${weekNum}`;
+        if (weekKey !== lastWeek) {
+            const weekStart = new Date(START.getTime() + (weekNum - 1) * 7 * 86400000);
+            const weekEnd = new Date(weekStart.getTime() + 6 * 86400000);
+            const fmt = d => `${d.getDate()} ${['jan','fév','mars','avr','mai','juin','juil','août','sept','oct','nov','déc'][d.getMonth()]}`;
+            html += `<div class="week-header">${weekKey} — ${fmt(weekStart)} au ${fmt(weekEnd)}</div>`;
+            lastWeek = weekKey;
+        }
+
+        const jour = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'][d.getDay()];
+        const dateStr = `${jour} ${d.getDate()}/${d.getMonth()+1}`;
+        const pClass = phaseClass(s.phase);
+        const statusBadge = s.statut === 'done' ? '<span class="sc-badge done">Fait</span>'
+            : s.statut === 'cancelled' ? '<span class="sc-badge cancelled">Annulé</span>'
+            : `<span class="sc-badge ${pClass}">${s.phase.split('—')[0].trim()}</span>`;
+
+        let actions = '';
+        if (s.statut === 'planned') {
+            actions = `<div class="sc-actions">
+                <button class="sc-btn done" onclick="markSession(${s.id},'done')">Fait ✓</button>
+                <button class="sc-btn cancel" onclick="markSession(${s.id},'cancelled')">Annuler</button>
+            </div>`;
+        } else if (s.statut === 'done') {
+            const real = s.portes_realisees || s.portes_estimees;
+            actions = `<div class="sc-realised">✓ ${real} portes réalisées</div>
+                <div class="sc-actions"><button class="sc-btn reopen" onclick="markSession(${s.id},'planned')">Rouvrir</button></div>`;
+        } else {
+            actions = `<div class="sc-actions"><button class="sc-btn reopen" onclick="markSession(${s.id},'planned')">Replanifier</button></div>`;
+        }
+
+        html += `<div class="session-card ${s.statut}">
+            <div class="sc-top">
+                <span class="sc-date">${dateStr} · ${s.type}</span>
+                ${statusBadge}
+            </div>
+            <div class="sc-bureau">Bureau ${s.bureau} · ${s.adresses_cibles ? s.adresses_cibles.split(',')[0] : ''}</div>
+            <div class="sc-addr">${s.adresses_cibles || ''}</div>
+            <div class="sc-portes"><b>${s.portes_estimees}</b> portes estimées</div>
+            ${actions}
+        </div>`;
+    });
+
+    document.getElementById('sessions').innerHTML = html || '<p style="padding:20px;color:#999;">Aucune session</p>';
+}
+
+async function markSession(id, statut) {
+    const session = sessions.find(s => s.id === id);
+    if (!session) return;
+    session.statut = statut;
+    if (statut === 'done') session.portes_realisees = session.portes_estimees;
+
+    try { await fetch(`${SB_URL}/rest/v1/sessions?id=eq.${id}`, {
+        method: 'PATCH', headers: SB_H,
+        body: JSON.stringify({ statut, portes_realisees: session.portes_realisees })
+    }); } catch(e) { console.error(e); }
+
+    renderStats();
+    renderSessions();
+}
+
+function setFilter(filter, btn) {
+    currentFilter = filter;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderSessions();
+}
+
+// Close nav on outside click
+document.addEventListener('click', e => {
+    if (!e.target.closest('.nav-menu-btn') && !e.target.closest('.nav-dropdown'))
+        document.getElementById('nav-dropdown').classList.remove('open');
+});
+
+async function init() {
+    await loadAll();
+    renderTimeline();
+    renderStats();
+    renderSessions();
+}
+init();
+</script>
+</body>
+</html>
