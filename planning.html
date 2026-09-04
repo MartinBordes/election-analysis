@@ -299,8 +299,9 @@ async function recalculate() {
     let p1Remaining = budgetP1;
     let inP2 = false;
 
-    const t1Ids = new Set(poolPhase1.map(a => a.id));
-    const poolPhase3 = buildPoolT2().filter(a => !t1Ids.has(a.id));
+    // Pool T2 : exclure seulement les adresses qui auront eu 2 passages (P1 + P2)
+    // Calculé après la boucle P1/P2, donc on le construit juste avant la phase 3
+    let poolPhase3 = [];
 
     const newSessions = [];
     let ws = new Date(startDate);
@@ -320,6 +321,11 @@ async function recalculate() {
             const nMil = milPerSession(slot.date, slot.isWe);
             let pool, passage, phaseLabel;
             if (isPostT1) {
+                // Construire le pool T2 au premier passage (exclure seulement les adresses avec 2 passages)
+                if (!poolPhase3.length) {
+                    const doneP2 = p2Used; // adresses ayant eu P1 + P2
+                    poolPhase3 = buildPoolT2().filter(a => !doneP2.has(a.id));
+                }
                 pool = poolPhase3; passage = 1;
                 phaseLabel = 'Entre-deux-tours — Front républicain';
             } else {
