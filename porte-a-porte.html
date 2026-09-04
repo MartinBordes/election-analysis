@@ -860,8 +860,9 @@ function findBureauLayer(bId) {
 
 // === GEOMETRY ===
 function precomputeBureaux() {
-    if (!BUREAUX) return;
     ADDRESSES.forEach(a => {
+        if (a.bv !== undefined) { a._bureau = a.bv; return; }
+        if (!BUREAUX) return;
         const pt = [a.lon, a.lat];
         for (const f of BUREAUX.features) if (pointInPolygon(pt, f.geometry)) { a._bureau = f.properties.bureau; return; }
         a._bureau = null;

@@ -160,7 +160,7 @@ function portesFaites(bureau) {
         const a = addresses.find(x => x.id === id);
         if (!a) continue;
         // On utilise le bureau pré-calculé si disponible
-        const aBureau = a._bureau;
+        const aBureau = a.bv;
         if (aBureau !== undefined && aBureau !== bureau) continue;
         if (aBureau === undefined) continue;
         if (v.pap && v.pap.status === 'approved') total += (a.lgts || 1);
@@ -365,7 +365,7 @@ function renderStats() {
     for (const [id, v] of Object.entries(visites)) {
         if (v.pap && v.pap.status === 'approved') {
             const a = addresses.find(x => x.id === id);
-            if (a && a._bureau) bureauxWithVisits.add(a._bureau);
+            if (a && a.bv) bureauxWithVisits.add(a.bv);
         }
     }
 
