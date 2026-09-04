@@ -52,6 +52,7 @@ body { font-family: 'Stack Sans', Arial, sans-serif; color: var(--lfi-noir); bac
 .sc-addrs .addr-lgts { color: var(--lfi-gris2); }
 .sc-summary { font-size: 12px; color: var(--lfi-gris2); margin-top: 4px; }
 .sc-summary b { color: var(--lfi-noir); }
+.sc-toggle { color: var(--lfi-violet); font-size: 12px; font-weight: 600; cursor: pointer; padding: 4px 0; }
 .nav-menu-btn { position: fixed; top: 10px; right: 10px; z-index: 10000; width: 44px; height: 44px; border: 1.5px solid var(--lfi-violet-light); border-radius: 50%; background: rgba(255,252,244,0.95); color: var(--lfi-violet); font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(76,2,151,0.2); }
 .nav-dropdown { display: none; position: fixed; top: 62px; right: 10px; z-index: 10000; background: rgba(255,252,244,0.97); border-radius: 10px; border: 1.5px solid var(--lfi-violet-light); box-shadow: 0 4px 16px rgba(76,2,151,0.2); overflow: hidden; min-width: 160px; }
 .nav-dropdown.open { display: block; }
@@ -380,15 +381,14 @@ async function recalculate() {
             }
 
             const totalLgts = selected.reduce((s,a)=>s+(a.lgts||1),0);
-            const addrList = selected.slice(0,5).map(a=>`${a.adr} (~${a.lgts||1})`).join(', ');
-            const extra = selected.length>5 ? ` +${selected.length-5} adresses` : '';
+            const addrList = selected.map(a=>`${a.adr} (~${a.lgts||1})`).join(' | ');
             const bureau = selected[0].bureau;
 
             newSessions.push({
                 date: slot.date.toISOString().split('T')[0],
                 bureau, phase: phaseLabel,
                 type: slot.isWe ? 'Weekend' : 'Soir',
-                adresses_cibles: addrList + extra,
+                adresses_cibles: addrList,
                 portes_estimees: totalLgts,
                 statut: 'planned',
                 notes: `Passage ${passage} · ${selected.length} adresses · ${nMil} militants`,
@@ -436,6 +436,27 @@ function renderStats() {
         <div class="stat-card"><div class="num">${portesFaites.toLocaleString()}</div><div class="label">Portes terrain</div></div>`;
 }
 
+function renderAddrs(cibles, sessionId) {
+    if (!cibles) return '';
+    const addrs = cibles.split(' | ');
+    const SHOW = 3;
+    if (addrs.length <= SHOW) {
+        return `<div class="sc-addrs">${addrs.map(a => `<div class="addr-item">${a}</div>`).join('')}</div>`;
+    }
+    const visible = addrs.slice(0, SHOW).map(a => `<div class="addr-item">${a}</div>`).join('');
+    const hidden = addrs.slice(SHOW).map(a => `<div class="addr-item">${a}</div>`).join('');
+    return `<div class="sc-addrs">
+        ${visible}
+        <div id="more-${sessionId}" style="display:none;">${hidden}</div>
+        <div class="sc-toggle" onclick="
+            var el=document.getElementById('more-${sessionId}');
+            var open=el.style.display!=='none';
+            el.style.display=open?'none':'block';
+            this.textContent=open?'Voir les ${addrs.length - SHOW} autres adresses ▼':'Masquer ▲';
+        ">Voir les ${addrs.length - SHOW} autres adresses ▼</div>
+    </div>`;
+}
+
 function renderSessions() {
     let html='', lastW='';
     for (const s of sessions) {
@@ -462,7 +483,7 @@ function renderSessions() {
                 <span class="sc-bureau">Bureau ${s.bureau}</span>
                 <span class="sc-badge ${passageNum===1?'p1':'p2'}">Passage ${passageNum}</span>
             </div>
-            <div class="sc-addrs">${(s.adresses_cibles||'').split(', ').map(a=>`<div class="addr-item">${a}</div>`).join('')}</div>
+            ${renderAddrs(s.adresses_cibles, s.id)}
             <div class="sc-summary"><b>${s.portes_estimees}</b> logements · ${s.notes||''}</div>
         </div>`;
     }
