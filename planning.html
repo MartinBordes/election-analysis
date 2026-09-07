@@ -185,15 +185,21 @@ function dist(a,b) { return Math.sqrt((a.lat-b.lat)**2+(a.lon-b.lon)**2); }
 const SEUIL_LGTS = 10;
 const BASCULE_P2 = new Date('2027-02-01');
 
+const SEUIL_VOTANTS = 5; // moins de 5 votants = foyer non électoral, on n'y va pas
+
 function addrPriority(a, fallbackScore) {
-    // Score par adresse = csv_score × votants (exclut naturellement les foyers avec peu d'électorat)
+    // Score par adresse = csv_score × votants
+    // Si votants < seuil → retourne 0 (exclu du pool)
     const csv = addrScoreLookup[a.id];
-    if (csv && csv.votants > 0) return csv.score * csv.votants;
+    if (csv) {
+        if (csv.votants < SEUIL_VOTANTS) return 0; // foyer de travailleurs, étrangers, etc.
+        return csv.score * csv.votants;
+    }
     return fallbackScore;
 }
 
 function buildPoolT1() {
-    // Adresses 10+ lgts pas encore visitées, triées par score de priorité
+    // Adresses 10+ lgts pas encore visitées, score > 0 (exclut foyers non électoraux)
     const pool = [];
     for (const a of addresses) {
         if (!a.bv || !bureauStats[a.bv]) continue;
@@ -201,14 +207,16 @@ function buildPoolT1() {
         if (lgts < SEUIL_LGTS) continue;
         if (visitCount(a.id) >= 1) continue;
         const bs = bureauStats[a.bv];
-        pool.push({...a, score: addrPriority(a, bs.score_recup * lgts), bureau: a.bv});
+        const score = addrPriority(a, bs.score_recup * lgts);
+        if (score <= 0) continue; // votants insuffisants
+        pool.push({...a, score, bureau: a.bv});
     }
     pool.sort((a, b) => b.score - a.score);
     return pool;
 }
 
 function buildPoolT2() {
-    // Toutes les adresses 10+ lgts, triées par score de priorité
+    // Adresses 10+ lgts, score > 0 (exclut foyers non électoraux)
     const pool = [];
     for (const a of addresses) {
         if (!a.bv || !bureauStats[a.bv]) continue;
@@ -217,7 +225,7 @@ function buildPoolT2() {
         const bs = bureauStats[a.bv];
         const fallback = (bs.gain_voix || 0) * lgts;
         const score = addrPriority(a, fallback);
-        if (score <= 0) continue;
+        if (score <= 0) continue; // votants insuffisants
         pool.push({...a, score, bureau: a.bv});
     }
     pool.sort((a, b) => b.score - a.score);
