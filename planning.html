@@ -94,6 +94,8 @@ const JOURS=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
 const MOIS=['jan','fév','mars','avr','mai','juin','juil','août','sept','oct','nov','déc'];
 
 let sessions=[], addresses=[], bureauStats={}, visites={}, planningRef=[], csvData=[], addrScoreLookup={};
+// Militants personnalisés par session : clé = "date|type", valeur = nb militants
+let customMilitants = {};
 
 function parseCSVLine(line) {
     const result = []; let inQ = false, cur = '';
@@ -389,7 +391,9 @@ async function recalculate() {
         for (const slot of slots) {
             if (slot.date < startDate || slot.date > END) continue;
 
-            const nMil = milPerSession(slot.date, slot.isWe);
+            // Militants : valeur personnalisée si disponible, sinon calcul auto
+            const slotKey = slot.date.toISOString().split('T')[0] + '|' + (slot.isWe ? 'Weekend' : 'Soir');
+            const nMil = customMilitants[slotKey] || milPerSession(slot.date, slot.isWe);
             let pool, passage, phaseLabel;
             if (isPostT1) {
                 // Construire le pool T2 au premier passage (exclure seulement les adresses avec 2 passages)
@@ -502,11 +506,14 @@ async function recalculate() {
     render();
 }
 
-function updateCap(input, sid, isWe) {
+function updateCap(input, sid, isWe, dateStr) {
     const n = Math.max(1, parseInt(input.value) || 1);
     const portes = n * (isWe ? 70 : 40);
     const el = document.getElementById('cap-' + sid);
-    if (el) el.innerHTML = `Capacité : <b>${portes}</b> portes (${n} × ${isWe ? 70 : 40})`;
+    if (el) el.innerHTML = `Capacité : <b>${portes}</b> portes (${n} × ${isWe ? 70 : 40}) — <span style="color:var(--lfi-violet);font-weight:600;">⟳ Cliquez "Mettre à jour" pour recalculer les adresses</span>`;
+    // Stocker la valeur personnalisée
+    const key = dateStr + '|' + (isWe ? 'Weekend' : 'Soir');
+    customMilitants[key] = n;
 }
 
 // === RENDER ===
@@ -652,7 +659,9 @@ function renderSessions() {
         const isWe = s.type === 'Weekend';
         const horaire = isWe ? '15h–18h' : '18h30–20h';
         const milMatch = (s.notes||'').match(/(\d+) militants/);
-        const nMilDef = milMatch ? parseInt(milMatch[1]) : (isWe ? 6 : 3);
+        const milAuto = milMatch ? parseInt(milMatch[1]) : (isWe ? 6 : 3);
+        const slotKey2 = s.date + '|' + s.type;
+        const nMilDef = customMilitants[slotKey2] || milAuto;
         const capDef = nMilDef * (isWe ? 70 : 40);
         const sid = s.id || Math.random().toString(36).slice(2);
 
@@ -670,7 +679,7 @@ function renderSessions() {
                 <span style="font-size:12px;display:flex;align-items:center;gap:4px;">
                     <input type="number" min="1" max="20" value="${nMilDef}"
                         style="width:42px;border:1px solid #ccc;border-radius:4px;padding:2px 4px;font-size:12px;text-align:center;"
-                        oninput="updateCap(this,'${sid}',${isWe?1:0})">
+                        oninput="updateCap(this,'${sid}',${isWe?1:0},'${s.date}')">
                     <span>militants</span>
                 </span>
             </div>
