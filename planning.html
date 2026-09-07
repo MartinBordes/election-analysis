@@ -93,14 +93,68 @@ const PORTES_IMM=50, PORTES_PAV=20;
 const JOURS=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
 const MOIS=['jan','fév','mars','avr','mai','juin','juil','août','sept','oct','nov','déc'];
 
-let sessions=[], addresses=[], bureauStats={}, visites={}, planningRef=[];
+let sessions=[], addresses=[], bureauStats={}, visites={}, planningRef=[], csvData=[], addrScoreLookup={};
+
+function parseCSVLine(line) {
+    const result = []; let inQ = false, cur = '';
+    for (const ch of line) {
+        if (ch === '"') { inQ = !inQ; }
+        else if (ch === ',' && !inQ) { result.push(cur); cur = ''; }
+        else cur += ch;
+    }
+    result.push(cur);
+    return result;
+}
+
+function parseCSVData(text) {
+    const lines = text.split('\n').filter(l => l.trim());
+    if (!lines.length) return [];
+    const headers = parseCSVLine(lines[0]).map(h => h.replace(/^﻿/, '').trim());
+    return lines.slice(1).map(line => {
+        const vals = parseCSVLine(line);
+        const obj = {};
+        headers.forEach((h, i) => obj[h] = (vals[i] || '').trim());
+        return obj;
+    }).filter(r => Object.values(r)[1]); // exclure lignes sans nom de rue
+}
+
+function normalizeAddr(s) {
+    return s.toLowerCase()
+        .normalize('NFD').replace(/[̀-ͯ]/g, '')
+        .replace(/\s+/g, ' ').trim();
+}
+
+function buildAddrScoreLookup(data, addrs) {
+    // Index CSV par "numéro rue" normalisé — plusieurs lignes peuvent avoir la même adresse
+    const csvMap = {};
+    for (const row of data) {
+        // Colonne 1 = Numéro, colonne 2 = Addresse (peu importe l'encodage du header)
+        const vals = Object.values(row);
+        const num = (vals[0] || '').trim();
+        const rue = (vals[1] || '').trim();
+        if (!rue) continue;
+        const key = normalizeAddr(`${num} ${rue}`);
+        if (!csvMap[key]) csvMap[key] = { score: 0, votants: 0 };
+        // Score : prendre le max si plusieurs entrées, votants : sommer
+        csvMap[key].score = Math.max(csvMap[key].score, parseInt(row['Score']) || 0);
+        csvMap[key].votants += parseInt(row['Nombre de votant']) || 0;
+    }
+    const lookup = {};
+    for (const a of addrs) {
+        const key = normalizeAddr(a.adr || '');
+        const entry = csvMap[key];
+        if (entry) lookup[a.id] = { score: entry.score, votants: entry.votants };
+    }
+    return lookup;
+}
 
 async function loadAll() {
-    const [sR,vR,aR,bR,prR] = await Promise.all([
+    const [sR,vR,aR,bR,prR,csvR] = await Promise.all([
         fetch(`${SB_URL}/rest/v1/sessions?select=*&order=date`,{headers:SB_H}),
         fetch(`${SB_URL}/rest/v1/visites?select=*`,{headers:SB_H}),
         fetch('adresses_nanterre.json'), fetch('bureau_stats_calendrier.json'),
         fetch(`${SB_URL}/rest/v1/planning_reference?select=*&order=date`,{headers:SB_H}),
+        fetch('campaign_addrs.csv').catch(() => null),
     ]);
     sessions = await sR.json();
     const vRows = await vR.json();
@@ -111,6 +165,10 @@ async function loadAll() {
     addresses = await aR.json();
     bureauStats = await bR.json();
     planningRef = await prR.json();
+    if (csvR && csvR.ok) {
+        csvData = parseCSVData(await csvR.text());
+        addrScoreLookup = buildAddrScoreLookup(csvData, addresses);
+    }
 }
 
 // === ALGO DE PLANIFICATION (pool global, pas par bureau) ===
@@ -125,32 +183,40 @@ function dist(a,b) { return Math.sqrt((a.lat-b.lat)**2+(a.lon-b.lon)**2); }
 const SEUIL_LGTS = 10;
 const BASCULE_P2 = new Date('2027-02-01');
 
+function addrPriority(a, fallbackScore) {
+    // Score par adresse = csv_score × votants (exclut naturellement les foyers avec peu d'électorat)
+    const csv = addrScoreLookup[a.id];
+    if (csv && csv.votants > 0) return csv.score * csv.votants;
+    return fallbackScore;
+}
+
 function buildPoolT1() {
-    // Adresses 10+ lgts pas encore visitées, triées par score_recup × logements
+    // Adresses 10+ lgts pas encore visitées, triées par score de priorité
     const pool = [];
     for (const a of addresses) {
         if (!a.bv || !bureauStats[a.bv]) continue;
         const lgts = a.lgts || 1;
         if (lgts < SEUIL_LGTS) continue;
-        if (visitCount(a.id) >= 1) continue; // déjà fait sur le terrain
+        if (visitCount(a.id) >= 1) continue;
         const bs = bureauStats[a.bv];
-        pool.push({...a, score: bs.score_recup * lgts, bureau: a.bv});
+        pool.push({...a, score: addrPriority(a, bs.score_recup * lgts), bureau: a.bv});
     }
     pool.sort((a, b) => b.score - a.score);
     return pool;
 }
 
 function buildPoolT2() {
-    // Toutes les adresses 10+ lgts, triées par gain_voix_bureau × logements
+    // Toutes les adresses 10+ lgts, triées par score de priorité
     const pool = [];
     for (const a of addresses) {
         if (!a.bv || !bureauStats[a.bv]) continue;
         const lgts = a.lgts || 1;
         if (lgts < SEUIL_LGTS) continue;
         const bs = bureauStats[a.bv];
-        const scoreT2 = (bs.gain_voix || 0) * lgts;
-        if (scoreT2 <= 0) continue;
-        pool.push({...a, score: scoreT2, scoreT2, bureau: a.bv});
+        const fallback = (bs.gain_voix || 0) * lgts;
+        const score = addrPriority(a, fallback);
+        if (score <= 0) continue;
+        pool.push({...a, score, bureau: a.bv});
     }
     pool.sort((a, b) => b.score - a.score);
     return pool;
@@ -367,9 +433,8 @@ async function recalculate() {
             }
             if (!pool.length) continue;
 
-            // Capacité + 40% de marge pour que les militants aient toujours un bâtiment suivant
-            const firstLgts = pool[0]?.lgts || 1;
-            const capacity = Math.round(nMil * (firstLgts >= 6 ? PORTES_IMM : PORTES_PAV) * 1.4);
+            // Capacité : 70 portes/militant le week-end, 40 en semaine (sans bonus)
+            const capacity = nMil * (slot.isWe ? 70 : 40);
 
             const selected = pickSession(pool, capacity, usedZones);
             if (!selected.length) continue;
@@ -435,6 +500,13 @@ async function recalculate() {
 
     btn.disabled=false; btn.textContent='Mettre à jour le planning';
     render();
+}
+
+function updateCap(input, sid, isWe) {
+    const n = Math.max(1, parseInt(input.value) || 1);
+    const portes = n * (isWe ? 70 : 40);
+    const el = document.getElementById('cap-' + sid);
+    if (el) el.innerHTML = `Capacité : <b>${portes}</b> portes (${n} × ${isWe ? 70 : 40})`;
 }
 
 // === RENDER ===
@@ -577,6 +649,12 @@ function renderSessions() {
         const pCls=s.phase.includes('Inscr')?'inscr':s.phase.includes('1er')?'t1':'t2';
         const pShort=s.phase.includes('Inscr')?'Inscriptions':s.phase.includes('1er')?'1er tour':'Front rép.';
         const passageNum = s.notes && s.notes.includes('Passage 2') ? 2 : 1;
+        const isWe = s.type === 'Weekend';
+        const horaire = isWe ? '15h–18h' : '18h30–20h';
+        const milMatch = (s.notes||'').match(/(\d+) militants/);
+        const nMilDef = milMatch ? parseInt(milMatch[1]) : (isWe ? 6 : 3);
+        const capDef = nMilDef * (isWe ? 70 : 40);
+        const sid = s.id || Math.random().toString(36).slice(2);
 
         html+=`<div class="session-card">
             <div class="sc-top">
@@ -587,8 +665,20 @@ function renderSessions() {
                 <span class="sc-bureau">Bureau ${s.bureau}</span>
                 <span class="sc-badge ${passageNum===1?'p1':'p2'}">Passage ${passageNum}</span>
             </div>
-            ${renderAddrs(s.adresses_cibles, s.id)}
-            <div class="sc-summary"><b>${s.portes_estimees}</b> logements · ${s.notes||''}</div>
+            <div class="sc-top" style="margin-top:4px;align-items:center;">
+                <span style="font-size:12px;color:var(--lfi-gris2);">⏰ ${horaire}</span>
+                <span style="font-size:12px;display:flex;align-items:center;gap:4px;">
+                    <input type="number" min="1" max="20" value="${nMilDef}"
+                        style="width:42px;border:1px solid #ccc;border-radius:4px;padding:2px 4px;font-size:12px;text-align:center;"
+                        oninput="updateCap(this,'${sid}',${isWe?1:0})">
+                    <span>militants</span>
+                </span>
+            </div>
+            <div id="cap-${sid}" class="sc-summary" style="margin-top:2px;">
+                Capacité : <b>${capDef}</b> portes (${nMilDef} × ${isWe?70:40})
+            </div>
+            ${renderAddrs(s.adresses_cibles, sid)}
+            <div class="sc-summary"><b>${s.portes_estimees}</b> logements planifiés · ${s.notes||''}</div>
         </div>`;
     }
     document.getElementById('sessions').innerHTML=html||'<p style="padding:20px;color:#999;">Cliquez "Mettre à jour" pour générer le planning.</p>';
