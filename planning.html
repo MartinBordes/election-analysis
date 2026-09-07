@@ -120,32 +120,54 @@ function parseCSVData(text) {
     }).filter(r => Object.values(r)[1]); // exclure lignes sans nom de rue
 }
 
-function normalizeAddr(s) {
-    return s.toLowerCase()
-        .normalize('NFD').replace(/[̀-ͯ]/g, '')
-        .replace(/\s+/g, ' ').trim();
+function normAddr(s) {
+    // Normalisation robuste : enlève accents, standardise abréviations, supprime ponctuation
+    if (!s) return '';
+    s = s.normalize('NFD').replace(/[̀-ͯ]/g, '');
+    s = s.toLowerCase().trim();
+    s = s.replace(/\bbd\b/g, 'boulevard').replace(/\bav\b/g, 'avenue')
+         .replace(/\ball\b/g, 'allee').replace(/\bpl\b/g, 'place');
+    s = s.replace(/['\-]/g, ' ').replace(/\s+/g, ' ').trim();
+    return s;
 }
 
 function buildAddrScoreLookup(data, addrs) {
-    // Index CSV par "numéro rue" normalisé — plusieurs lignes peuvent avoir la même adresse
-    const csvMap = {};
+    // Index 1 : par adresse normalisée
+    const csvMapStr = {};
+    // Index 2 : par coordonnées pour fallback
+    const csvCoords = [];
+
     for (const row of data) {
-        // Colonne 1 = Numéro, colonne 2 = Addresse (peu importe l'encodage du header)
         const vals = Object.values(row);
         const num = (vals[0] || '').trim();
         const rue = (vals[1] || '').trim();
         if (!rue) continue;
-        const key = normalizeAddr(`${num} ${rue}`);
-        if (!csvMap[key]) csvMap[key] = { score: 0, votants: 0 };
-        // Score : prendre le max si plusieurs entrées, votants : sommer
-        csvMap[key].score = Math.max(csvMap[key].score, parseInt(row['Score']) || 0);
-        csvMap[key].votants += parseInt(row['Nombre de votant']) || 0;
+        const key = normAddr(`${num} ${rue}`);
+        const score = parseInt(row['Score']) || 0;
+        const votants = parseInt(row['Nombre de votant']) || 0;
+        if (!csvMapStr[key]) csvMapStr[key] = { score: 0, votants: 0 };
+        csvMapStr[key].score = Math.max(csvMapStr[key].score, score);
+        csvMapStr[key].votants += votants;
+        const lat = parseFloat(row['Latitude']), lon = parseFloat(row['Longitude']);
+        if (lat && lon) csvCoords.push({ lat, lon, score, votants });
     }
+
     const lookup = {};
+    const THRESH = 0.00027; // ~30m
     for (const a of addrs) {
-        const key = normalizeAddr(a.adr || '');
-        const entry = csvMap[key];
-        if (entry) lookup[a.id] = { score: entry.score, votants: entry.votants };
+        // Essai 1 : matching texte normalisé
+        const key = normAddr(a.adr || '');
+        if (csvMapStr[key]) {
+            lookup[a.id] = { score: csvMapStr[key].score, votants: csvMapStr[key].votants };
+            continue;
+        }
+        // Essai 2 : fallback coordonnées
+        let bestD = THRESH, best = null;
+        for (const c of csvCoords) {
+            const d = Math.sqrt((a.lat-c.lat)**2 + (a.lon-c.lon)**2);
+            if (d < bestD) { bestD = d; best = c; }
+        }
+        if (best) lookup[a.id] = { score: best.score, votants: best.votants };
     }
     return lookup;
 }
