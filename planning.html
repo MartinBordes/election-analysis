@@ -350,13 +350,16 @@ function pickSession(pool, capacity, usedZones, quartierCount, maxPerQuartier, q
         const q = getQuartier(pool[i]);
         if (gapOkFor(pool[i]) && (quartierCount.get(q) || 0) < maxPerQuartier) { seedIdx = i; break; }
     }
-    // Si le seed trouvé est de mauvaise qualité → chercher mieux en ignorant le gap quartier
+    // Si le seed trouvé est de mauvaise qualité → chercher mieux en ignorant le GAP quartier
+    // mais en respectant toujours la LIMITE HEBDO par quartier
     if (seedIdx >= 0 && pool[seedIdx].score < MIN_SEED_PRIORITY) {
         for (let i = 0; i < pool.length; i++) {
-            if (pool[i].score >= MIN_SEED_PRIORITY) {
-                const bvLast = bvLastDate.get(pool[i].bv);
-                if (!bvLast || (sessionDate - bvLast >= GAP_MS)) { seedIdx = i; break; }
-            }
+            if (pool[i].score < MIN_SEED_PRIORITY) continue;
+            const bvLast = bvLastDate.get(pool[i].bv);
+            if (bvLast && (sessionDate - bvLast < GAP_MS)) continue; // gap BV requis
+            const q = getQuartier(pool[i]);
+            if ((quartierCount.get(q) || 0) >= maxPerQuartier) continue; // limite hebdo respectée
+            seedIdx = i; break;
         }
     }
     // Fallback 1 : seulement les gaps (ignore limite hebdo)
