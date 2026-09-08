@@ -420,11 +420,10 @@ function pickSession(pool, capacity, usedZones, quartierCount, maxPerQuartier, q
         return true;
     }
 
-    // 1re passe : 400m, score CSV >= 45
-    while (left > 0) { if (!applyFill(fillRound(0.0036, 45))) break; }
-    // 2e passe si session courte (<3 adresses) : 600m, score >= 40
+    // Fill : limité à 20 adresses max pour éviter les boucles trop longues
+    let fillCount = 0;
+    while (left > 0 && fillCount < 20) { if (!applyFill(fillRound(0.0036, 45))) break; fillCount++; }
     if (selected.length < 3 && left > 0) applyFill(fillRound(0.0054, 40));
-    // 3e passe si toujours court : 800m, toute adresse qualifiée
     if (selected.length < 2 && left > 0) applyFill(fillRound(0.0072, 0));
     // Retirer du pool
     [...used].sort((a,b)=>b-a).forEach(i=>pool.splice(i,1));
@@ -526,7 +525,8 @@ async function recalculate() {
         clusterScoreMap[poolPhase1[i].id] = s;
     }
 
-    // Pré-construire le pool P2 UNE SEULE FOIS (évite de le reconstruire pour chaque slot)
+    // Pool P2 pré-construit : uniquement adresses matchées CSV (même qualité que P1)
+    // → ~514 adresses max, pas 8651 (évite l'explosion du fill loop)
     const poolP2base = [];
     for (const a of addresses) {
         if (!a.bv || !bureauStats[a.bv]) continue;
@@ -534,20 +534,12 @@ async function recalculate() {
         if (blacklist.has(a.id)) continue;
         if (visitCount(a.id) >= 2) continue;
         const csv = addrScoreLookup[a.id];
-        let score;
-        if (csv) {
-            if (csv.votants < SEUIL_VOTANTS) continue;
-            const ratio = csv.votants / Math.max(a.lgts||1, 1);
-            if (ratio < 0.15) continue;
-            score = Math.pow(csv.score, 1.5) * Math.sqrt(csv.votants);
-        } else {
-            const bs = bureauStats[a.bv];
-            score = bs.score_recup * (a.lgts||1) * 0.05;
-        }
+        if (!csv || csv.votants < SEUIL_VOTANTS) continue;
+        const ratio = csv.votants / Math.max(a.lgts||1, 1);
+        if (ratio < 0.15) continue;
+        const score = Math.pow(csv.score, 1.5) * Math.sqrt(csv.votants);
         if (score <= 0) continue;
         poolP2base.push({...a, score, bureau: a.bv});
-        // Ajouter aussi au clusterScoreMap si pas déjà présent
-        if (!clusterScoreMap[a.id]) clusterScoreMap[a.id] = score;
     }
     poolP2base.sort((a, b) => (clusterScoreMap[b.id]||b.score) - (clusterScoreMap[a.id]||a.score));
 
