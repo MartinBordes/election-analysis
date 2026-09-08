@@ -509,6 +509,23 @@ function scheduleWeek(ws, n) {
     return slots.slice(0, n);
 }
 
+function optimizeRoute(addrs) {
+    if (addrs.length <= 2) return addrs;
+    // Nearest-neighbor en partant du bâtiment le plus à l'ouest
+    const rem = [...addrs].sort((a,b) => a.lon - b.lon);
+    const route = [rem.shift()];
+    while (rem.length > 0) {
+        const last = route[route.length-1];
+        let bi = 0, bd = Infinity;
+        for (let i = 0; i < rem.length; i++) {
+            const d = (last.lat-rem[i].lat)**2 + (last.lon-rem[i].lon)**2;
+            if (d < bd) { bd = d; bi = i; }
+        }
+        route.push(rem.splice(bi, 1)[0]);
+    }
+    return route;
+}
+
 async function recalculate() {
     const btn=document.getElementById('ubtn');
     btn.disabled=true; btn.textContent='Calcul en cours...';
@@ -692,9 +709,11 @@ async function recalculate() {
                 }
             }
             const totalLgts = selected.reduce((s,a)=>s+(a.lgts||1),0);
-            const addrList = selected.map(a=>`${a.adr} (~${a.lgts||1})`).join(' | ');
-            const bureau = selected[0].bureau;
-            const quartier = getQuartier(selected[0]);
+            // Optimiser l'ordre de parcours : nearest-neighbor depuis le bâtiment le plus à l'ouest
+            const route = optimizeRoute([...selected]);
+            const addrList = route.map(a=>`${a.adr} (~${a.lgts||1})`).join(' | ');
+            const bureau = route[0].bureau;
+            const quartier = getQuartier(route[0]);
 
             newSessions.push({
                 date: slot.date.toISOString().split('T')[0],
