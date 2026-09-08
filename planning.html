@@ -55,6 +55,7 @@ body { font-family: 'Stack Sans', Arial, sans-serif; color: var(--lfi-noir); bac
 .sc-summary { font-size: 12px; color: var(--lfi-gris2); margin-top: 4px; }
 .sc-summary b { color: var(--lfi-noir); }
 .sc-toggle { color: var(--lfi-violet); font-size: 12px; font-weight: 600; cursor: pointer; padding: 4px 0; }
+.sc-addrs .addr-item button:hover { color: var(--lfi-red) !important; }
 /* Bouton aide */
 .help-btn { position: fixed; top: 10px; right: 10px; z-index: 10000; width: 44px; height: 44px; border: 1.5px solid var(--lfi-violet-light); border-radius: 50%; background: rgba(255,252,244,0.95); color: var(--lfi-violet); font-size: 20px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(76,2,151,0.2); }
 .help-overlay { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 20000; background: rgba(0,0,0,0.5); }
@@ -128,7 +129,7 @@ const PORTES_IMM=50, PORTES_PAV=20;
 const JOURS=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
 const MOIS=['jan','fév','mars','avr','mai','juin','juil','août','sept','oct','nov','déc'];
 
-let sessions=[], addresses=[], bureauStats={}, visites={}, planningRef=[], csvData=[], addrScoreLookup={};
+let sessions=[], addresses=[], bureauStats={}, visites={}, planningRef=[], csvData=[], addrScoreLookup={}, blacklist=new Set();
 // Militants personnalisés par session : clé = "date|type", valeur = nb militants
 let customMilitants = {};
 
@@ -208,12 +209,13 @@ function buildAddrScoreLookup(data, addrs) {
 }
 
 async function loadAll() {
-    const [sR,vR,aR,bR,prR,csvR] = await Promise.all([
+    const [sR,vR,aR,bR,prR,csvR,blR] = await Promise.all([
         fetch(`${SB_URL}/rest/v1/sessions?select=*&order=date`,{headers:SB_H}),
         fetch(`${SB_URL}/rest/v1/visites?select=*`,{headers:SB_H}),
         fetch('adresses_nanterre.json'), fetch('bureau_stats_calendrier.json'),
         fetch(`${SB_URL}/rest/v1/planning_reference?select=*&order=date`,{headers:SB_H}),
         fetch('campaign_addrs.csv').catch(() => null),
+        fetch(`${SB_URL}/rest/v1/blacklist_adresses?select=address_id`,{headers:SB_H}),
     ]);
     sessions = await sR.json();
     const vRows = await vR.json();
@@ -228,6 +230,22 @@ async function loadAll() {
         csvData = parseCSVData(await csvR.text());
         addrScoreLookup = buildAddrScoreLookup(csvData, addresses);
     }
+    const blRows = await blR.json();
+    if (Array.isArray(blRows)) blRows.forEach(r => blacklist.add(r.address_id));
+}
+
+async function toggleBlacklist(addrId, adr) {
+    if (blacklist.has(addrId)) {
+        blacklist.delete(addrId);
+        await fetch(`${SB_URL}/rest/v1/blacklist_adresses?address_id=eq.${addrId}`, {method:'DELETE',headers:SB_H});
+    } else {
+        blacklist.add(addrId);
+        await fetch(`${SB_URL}/rest/v1/blacklist_adresses`, {
+            method:'POST', headers:SB_H,
+            body: JSON.stringify({address_id: addrId, adr})
+        });
+    }
+    render();
 }
 
 // === ALGO DE PLANIFICATION (pool global, pas par bureau) ===
@@ -256,17 +274,20 @@ function addrPriority(a, fallbackScore) {
     return fallbackScore * 0.05;
 }
 
+function isEligibleAddr(a) {
+    return !blacklist.has(a.id);
+}
+
 function buildPoolT1() {
-    // Adresses 10+ lgts pas encore visitées, score > 0 (exclut foyers non électoraux)
     const pool = [];
     for (const a of addresses) {
         if (!a.bv || !bureauStats[a.bv]) continue;
-        const lgts = a.lgts || 1;
-        if (lgts < SEUIL_LGTS) continue;
+        if ((a.lgts||1) < SEUIL_LGTS) continue;
         if (visitCount(a.id) >= 1) continue;
+        if (!isEligibleAddr(a)) continue; // blacklistée
         const bs = bureauStats[a.bv];
-        const score = addrPriority(a, bs.score_recup * lgts);
-        if (score <= 0) continue; // votants insuffisants
+        const score = addrPriority(a, bs.score_recup * (a.lgts||1));
+        if (score <= 0) continue;
         pool.push({...a, score, bureau: a.bv});
     }
     pool.sort((a, b) => b.score - a.score);
@@ -274,16 +295,15 @@ function buildPoolT1() {
 }
 
 function buildPoolT2() {
-    // Adresses 10+ lgts, score > 0 (exclut foyers non électoraux)
     const pool = [];
     for (const a of addresses) {
         if (!a.bv || !bureauStats[a.bv]) continue;
-        const lgts = a.lgts || 1;
-        if (lgts < SEUIL_LGTS) continue;
+        if ((a.lgts||1) < SEUIL_LGTS) continue;
+        if (!isEligibleAddr(a)) continue; // blacklistée
         const bs = bureauStats[a.bv];
-        const fallback = (bs.gain_voix || 0) * lgts;
+        const fallback = (bs.gain_voix || 0) * (a.lgts||1);
         const score = addrPriority(a, fallback);
-        if (score <= 0) continue; // votants insuffisants
+        if (score <= 0) continue;
         pool.push({...a, score, bureau: a.bv});
     }
     pool.sort((a, b) => b.score - a.score);
@@ -340,14 +360,20 @@ function pickSession(pool, capacity, usedZones, quartierCount, maxPerQuartier, q
     const used=new Set([seedIdx]);
     let left=capacity-(seed.lgts||1);
 
+    const FILL_DIST = 0.0009; // ~100m : on ne complète qu'avec des adresses vraiment proches
+    const MIN_SCORE_FILL = 50; // score CSV minimum pour compléter la session
     while (left>0 && used.size<pool.length) {
         const last=selected[selected.length-1];
         let bi=-1, bv=-Infinity;
         for (let i=0;i<pool.length;i++) {
             if (used.has(i)) continue;
-            const d=dist(last,pool[i]);
-            if (d>0.004) continue;
-            const v=(pool[i].lgts||1)/(d+0.00005);
+            const a = pool[i];
+            const d=dist(last,a);
+            if (d > FILL_DIST) continue; // trop loin
+            // Vérifier score CSV minimum
+            const csv = addrScoreLookup[a.id];
+            if (csv && csv.score < MIN_SCORE_FILL) continue; // score trop faible
+            const v=(a.lgts||1)/(d+0.00005);
             if (v>bv) { bv=v; bi=i; }
         }
         if (bi<0) break;
@@ -727,15 +753,33 @@ function renderStats() {
         <div class="stat-card"><div class="num">${portesFaites.toLocaleString()}</div><div class="label">Portes terrain</div></div>`;
 }
 
+function addrItemHtml(raw) {
+    // raw = "17 Allée de l'Arlequin (~181)"
+    const nameMatch = raw.match(/^(.+?)\s*\(~/);
+    const adrName = nameMatch ? nameMatch[1].trim() : raw;
+    // Trouver l'id dans addresses
+    const found = addresses.find(a => a.adr === adrName);
+    if (!found) return `<div class="addr-item">${raw}</div>`;
+    const isBlack = blacklist.has(found.id);
+    const btnStyle = `cursor:pointer;border:none;background:none;font-size:13px;color:${isBlack?'var(--lfi-red)':'#ccc'};padding:0 0 0 4px;`;
+    return `<div class="addr-item" style="display:flex;align-items:center;gap:4px;">
+        <span style="${isBlack?'text-decoration:line-through;color:#aaa;':''}">${raw}</span>
+        <button style="${btnStyle}" title="${isBlack?'Retirer de la blacklist':'Blacklister cette adresse'}"
+            onclick="toggleBlacklist('${found.id}','${adrName.replace(/'/g,"\\'")}')">
+            ${isBlack?'↩':'🚫'}
+        </button>
+    </div>`;
+}
+
 function renderAddrs(cibles, sessionId) {
     if (!cibles) return '';
     const addrs = cibles.split(' | ');
     const SHOW = 3;
     if (addrs.length <= SHOW) {
-        return `<div class="sc-addrs">${addrs.map(a => `<div class="addr-item">${a}</div>`).join('')}</div>`;
+        return `<div class="sc-addrs">${addrs.map(a => addrItemHtml(a)).join('')}</div>`;
     }
-    const visible = addrs.slice(0, SHOW).map(a => `<div class="addr-item">${a}</div>`).join('');
-    const hidden = addrs.slice(SHOW).map(a => `<div class="addr-item">${a}</div>`).join('');
+    const visible = addrs.slice(0, SHOW).map(a => addrItemHtml(a)).join('');
+    const hidden = addrs.slice(SHOW).map(a => addrItemHtml(a)).join('');
     return `<div class="sc-addrs">
         ${visible}
         <div id="more-${sessionId}" style="display:none;">${hidden}</div>
