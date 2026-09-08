@@ -331,7 +331,7 @@ function getQuartier(a) {
 }
 
 function pickSession(pool, capacity, usedZones, quartierCount, maxPerQuartier, quartierLastDate, bvLastDate, sessionDate,
-                    quartierTotalCount, totalSessionsScheduled, quartierShareFraction) {
+                    quartierTotalCount, totalSessionsScheduled, quartierShareFraction, clusterScoreMap) {
     if (!pool.length) return [];
     const GAP_MS = 8 * 864e5; // 8j min
 
@@ -352,18 +352,9 @@ function pickSession(pool, capacity, usedZones, quartierCount, maxPerQuartier, q
         return used / totalSessionsScheduled <= share * 2.0; // tolérance large, guide sans bloquer
     }
 
-    // Pré-calculer le score du cluster autour de chaque candidat (300m)
-    // = somme des scores de toutes les adresses dans le rayon
-    // Choisir le cluster le plus dense/prioritaire, pas juste le meilleur bâtiment isolé
-    const CLUSTER_RADIUS = 0.0027; // ~300m
-    const clusterScores = pool.map((center, i) => {
-        let s = center.score;
-        for (let j = 0; j < pool.length; j++) {
-            if (j === i) continue;
-            if (dist(center, pool[j]) <= CLUSTER_RADIUS) s += pool[j].score;
-        }
-        return s;
-    });
+    // Scores de cluster pré-calculés (passés depuis recalculate, calculés une seule fois)
+    // clusterScoreMap : { address_id → cluster_score }
+    const clusterScores = pool.map(a => clusterScoreMap[a.id] || a.score);
 
     // Sélectionner le seed éligible avec le meilleur score de cluster
     function bestEligibleSeed(checkGapQ, checkBudget, checkWeeklyLimit) {
@@ -523,6 +514,18 @@ async function recalculate() {
     const p2Used = new Set();
     const GAP_MS = 90 * 24 * 3600 * 1000; // 3 mois
 
+    // Pré-calculer les scores de cluster UNE SEULE FOIS (O(n²) mais fait 1x, pas à chaque session)
+    // clusterScore[id] = score propre + somme des scores des adresses dans un rayon de 300m
+    const CLUSTER_RADIUS = 0.0027; // ~300m
+    const clusterScoreMap = {};
+    for (let i = 0; i < poolPhase1.length; i++) {
+        let s = poolPhase1[i].score;
+        for (let j = 0; j < poolPhase1.length; j++) {
+            if (j !== i && dist(poolPhase1[i], poolPhase1[j]) <= CLUSTER_RADIUS) s += poolPhase1[j].score;
+        }
+        clusterScoreMap[poolPhase1[i].id] = s;
+    }
+
     // Pré-calculer la part de sessions par quartier (budget proportionnel au score total)
     const quartierShareFraction = {};
     let totalPoolScore = 0;
@@ -656,7 +659,7 @@ async function recalculate() {
             const capacity = nMil * (slot.isWe ? 70 : 40);
 
             const selected = pickSession(pool, capacity, usedZones, quartierCount, maxPerQuartier, quartierLastDate, bvLastDate, slot.date,
-                quartierTotalCount, totalSessionsScheduled, quartierShareFraction);
+                quartierTotalCount, totalSessionsScheduled, quartierShareFraction, clusterScoreMap);
             if (!selected.length) continue;
             if (selected.length) totalSessionsScheduled++;
 
