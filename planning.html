@@ -274,40 +274,53 @@ function addrPriority(a, fallbackScore) {
     return fallbackScore * 0.05;
 }
 
+const MIN_POOL_SIZE = 100; // seuil pour activer les adresses non-matchées CSV
+
 function isEligibleAddr(a) {
     return !blacklist.has(a.id);
 }
 
-function buildPoolT1() {
-    const pool = [];
+function buildPool(passageFilter, fallbackFn) {
+    // D'abord : uniquement les adresses matchées CSV (score réel)
+    const matched = [], unmatched = [];
     for (const a of addresses) {
         if (!a.bv || !bureauStats[a.bv]) continue;
         if ((a.lgts||1) < SEUIL_LGTS) continue;
-        if (visitCount(a.id) >= 1) continue;
-        if (!isEligibleAddr(a)) continue; // blacklistée
+        if (!isEligibleAddr(a)) continue;
+        if (passageFilter && !passageFilter(a)) continue;
+        const csv = addrScoreLookup[a.id];
         const bs = bureauStats[a.bv];
-        const score = addrPriority(a, bs.score_recup * (a.lgts||1));
-        if (score <= 0) continue;
-        pool.push({...a, score, bureau: a.bv});
+        if (csv) {
+            if (csv.votants < SEUIL_VOTANTS) continue;
+            const score = csv.score * csv.votants;
+            if (score <= 0) continue;
+            matched.push({...a, score, bureau: a.bv});
+        } else {
+            const fb = fallbackFn(a, bs) * 0.05;
+            if (fb > 0) unmatched.push({...a, score: fb, bureau: a.bv});
+        }
     }
-    pool.sort((a, b) => b.score - a.score);
-    return pool;
+    matched.sort((a, b) => b.score - a.score);
+    // N'ajouter les non-matchées que si pas assez de matchées
+    if (matched.length < MIN_POOL_SIZE) {
+        unmatched.sort((a, b) => b.score - a.score);
+        return [...matched, ...unmatched];
+    }
+    return matched;
+}
+
+function buildPoolT1() {
+    return buildPool(
+        a => visitCount(a.id) === 0,
+        (a, bs) => bs.score_recup * (a.lgts||1)
+    );
 }
 
 function buildPoolT2() {
-    const pool = [];
-    for (const a of addresses) {
-        if (!a.bv || !bureauStats[a.bv]) continue;
-        if ((a.lgts||1) < SEUIL_LGTS) continue;
-        if (!isEligibleAddr(a)) continue; // blacklistée
-        const bs = bureauStats[a.bv];
-        const fallback = (bs.gain_voix || 0) * (a.lgts||1);
-        const score = addrPriority(a, fallback);
-        if (score <= 0) continue;
-        pool.push({...a, score, bureau: a.bv});
-    }
-    pool.sort((a, b) => b.score - a.score);
-    return pool;
+    return buildPool(
+        null,
+        (a, bs) => (bs.gain_voix || 0) * (a.lgts||1)
+    );
 }
 
 // Quartier pré-calculé par point-in-polygon dans adresses_nanterre.json
@@ -360,7 +373,7 @@ function pickSession(pool, capacity, usedZones, quartierCount, maxPerQuartier, q
     const used=new Set([seedIdx]);
     let left=capacity-(seed.lgts||1);
 
-    const FILL_DIST = 0.0009; // ~100m : on ne complète qu'avec des adresses vraiment proches
+    const FILL_DIST = 0.0018; // ~200m
     const MIN_SCORE_FILL = 50; // score CSV minimum pour compléter la session
     while (left>0 && used.size<pool.length) {
         const last=selected[selected.length-1];
