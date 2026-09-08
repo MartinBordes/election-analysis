@@ -327,7 +327,8 @@ function getQuartier(a) {
     return a.quartier || `Q-${Math.round(a.lat*100)}-${Math.round(a.lon*100)}`;
 }
 
-function pickSession(pool, capacity, usedZones, quartierCount, maxPerQuartier, quartierLastDate, bvLastDate, sessionDate) {
+function pickSession(pool, capacity, usedZones, quartierCount, maxPerQuartier, quartierLastDate, bvLastDate, sessionDate,
+                    quartierTotalCount, totalSessionsScheduled, quartierShareFraction) {
     if (!pool.length) return [];
     const GAP_MS = 8 * 864e5; // 8j min
 
@@ -339,36 +340,42 @@ function pickSession(pool, capacity, usedZones, quartierCount, maxPerQuartier, q
         return qOk && bvOk;
     }
 
-    // Seuil de qualité : si le meilleur seed disponible est sous ce score,
-    // on relâche la contrainte quartier pour trouver mieux
-    // ≈ score 60, 20 votants → 60^1.5 × √20 ≈ 2650
+    // Budget proportionnel : un quartier ne peut pas être "en avance" sur sa part cible
+    // Tolérance : on autorise jusqu'à 30% de dépassement de la part théorique
+    function budgetOkFor(q) {
+        if (!quartierShareFraction[q] || totalSessionsScheduled === 0) return true;
+        const share = quartierShareFraction[q] || 0;
+        const used = quartierTotalCount[q] || 0;
+        return used / totalSessionsScheduled <= share * 1.3; // 30% de tolérance
+    }
+
     const MIN_SEED_PRIORITY = 3000;
 
-    // Pass 1 : gap quartier + gap bureau + limite hebdo
+    // Pass 1 : gap + budget + limite hebdo
     let seedIdx = -1;
     for (let i = 0; i < pool.length; i++) {
         const q = getQuartier(pool[i]);
-        if (gapOkFor(pool[i]) && (quartierCount.get(q) || 0) < maxPerQuartier) { seedIdx = i; break; }
+        if (gapOkFor(pool[i]) && budgetOkFor(q) && (quartierCount.get(q) || 0) < maxPerQuartier) { seedIdx = i; break; }
     }
-    // Si le seed trouvé est de mauvaise qualité → chercher mieux en ignorant le GAP quartier
-    // mais en respectant toujours la LIMITE HEBDO par quartier
+    // Si seed de mauvaise qualité → chercher mieux en ignorant le GAP quartier (mais pas le budget ni la limite hebdo)
     if (seedIdx >= 0 && pool[seedIdx].score < MIN_SEED_PRIORITY) {
         for (let i = 0; i < pool.length; i++) {
             if (pool[i].score < MIN_SEED_PRIORITY) continue;
             const bvLast = bvLastDate.get(pool[i].bv);
-            if (bvLast && (sessionDate - bvLast < GAP_MS)) continue; // gap BV requis
+            if (bvLast && (sessionDate - bvLast < GAP_MS)) continue;
             const q = getQuartier(pool[i]);
-            if ((quartierCount.get(q) || 0) >= maxPerQuartier) continue; // limite hebdo respectée
+            if ((quartierCount.get(q) || 0) >= maxPerQuartier) continue;
+            if (!budgetOkFor(q)) continue;
             seedIdx = i; break;
         }
     }
-    // Fallback 1 : seulement les gaps (ignore limite hebdo)
+    // Fallback 1 : gaps ok, ignore budget
     if (seedIdx < 0) {
         for (let i = 0; i < pool.length; i++) {
             if (gapOkFor(pool[i])) { seedIdx = i; break; }
         }
     }
-    // Fallback 2 : au moins le gap bureau
+    // Fallback 2 : gap bureau seulement
     if (seedIdx < 0) {
         for (let i = 0; i < pool.length; i++) {
             const bvLast = bvLastDate.get(pool[i].bv);
@@ -384,6 +391,8 @@ function pickSession(pool, capacity, usedZones, quartierCount, maxPerQuartier, q
     quartierCount.set(q, (quartierCount.get(q) || 0) + 1);
     quartierLastDate.set(q, sessionDate);
     bvLastDate.set(bv, sessionDate);
+    // Incrémenter le compteur global du budget quartier
+    quartierTotalCount[q] = (quartierTotalCount[q] || 0) + 1;
     const seed=pool[seedIdx];
     const selected=[seed];
     const used=new Set([seedIdx]);
@@ -504,6 +513,21 @@ async function recalculate() {
     const p2Used = new Set();
     const GAP_MS = 90 * 24 * 3600 * 1000; // 3 mois
 
+    // Pré-calculer la part de sessions par quartier (budget proportionnel au score total)
+    const quartierShareFraction = {};
+    let totalPoolScore = 0;
+    for (const a of poolPhase1) {
+        const q = getQuartier(a);
+        quartierShareFraction[q] = (quartierShareFraction[q] || 0) + a.score;
+        totalPoolScore += a.score;
+    }
+    for (const q of Object.keys(quartierShareFraction)) {
+        quartierShareFraction[q] /= totalPoolScore; // fraction 0-1
+    }
+    // Compteur global de sessions par quartier pour le suivi du budget
+    const quartierTotalCount = {};
+    let totalSessionsScheduled = 0;
+
     // Calculer le budget total en logements (somme de toutes les sessions possibles)
     let totalBudget = 0;
     let tempWs = new Date(startDate);
@@ -608,7 +632,9 @@ async function recalculate() {
             // Capacité : 70 portes/militant le week-end, 40 en semaine (sans bonus)
             const capacity = nMil * (slot.isWe ? 70 : 40);
 
-            const selected = pickSession(pool, capacity, usedZones, quartierCount, maxPerQuartier, quartierLastDate, bvLastDate, slot.date);
+            const selected = pickSession(pool, capacity, usedZones, quartierCount, maxPerQuartier, quartierLastDate, bvLastDate, slot.date,
+                quartierTotalCount, totalSessionsScheduled, quartierShareFraction);
+            if (selected.length) totalSessionsScheduled++;
             if (!selected.length) continue;
 
             // Enregistrer les dates P1, décrémenter le budget, marquer P2
