@@ -425,12 +425,12 @@ function pickSession(pool, capacity, usedZones, quartierCount, maxPerQuartier, q
     // Si session trop petite : passes supplémentaires avec critères assouplis
     // (rayon et score relâchés pour trouver des adresses bonus proches)
     const lgtsNow = () => selected.reduce((s,a)=>s+(a.lgts||1),0);
-    // Passes supplémentaires si session trop légère — s'applique aussi en P2
+    // Passes supplémentaires si session trop légère (P1 et P2)
     if (lgtsNow() < capacity * 0.4 && left > 0) {
-        while (left > 0 && fillCount < 30) { if (!applyFill(fillRound(0.0036, 38))) break; fillCount++; }
+        while (left > 0 && fillCount < 30) { if (!applyFill(fillRound(0.0036, 30))) break; fillCount++; }
     }
     if (lgtsNow() < capacity * 0.4 && left > 0) {
-        while (left > 0 && fillCount < 35) { if (!applyFill(fillRound(0.0036, 35))) break; fillCount++; }
+        while (left > 0 && fillCount < 35) { if (!applyFill(fillRound(0.0036, 20))) break; fillCount++; }
     }
 
     // Retirer du pool
@@ -670,11 +670,11 @@ async function recalculate() {
                 quartierTotalCount, totalSessionsScheduled, quartierShareFraction, clusterScoreMap);
             if (!selected.length) continue;
 
-            // En P1 : annuler les sessions trop petites (<20 lgts/militant)
-            // En P2/P3 : garder même les petites sessions (l'élection approche)
-            if (!inP2 && !isPostT1) {
+            // Annuler les sessions trop petites (<20 lgts/militant) en P1 et P2
+            // En P3 (entre-deux-tours) : garder toutes les sessions
+            if (!isPostT1) {
                 const lgts = selected.reduce((s,a)=>s+(a.lgts||1),0);
-                if (lgts < nMil * 20) continue; // trop petite, skip
+                if (lgts < nMil * 20) continue;
             }
 
             if (selected.length) totalSessionsScheduled++;
