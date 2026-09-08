@@ -566,11 +566,15 @@ async function recalculate() {
     const quartierTotalCount = {};
     let totalSessionsScheduled = 0;
 
+    console.log('Setup before budget loop');
     // Calculer le budget total en logements (somme de toutes les sessions possibles)
     let totalBudget = 0;
     let tempWs = new Date(startDate);
     tempWs.setDate(tempWs.getDate() - tempWs.getDay() + 1);
+    let _budgetIter = 0;
     while (tempWs < T1) {
+        _budgetIter++;
+        if (_budgetIter > 100) { console.error('Budget loop infinite!'); break; }
         if (tempWs.getTime() + 6*864e5 >= startDate.getTime()) {
             const n = sessionsPerWeek(tempWs);
             const slots = scheduleWeek(tempWs, n);
@@ -583,7 +587,8 @@ async function recalculate() {
         }
         tempWs.setDate(tempWs.getDate() + 7);
     }
-    weekCounter = 0; // reset le compteur de semaines après le calcul
+    weekCounter = 0;
+    console.log('Budget loop done, iters='+_budgetIter+', budget='+totalBudget);
 
     // Budget P1 = 50% du total - portes déjà faites sur le terrain
     let portesTerrain = 0;
@@ -607,7 +612,12 @@ async function recalculate() {
     let ws = new Date(startDate);
     ws.setDate(ws.getDate() - ws.getDay() + 1);
 
+    console.log('Starting main while loop, ws='+ws.toISOString().split('T')[0]);
+    let _mainIter = 0;
     while (ws < END) {
+        _mainIter++;
+        if (_mainIter % 5 === 0) console.log('Week '+_mainIter, ws.toISOString().split('T')[0], 'sessions so far:'+newSessions.length);
+        if (_mainIter > 200) { console.error('Main loop infinite!'); break; }
         if (ws.getTime()+6*864e5 < startDate.getTime()) { ws.setDate(ws.getDate()+7); continue; }
 
         const isPostT1 = ws >= T1;
