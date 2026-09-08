@@ -245,14 +245,15 @@ const BASCULE_P2 = new Date('2027-02-01');
 const SEUIL_VOTANTS = 5; // moins de 5 votants = foyer non électoral, on n'y va pas
 
 function addrPriority(a, fallbackScore) {
-    // Score par adresse = csv_score × votants
-    // Si votants < seuil → retourne 0 (exclu du pool)
+    // Score par adresse = csv_score × votants (données réelles)
+    // Si pas dans le CSV → fallback très pénalisé (×0.05) pour passer après tous les matchés
     const csv = addrScoreLookup[a.id];
     if (csv) {
-        if (csv.votants < SEUIL_VOTANTS) return 0; // foyer de travailleurs, étrangers, etc.
+        if (csv.votants < SEUIL_VOTANTS) return 0;
         return csv.score * csv.votants;
     }
-    return fallbackScore;
+    // Adresse non matchée : on ne sait pas si elle est prioritaire, priorité très basse
+    return fallbackScore * 0.05;
 }
 
 function buildPoolT1() {
