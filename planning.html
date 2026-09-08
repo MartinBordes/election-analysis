@@ -269,37 +269,66 @@ const BV_QUARTIER = {
     37:'Les-Pâtis', 38:'Les-Pâtis', 39:'Les-Pâtis', 40:'Les-Pâtis',
 };
 
+// Liste ordonnée des quartiers pour la rotation
+const QUARTIERS_LIST = [
+    'Pablo-Picasso','Centre-Ville','Vieux-Nanterre','Voltaire',
+    'Rouget-de-Lisle','Mont-Valérien','Les-Pâtis','Balzac',
+    'Vieux-Pont','Provinces-Françaises'
+];
+let quartierRRIdx = 0; // index global du round-robin
+
 function getQuartier(a) {
     return BV_QUARTIER[a.bv] || `Q-${Math.round(a.lat*100)}-${Math.round(a.lon*100)}`;
 }
 
-function pickSession(pool, capacity, usedZones, quartierCount, maxPerQuartier, quartierLastDate, sessionDate) {
-    if (!pool.length) return [];
-    const GAP_MS = 7 * 864e5; // 7 jours minimum entre 2 sessions dans le même quartier
-    // Choisir un seed : quartier avec gap respecté ET sous la limite hebdo
-    let seedIdx = -1;
+// Index pool par quartier pour accès rapide
+function indexByQuartier(pool) {
+    const idx = {};
     for (let i = 0; i < pool.length; i++) {
         const q = getQuartier(pool[i]);
+        if (!idx[q]) idx[q] = [];
+        idx[q].push(i);
+    }
+    return idx;
+}
+
+function pickSession(pool, capacity, usedZones, quartierCount, maxPerQuartier, quartierLastDate, sessionDate) {
+    if (!pool.length) return [];
+    const GAP_MS = 7 * 864e5;
+    const byQ = indexByQuartier(pool);
+
+    // Chercher le prochain quartier dans la rotation qui respecte gap + limite
+    let chosenQ = null;
+    const nQ = QUARTIERS_LIST.length;
+    for (let attempt = 0; attempt < nQ * 2; attempt++) {
+        const q = QUARTIERS_LIST[(quartierRRIdx + attempt) % nQ];
+        if (!byQ[q] || byQ[q].length === 0) continue;
         const lastDate = quartierLastDate.get(q);
         const gapOk = !lastDate || (sessionDate.getTime() - lastDate.getTime() >= GAP_MS);
         const countOk = (quartierCount.get(q) || 0) < maxPerQuartier;
-        if (gapOk && countOk) { seedIdx = i; break; }
+        if (gapOk && countOk) { chosenQ = q; quartierRRIdx = (quartierRRIdx + attempt + 1) % nQ; break; }
     }
-    // Fallback 1 : gap respecté mais limite dépassée
-    if (seedIdx < 0) {
-        for (let i = 0; i < pool.length; i++) {
-            const q = getQuartier(pool[i]);
+    // Fallback 1 : gap ok, peu importe la limite hebdo
+    if (!chosenQ) {
+        for (let attempt = 0; attempt < nQ * 2; attempt++) {
+            const q = QUARTIERS_LIST[(quartierRRIdx + attempt) % nQ];
+            if (!byQ[q] || byQ[q].length === 0) continue;
             const lastDate = quartierLastDate.get(q);
-            if (!lastDate || (sessionDate.getTime() - lastDate.getTime() >= GAP_MS)) { seedIdx = i; break; }
+            if (!lastDate || (sessionDate.getTime() - lastDate.getTime() >= GAP_MS)) {
+                chosenQ = q; quartierRRIdx = (quartierRRIdx + attempt + 1) % nQ; break;
+            }
         }
     }
-    // Fallback 2 : tout est contraint, prendre le meilleur disponible
-    if (seedIdx < 0) seedIdx = 0;
-    if (seedIdx < 0) return [];
-    // Mettre à jour le compteur et la date du quartier
-    const q = getQuartier(pool[seedIdx]);
-    quartierCount.set(q, (quartierCount.get(q) || 0) + 1);
-    quartierLastDate.set(q, sessionDate);
+    // Fallback 2 : tout contraint, prendre le premier dispo
+    if (!chosenQ) {
+        for (const q of QUARTIERS_LIST) { if (byQ[q]?.length) { chosenQ = q; break; } }
+        if (!chosenQ) chosenQ = getQuartier(pool[0]);
+    }
+
+    // Seed = meilleure adresse dans le quartier choisi (déjà triée par score dans pool)
+    const seedIdx = byQ[chosenQ]?.[0] ?? 0;
+    quartierCount.set(chosenQ, (quartierCount.get(chosenQ) || 0) + 1);
+    quartierLastDate.set(chosenQ, sessionDate);
     const seed=pool[seedIdx];
     const selected=[seed];
     const used=new Set([seedIdx]);
@@ -445,6 +474,7 @@ async function recalculate() {
 
     const newSessions = [];
     const quartierLastDate = new Map(); // gap 7j entre sessions du même quartier
+    quartierRRIdx = 0; // reset le round-robin à chaque recalcul
     let ws = new Date(startDate);
     ws.setDate(ws.getDate() - ws.getDay() + 1);
 
