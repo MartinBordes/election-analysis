@@ -263,14 +263,12 @@ const BASCULE_P2 = new Date('2027-02-01');
 const SEUIL_VOTANTS = 5; // moins de 5 votants = foyer non électoral, on n'y va pas
 
 function addrPriority(a, fallbackScore) {
-    // Score par adresse = csv_score × votants (données réelles)
-    // Si pas dans le CSV → fallback très pénalisé (×0.05) pour passer après tous les matchés
+    // score^1.5 × √votants : le score LFI domine
     const csv = addrScoreLookup[a.id];
     if (csv) {
         if (csv.votants < SEUIL_VOTANTS) return 0;
-        return csv.score * csv.votants;
+        return Math.pow(csv.score, 1.5) * Math.sqrt(csv.votants);
     }
-    // Adresse non matchée : on ne sait pas si elle est prioritaire, priorité très basse
     return fallbackScore * 0.05;
 }
 
@@ -292,7 +290,8 @@ function buildPool(passageFilter, fallbackFn) {
         const bs = bureauStats[a.bv];
         if (csv) {
             if (csv.votants < SEUIL_VOTANTS) continue;
-            const score = csv.score * csv.votants;
+            // score^1.5 × √votants : le score LFI domine, les votants amplifient modérément
+            const score = Math.pow(csv.score, 1.5) * Math.sqrt(csv.votants);
             if (score <= 0) continue;
             matched.push({...a, score, bureau: a.bv});
         } else {
