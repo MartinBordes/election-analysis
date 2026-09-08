@@ -254,15 +254,41 @@ function buildPoolT2() {
     return pool;
 }
 
-function pickSession(pool, capacity, usedZones) {
+// Mapping bureau de vote → quartier (10 quartiers de Nanterre)
+const BV_QUARTIER = {
+    1:'Centre-Ville', 2:'Centre-Ville', 3:'Centre-Ville', 4:'Centre-Ville', 5:'Centre-Ville', 6:'Centre-Ville',
+    7:'Vieux-Nanterre', 8:'Vieux-Nanterre', 9:'Vieux-Nanterre', 19:'Vieux-Nanterre', 20:'Vieux-Nanterre', 21:'Vieux-Nanterre',
+    10:'Voltaire', 11:'Voltaire', 12:'Voltaire', 22:'Voltaire',
+    13:'Rouget-de-Lisle', 14:'Rouget-de-Lisle', 32:'Rouget-de-Lisle', 33:'Rouget-de-Lisle',
+    15:'Balzac', 16:'Balzac', 17:'Balzac',
+    18:'Provinces-Françaises', 49:'Provinces-Françaises',
+    23:'Mont-Valérien', 24:'Mont-Valérien', 25:'Mont-Valérien', 26:'Mont-Valérien', 27:'Mont-Valérien', 28:'Mont-Valérien',
+    29:'Vieux-Pont', 30:'Vieux-Pont', 31:'Vieux-Pont',
+    34:'Pablo-Picasso', 35:'Pablo-Picasso', 36:'Pablo-Picasso', 41:'Pablo-Picasso', 42:'Pablo-Picasso',
+    43:'Pablo-Picasso', 44:'Pablo-Picasso', 45:'Pablo-Picasso', 46:'Pablo-Picasso', 47:'Pablo-Picasso', 48:'Pablo-Picasso',
+    37:'Les-Pâtis', 38:'Les-Pâtis', 39:'Les-Pâtis', 40:'Les-Pâtis',
+};
+
+function getQuartier(a) {
+    return BV_QUARTIER[a.bv] || `Q-${Math.round(a.lat*100)}-${Math.round(a.lon*100)}`;
+}
+
+function pickSession(pool, capacity, usedZones, usedQuartiers, strictQuartier) {
     if (!pool.length) return [];
-    // Zone = grille ~200m pour diversifier
+    // Priorité : quartier pas encore utilisé cette semaine (si strictQuartier=true)
     let seedIdx=-1;
     for (let i=0;i<pool.length;i++) {
-        const z=`${Math.round(pool[i].lat*500)}_${Math.round(pool[i].lon*500)}`;
-        if (!usedZones.has(z)) { seedIdx=i; break; }
+        const q = getQuartier(pool[i]);
+        if (strictQuartier && usedQuartiers.has(q)) continue;
+        seedIdx=i; break;
     }
-    if (seedIdx<0) seedIdx=0;
+    // Fallback : si tous les quartiers sont pris, prendre le meilleur disponible
+    if (seedIdx<0) {
+        for (let i=0;i<pool.length;i++) { seedIdx=i; break; }
+    }
+    if (seedIdx<0) return [];
+    // Marquer le quartier
+    usedQuartiers.add(getQuartier(pool[seedIdx]));
     const seed=pool[seedIdx];
     const selected=[seed];
     const used=new Set([seedIdx]);
@@ -417,6 +443,9 @@ async function recalculate() {
         const n = isPostT1 ? 20 : sessionsPerWeek(ws);
         const slots = scheduleWeek(ws, n);
         const usedZones = new Set();
+        const usedQuartiers = new Set();
+        // Règle de diversité : 1 session par quartier max quand ≤5 sessions/semaine
+        const strictQuartier = n <= 5;
 
         for (const slot of slots) {
             if (slot.date < startDate || slot.date > END) continue;
@@ -470,7 +499,7 @@ async function recalculate() {
             // Capacité : 70 portes/militant le week-end, 40 en semaine (sans bonus)
             const capacity = nMil * (slot.isWe ? 70 : 40);
 
-            const selected = pickSession(pool, capacity, usedZones);
+            const selected = pickSession(pool, capacity, usedZones, usedQuartiers, strictQuartier);
             if (!selected.length) continue;
 
             // Enregistrer les dates P1, décrémenter le budget, marquer P2
