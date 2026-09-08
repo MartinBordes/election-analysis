@@ -55,6 +55,16 @@ body { font-family: 'Stack Sans', Arial, sans-serif; color: var(--lfi-noir); bac
 .sc-summary { font-size: 12px; color: var(--lfi-gris2); margin-top: 4px; }
 .sc-summary b { color: var(--lfi-noir); }
 .sc-toggle { color: var(--lfi-violet); font-size: 12px; font-weight: 600; cursor: pointer; padding: 4px 0; }
+/* Bouton aide */
+.help-btn { position: fixed; top: 10px; right: 10px; z-index: 10000; width: 44px; height: 44px; border: 1.5px solid var(--lfi-violet-light); border-radius: 50%; background: rgba(255,252,244,0.95); color: var(--lfi-violet); font-size: 20px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(76,2,151,0.2); }
+.help-overlay { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 20000; background: rgba(0,0,0,0.5); }
+.help-overlay.open { display: flex; align-items: center; justify-content: center; }
+.help-box { background: var(--lfi-blanc); border-radius: 14px; padding: 24px 20px; max-width: 480px; width: 90%; max-height: 80vh; overflow-y: auto; position: relative; box-shadow: 0 8px 32px rgba(0,0,0,0.2); }
+.help-box h2 { font-family: 'Union Gothic', sans-serif; color: var(--lfi-violet); font-size: 18px; text-transform: uppercase; margin-bottom: 12px; }
+.help-box h3 { font-size: 13px; font-weight: 700; color: var(--lfi-violet); margin: 14px 0 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+.help-box p, .help-box li { font-size: 13px; line-height: 1.6; color: var(--lfi-noir); }
+.help-box ul { padding-left: 18px; }
+.help-close { position: absolute; top: 12px; right: 14px; font-size: 20px; cursor: pointer; color: var(--lfi-gris2); background: none; border: none; }
 .nav-menu-btn { position: fixed; top: 10px; left: 10px; z-index: 10000; width: 44px; height: 44px; border: 1.5px solid var(--lfi-violet-light); border-radius: 50%; background: rgba(255,252,244,0.95); color: var(--lfi-violet); font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(76,2,151,0.2); }
 .nav-dropdown { display: none; position: fixed; top: 62px; left: 10px; z-index: 10000; background: rgba(255,252,244,0.97); border-radius: 10px; border: 1.5px solid var(--lfi-violet-light); box-shadow: 0 4px 16px rgba(76,2,151,0.2); overflow: hidden; min-width: 160px; }
 .nav-dropdown.open { display: block; }
@@ -75,6 +85,31 @@ body { font-family: 'Stack Sans', Arial, sans-serif; color: var(--lfi-noir); bac
 <div class="update-row"><button class="update-btn" id="ubtn" onclick="recalculate()">Mettre à jour le planning</button></div>
 <div class="sessions" id="sessions"></div>
 <button class="nav-menu-btn" onclick="document.getElementById('nav-dropdown').classList.toggle('open')">&#9776;</button>
+<button class="help-btn" onclick="document.getElementById('help-overlay').classList.add('open')">?</button>
+<div class="help-overlay" id="help-overlay" onclick="if(event.target===this)this.classList.remove('open')">
+<div class="help-box">
+    <button class="help-close" onclick="document.getElementById('help-overlay').classList.remove('open')">&#x2715;</button>
+    <h2>Comment fonctionne ce planning ?</h2>
+    <h3>Objectif</h3>
+    <p>Ce planning organise les sessions de porte-à-porte (PAP) à Nanterre pour la campagne présidentielle 2027, en deux passages sur chaque zone prioritaire.</p>
+    <h3>Les 3 phases</h3>
+    <ul>
+        <li><b>Passage 1</b> (sept → ~janvier) : premier contact, focus inscriptions sur les listes électorales.</li>
+        <li><b>Passage 2</b> (février → 18 avril) : retour militant, message vote utile Mélenchon au 1er tour.</li>
+        <li><b>Entre-deux-tours</b> (18 → 30 avril) : front républicain dans les zones mixtes.</li>
+    </ul>
+    <h3>Priorité des adresses</h3>
+    <p>Chaque adresse est scorée par <b>Score électorale × nombre de votants inscrits</b>. Les foyers de travailleurs sans électeurs inscrits sont automatiquement exclus. On n'y va que dans les immeubles de 10+ logements.</p>
+    <h3>Diversité géographique</h3>
+    <p>L'algo évite de revenir dans le même <b>quartier</b> ou le même <b>bureau de vote</b> avant 8 jours. La limite est aussi <b>ceil(n/5) sessions par quartier par semaine</b> selon le nombre de sessions totales.</p>
+    <h3>Bouton "Mettre à jour"</h3>
+    <p>Recalcule tout le planning à partir d'aujourd'hui en tenant compte des visites déjà faites sur la carte terrain. À utiliser régulièrement (1x/semaine) pour que le planning reste cohérent avec ce qui a été fait.</p>
+    <h3>Nombre de militants</h3>
+    <p>Tu peux modifier le nombre de militants pour chaque session. Cela recalcule la capacité de la session : <b>40 portes × militants</b> en semaine, <b>70 × militants</b> le week-end.</p>
+    <h3>Adresses affichées</h3>
+    <p>Les 3 premières adresses sont visibles directement. Clique sur "Voir les X autres" pour la liste complète à donner aux militants avant la session.</p>
+</div>
+</div>
 <div class="nav-dropdown" id="nav-dropdown">
     <div class="nav-badge">Navigation</div>
     <a href="porte-a-porte.html?mode=admin">Terrain</a>
@@ -527,6 +562,7 @@ async function recalculate() {
             const totalLgts = selected.reduce((s,a)=>s+(a.lgts||1),0);
             const addrList = selected.map(a=>`${a.adr} (~${a.lgts||1})`).join(' | ');
             const bureau = selected[0].bureau;
+            const quartier = getQuartier(selected[0]);
 
             newSessions.push({
                 date: slot.date.toISOString().split('T')[0],
@@ -535,7 +571,7 @@ async function recalculate() {
                 adresses_cibles: addrList,
                 portes_estimees: totalLgts,
                 statut: 'planned',
-                notes: `Passage ${passage} · ${selected.length} adresses · ${nMil} militants`,
+                notes: `Passage ${passage} · ${selected.length} adresses · ${nMil} militants · ${quartier}`,
             });
         }
         ws.setDate(ws.getDate()+7);
@@ -729,6 +765,9 @@ function renderSessions() {
         const passageNum = s.notes && s.notes.includes('Passage 2') ? 2 : 1;
         const isWe = s.type === 'Weekend';
         const horaire = isWe ? '15h–18h' : '18h30–20h';
+        // Extraire le quartier des notes
+        const notesParts = (s.notes||'').split(' · ');
+        const quartierLabel = notesParts[notesParts.length-1] || '';
         const milMatch = (s.notes||'').match(/(\d+) militants/);
         const milAuto = milMatch ? parseInt(milMatch[1]) : (isWe ? 6 : 3);
         const slotKey2 = s.date + '|' + s.type;
@@ -742,7 +781,7 @@ function renderSessions() {
                 <span class="sc-badge ${pCls}">${pShort}</span>
             </div>
             <div class="sc-top" style="margin-top:2px;">
-                <span class="sc-bureau">Bureau ${s.bureau}</span>
+                <span class="sc-bureau">Bureau ${s.bureau}${quartierLabel ? ` · <b style="color:var(--lfi-violet)">${quartierLabel}</b>` : ''}</span>
                 <span class="sc-badge ${passageNum===1?'p1':'p2'}">Passage ${passageNum}</span>
             </div>
             <div class="sc-top" style="margin-top:4px;align-items:center;">
