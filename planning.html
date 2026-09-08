@@ -425,12 +425,11 @@ function pickSession(pool, capacity, usedZones, quartierCount, maxPerQuartier, q
     // Si session trop petite : passes supplémentaires avec critères assouplis
     // (rayon et score relâchés pour trouver des adresses bonus proches)
     const lgtsNow = () => selected.reduce((s,a)=>s+(a.lgts||1),0);
+    // Passes supplémentaires si session trop légère — s'applique aussi en P2
     if (lgtsNow() < capacity * 0.4 && left > 0) {
-        // Même rayon (400m), score abaissé à 38
         while (left > 0 && fillCount < 30) { if (!applyFill(fillRound(0.0036, 38))) break; fillCount++; }
     }
     if (lgtsNow() < capacity * 0.4 && left > 0) {
-        // Même rayon (400m), score abaissé à 35
         while (left > 0 && fillCount < 35) { if (!applyFill(fillRound(0.0036, 35))) break; fillCount++; }
     }
 
