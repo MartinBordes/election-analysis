@@ -333,6 +333,7 @@ function getQuartier(a) {
 function pickSession(pool, capacity, usedZones, quartierCount, maxPerQuartier, quartierLastDate, bvLastDate, sessionDate,
                     quartierTotalCount, totalSessionsScheduled, quartierShareFraction, clusterScoreMap) {
     if (!pool.length) return [];
+    console.log('pickSession: pool='+pool.length+' capacity='+capacity+' date='+sessionDate.toISOString().split('T')[0]);
     const GAP_MS = 8 * 864e5; // 8j min
 
     function gapOkFor(a) {
@@ -630,6 +631,7 @@ async function recalculate() {
 
         for (const slot of slots) {
             if (slot.date < startDate || slot.date > END) continue;
+            console.log('Slot:', slot.date.toISOString().split('T')[0], slot.isWe?'WE':'Soir', 'pool='+poolPhase1.length);
 
             // Militants : valeur personnalisée si disponible, sinon calcul auto
             const slotKey = slot.date.toISOString().split('T')[0] + '|' + (slot.isWe ? 'Weekend' : 'Soir');
