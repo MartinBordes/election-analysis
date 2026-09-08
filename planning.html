@@ -404,7 +404,8 @@ function pickSession(pool, capacity, usedZones, quartierCount, maxPerQuartier, q
             if (d > distMax) continue;
             const csv = addrScoreLookup[a.id];
             if (csv && csv.score < minScore) continue;
-            const v = (a.lgts||1) / (d + 0.00005);
+            // √lgts / distance : proximité domine, taille comme bonus modéré
+            const v = Math.sqrt(a.lgts||1) / (d + 0.00005);
             if (v > bestV) { bestV = v; bi = i; }
         }
         return bi;
