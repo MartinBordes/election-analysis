@@ -527,8 +527,10 @@ async function recalculate() {
     const clusterScoreMap = {};
     for (let i = 0; i < poolPhase1.length; i++) {
         let s = poolPhase1[i].score;
+        const qi = getQuartier(poolPhase1[i]);
         for (let j = 0; j < poolPhase1.length; j++) {
-            if (j !== i && dist(poolPhase1[i], poolPhase1[j]) <= CLUSTER_RADIUS) s += poolPhase1[j].score;
+            if (j !== i && getQuartier(poolPhase1[j]) === qi && dist(poolPhase1[i], poolPhase1[j]) <= CLUSTER_RADIUS)
+                s += poolPhase1[j].score;
         }
         clusterScoreMap[poolPhase1[i].id] = s;
     }
