@@ -257,8 +257,7 @@ function visitCount(addrId) {
 
 function dist(a,b) { return Math.sqrt((a.lat-b.lat)**2+(a.lon-b.lon)**2); }
 
-const SEUIL_LGTS = 30;    // seed : immeuble d'au moins 30 logements
-const SEUIL_LGTS_FILL = 10; // fill : on accepte les plus petits comme adresses secondaires
+const SEUIL_LGTS = 10; // minimum logements pour être dans le pool
 const BASCULE_P2 = new Date('2027-02-01');
 
 const SEUIL_VOTANTS = 5; // moins de 5 votants = foyer non électoral, on n'y va pas
@@ -353,40 +352,46 @@ function pickSession(pool, capacity, usedZones, quartierCount, maxPerQuartier, q
         return used / totalSessionsScheduled <= share * 2.0; // tolérance large, guide sans bloquer
     }
 
-    const MIN_SEED_PRIORITY = 3000;
+    // Pré-calculer le score du cluster autour de chaque candidat (300m)
+    // = somme des scores de toutes les adresses dans le rayon
+    // Choisir le cluster le plus dense/prioritaire, pas juste le meilleur bâtiment isolé
+    const CLUSTER_RADIUS = 0.0027; // ~300m
+    const clusterScores = pool.map((center, i) => {
+        let s = center.score;
+        for (let j = 0; j < pool.length; j++) {
+            if (j === i) continue;
+            if (dist(center, pool[j]) <= CLUSTER_RADIUS) s += pool[j].score;
+        }
+        return s;
+    });
 
-    // Pass 1 : gap + budget + limite hebdo
-    let seedIdx = -1;
-    for (let i = 0; i < pool.length; i++) {
-        const q = getQuartier(pool[i]);
-        if (gapOkFor(pool[i]) && budgetOkFor(q) && (quartierCount.get(q) || 0) < maxPerQuartier) { seedIdx = i; break; }
-    }
-    // Si seed de mauvaise qualité → chercher mieux en ignorant le GAP quartier (mais pas le budget ni la limite hebdo)
-    if (seedIdx >= 0 && pool[seedIdx].score < MIN_SEED_PRIORITY) {
+    // Sélectionner le seed éligible avec le meilleur score de cluster
+    function bestEligibleSeed(checkGapQ, checkBudget, checkWeeklyLimit) {
+        let best = -1, bestS = -Infinity;
         for (let i = 0; i < pool.length; i++) {
-            if (pool[i].score < MIN_SEED_PRIORITY) continue;
-            const bvLast = bvLastDate.get(pool[i].bv);
-            if (bvLast && (sessionDate - bvLast < GAP_MS)) continue;
             const q = getQuartier(pool[i]);
-            if ((quartierCount.get(q) || 0) >= maxPerQuartier) continue;
-            if (!budgetOkFor(q)) continue;
-            seedIdx = i; break;
+            if (checkGapQ && !gapOkFor(pool[i])) continue;
+            if (!checkGapQ) {
+                // Au moins le gap bureau
+                const bvLast = bvLastDate.get(pool[i].bv);
+                if (bvLast && (sessionDate - bvLast < GAP_MS)) continue;
+            }
+            if (checkWeeklyLimit && (quartierCount.get(q) || 0) >= maxPerQuartier) continue;
+            if (checkBudget && !budgetOkFor(q)) continue;
+            if (clusterScores[i] > bestS) { bestS = clusterScores[i]; best = i; }
         }
+        return best;
     }
-    // Fallback 1 : gaps ok, ignore budget
-    if (seedIdx < 0) {
-        for (let i = 0; i < pool.length; i++) {
-            if (gapOkFor(pool[i])) { seedIdx = i; break; }
-        }
-    }
-    // Fallback 2 : gap bureau seulement
-    if (seedIdx < 0) {
-        for (let i = 0; i < pool.length; i++) {
-            const bvLast = bvLastDate.get(pool[i].bv);
-            if (!bvLast || (sessionDate - bvLast >= GAP_MS)) { seedIdx = i; break; }
-        }
-    }
-    // Fallback 3 : tout contraint
+
+    // Pass 1 : contraintes complètes
+    let seedIdx = bestEligibleSeed(true, true, true);
+    // Fallback 1 : ignore budget
+    if (seedIdx < 0) seedIdx = bestEligibleSeed(true, false, true);
+    // Fallback 2 : ignore gap quartier + budget, garde limite hebdo
+    if (seedIdx < 0) seedIdx = bestEligibleSeed(false, false, true);
+    // Fallback 3 : ignore tout sauf gap bureau
+    if (seedIdx < 0) seedIdx = bestEligibleSeed(false, false, false);
+    // Fallback final
     if (seedIdx < 0) seedIdx = 0;
     if (seedIdx < 0) return [];
 
@@ -402,14 +407,9 @@ function pickSession(pool, capacity, usedZones, quartierCount, maxPerQuartier, q
     const used=new Set([seedIdx]);
     let left=capacity-(seed.lgts||1);
 
-    // fillPool : inclut les immeubles 10+ lgts pour le remplissage (pas seulement 30+)
-    // On les cherche directement dans le pool (qui peut contenir des petits si passés en fill)
-    // + dans addresses pour les 10-29 lgts proches
-    const selectedIds = new Set(selected.map(a => a.id));
     function fillRound(distMax, minScore) {
         const last = selected[selected.length-1];
-        let best = null, bestV = -Infinity;
-        // Chercher dans le pool principal (30+ lgts non-seeds encore disponibles)
+        let bi = -1, bestV = -Infinity;
         for (let i = 0; i < pool.length; i++) {
             if (used.has(i)) continue;
             const a = pool[i];
@@ -418,32 +418,14 @@ function pickSession(pool, capacity, usedZones, quartierCount, maxPerQuartier, q
             const csv = addrScoreLookup[a.id];
             if (csv && csv.score < minScore) continue;
             const v = (a.lgts||1) / (d + 0.00005);
-            if (v > bestV) { bestV = v; best = {type:'pool', idx:i}; }
+            if (v > bestV) { bestV = v; bi = i; }
         }
-        // Chercher aussi parmi les 10-29 lgts proches (fill only, pas seeds)
-        for (const a of addresses) {
-            if (selectedIds.has(a.id)) continue;
-            if ((a.lgts||1) < SEUIL_LGTS_FILL || (a.lgts||1) >= SEUIL_LGTS) continue; // 10-29 lgts
-            if (blacklist.has(a.id)) continue;
-            const d = dist(last, a);
-            if (d > distMax) continue;
-            const csv = addrScoreLookup[a.id];
-            if (csv && csv.score < minScore) continue;
-            const v = (a.lgts||1) / (d + 0.00005);
-            if (v > bestV) { bestV = v; best = {type:'addr', addr:a}; }
-        }
-        return best;
+        return bi;
     }
 
-    function applyFill(best) {
-        if (!best) return false;
-        if (best.type === 'pool') {
-            selected.push(pool[best.idx]); used.add(best.idx); selectedIds.add(pool[best.idx].id);
-            left -= (pool[best.idx].lgts||1);
-        } else {
-            selected.push(best.addr); selectedIds.add(best.addr.id);
-            left -= (best.addr.lgts||1);
-        }
+    function applyFill(bi) {
+        if (bi < 0) return false;
+        selected.push(pool[bi]); used.add(bi); left -= (pool[bi].lgts||1);
         return true;
     }
 
@@ -676,11 +658,6 @@ async function recalculate() {
             const selected = pickSession(pool, capacity, usedZones, quartierCount, maxPerQuartier, quartierLastDate, bvLastDate, slot.date,
                 quartierTotalCount, totalSessionsScheduled, quartierShareFraction);
             if (!selected.length) continue;
-            // Minimum session : au moins 20 logements par militant
-            // Évite d'envoyer des militants pour 2 petites adresses
-            const totalLgts = selected.reduce((s,a)=>s+(a.lgts||1),0);
-            if (totalLgts < nMil * 20) continue;
-
             if (selected.length) totalSessionsScheduled++;
 
             // Enregistrer les dates P1, décrémenter le budget, marquer P2
