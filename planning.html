@@ -604,17 +604,16 @@ async function recalculate() {
                 pool = poolPhase3; passage = 1;
                 phaseLabel = 'Entre-deux-tours — Front républicain';
             } else {
-                // Bascule P1→P2 quand le budget P1 est épuisé
-                if (!inP2 && p1Remaining <= 0) {
+                // Bascule P1→P2 : par DATE (1er février) OU quand le pool P1 est presque vide
+                if (!inP2 && (slot.date >= BASCULE_P2 || poolPhase1.length < 15)) {
                     inP2 = true;
-                    // Réinitialiser le budget pour P2 (distribution équitable du 2e passage)
                     Object.keys(quartierTotalCount).forEach(k => { quartierTotalCount[k] = 0; });
                     totalSessionsScheduled = 0;
                 }
 
                 if (inP2) {
-                    // P2 : mêmes filtres que P1 mais repart de 0 (même pool, nouveaux seeds)
-                    // Adresses avec gap de 3 mois depuis P1, pas encore faites 2 fois
+                    // P2 : mêmes filtres qualité, gap de 2 mois depuis P1 (pas 3)
+                    const GAP_P2 = 60 * 864e5; // 2 mois
                     const poolP2now = [];
                     for (const a of addresses) {
                         if (p2Used.has(a.id)) continue;
@@ -623,7 +622,7 @@ async function recalculate() {
                         if (visitCount(a.id) >= 2) continue;
                         if (blacklist.has(a.id)) continue;
                         const p1Date = p1PlannedDates[a.id];
-                        if (p1Date && slot.date.getTime() - p1Date.getTime() < GAP_MS) continue;
+                        if (p1Date && slot.date.getTime() - p1Date.getTime() < GAP_P2) continue;
                         // Mêmes filtres qualité que P1
                         const csv = addrScoreLookup[a.id];
                         if (csv) {
