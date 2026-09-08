@@ -290,6 +290,9 @@ function buildPool(passageFilter, fallbackFn) {
         const bs = bureauStats[a.bv];
         if (csv) {
             if (csv.votants < SEUIL_VOTANTS) continue;
+            // Exclure les foyers : ratio votants/logements trop faible (résidences non électorales)
+            const ratio = csv.votants / Math.max(a.lgts || 1, 1);
+            if (ratio < 0.15) continue;
             // score^1.5 × √votants : le score LFI domine, les votants amplifient modérément
             const score = Math.pow(csv.score, 1.5) * Math.sqrt(csv.votants);
             if (score <= 0) continue;
