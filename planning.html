@@ -273,20 +273,33 @@ function getQuartier(a) {
     return BV_QUARTIER[a.bv] || `Q-${Math.round(a.lat*100)}-${Math.round(a.lon*100)}`;
 }
 
-function pickSession(pool, capacity, usedZones, quartierCount, maxPerQuartier) {
+function pickSession(pool, capacity, usedZones, quartierCount, maxPerQuartier, quartierLastDate, sessionDate) {
     if (!pool.length) return [];
-    // Choisir un seed dans un quartier qui n'a pas encore atteint la limite
-    let seedIdx=-1;
-    for (let i=0;i<pool.length;i++) {
+    const GAP_MS = 7 * 864e5; // 7 jours minimum entre 2 sessions dans le même quartier
+    // Choisir un seed : quartier avec gap respecté ET sous la limite hebdo
+    let seedIdx = -1;
+    for (let i = 0; i < pool.length; i++) {
         const q = getQuartier(pool[i]);
-        if ((quartierCount.get(q) || 0) < maxPerQuartier) { seedIdx=i; break; }
+        const lastDate = quartierLastDate.get(q);
+        const gapOk = !lastDate || (sessionDate.getTime() - lastDate.getTime() >= GAP_MS);
+        const countOk = (quartierCount.get(q) || 0) < maxPerQuartier;
+        if (gapOk && countOk) { seedIdx = i; break; }
     }
-    // Fallback : si tous les quartiers sont saturés, prendre le meilleur disponible
-    if (seedIdx<0) { seedIdx=0; }
-    if (seedIdx<0) return [];
-    // Incrémenter le compteur du quartier
+    // Fallback 1 : gap respecté mais limite dépassée
+    if (seedIdx < 0) {
+        for (let i = 0; i < pool.length; i++) {
+            const q = getQuartier(pool[i]);
+            const lastDate = quartierLastDate.get(q);
+            if (!lastDate || (sessionDate.getTime() - lastDate.getTime() >= GAP_MS)) { seedIdx = i; break; }
+        }
+    }
+    // Fallback 2 : tout est contraint, prendre le meilleur disponible
+    if (seedIdx < 0) seedIdx = 0;
+    if (seedIdx < 0) return [];
+    // Mettre à jour le compteur et la date du quartier
     const q = getQuartier(pool[seedIdx]);
     quartierCount.set(q, (quartierCount.get(q) || 0) + 1);
+    quartierLastDate.set(q, sessionDate);
     const seed=pool[seedIdx];
     const selected=[seed];
     const used=new Set([seedIdx]);
@@ -431,6 +444,7 @@ async function recalculate() {
     let poolPhase3 = [];
 
     const newSessions = [];
+    const quartierLastDate = new Map(); // gap 7j entre sessions du même quartier
     let ws = new Date(startDate);
     ws.setDate(ws.getDate() - ws.getDay() + 1);
 
@@ -442,8 +456,7 @@ async function recalculate() {
         const slots = scheduleWeek(ws, n);
         const usedZones = new Set();
         const quartierCount = new Map();
-        // max sessions par quartier par semaine : ceil(n/5)
-        // n=3→1, n=7→2, n=11→3, n=15→3, n=20→4
+        // max sessions par quartier sur la fenêtre de 7 jours : ceil(n/5)
         const maxPerQuartier = Math.ceil(n / 5);
 
         for (const slot of slots) {
@@ -498,7 +511,7 @@ async function recalculate() {
             // Capacité : 70 portes/militant le week-end, 40 en semaine (sans bonus)
             const capacity = nMil * (slot.isWe ? 70 : 40);
 
-            const selected = pickSession(pool, capacity, usedZones, quartierCount, maxPerQuartier);
+            const selected = pickSession(pool, capacity, usedZones, quartierCount, maxPerQuartier, quartierLastDate, slot.date);
             if (!selected.length) continue;
 
             // Enregistrer les dates P1, décrémenter le budget, marquer P2
