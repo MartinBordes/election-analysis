@@ -254,23 +254,9 @@ function buildPoolT2() {
     return pool;
 }
 
-// Mapping bureau de vote → quartier (10 quartiers de Nanterre)
-const BV_QUARTIER = {
-    1:'Centre-Ville', 2:'Centre-Ville', 3:'Centre-Ville', 4:'Centre-Ville', 5:'Centre-Ville', 6:'Centre-Ville',
-    7:'Vieux-Nanterre', 8:'Vieux-Nanterre', 9:'Vieux-Nanterre', 19:'Vieux-Nanterre', 20:'Vieux-Nanterre', 21:'Vieux-Nanterre',
-    10:'Voltaire', 11:'Voltaire', 12:'Voltaire', 22:'Voltaire',
-    13:'Rouget-de-Lisle', 14:'Rouget-de-Lisle', 32:'Rouget-de-Lisle', 33:'Rouget-de-Lisle',
-    15:'Balzac', 16:'Balzac', 17:'Balzac',
-    18:'Provinces-Françaises', 49:'Provinces-Françaises',
-    23:'Mont-Valérien', 24:'Mont-Valérien', 25:'Mont-Valérien', 26:'Mont-Valérien', 27:'Mont-Valérien', 28:'Mont-Valérien',
-    29:'Vieux-Pont', 30:'Vieux-Pont', 31:'Vieux-Pont',
-    34:'Pablo-Picasso', 35:'Pablo-Picasso', 36:'Pablo-Picasso', 41:'Pablo-Picasso', 42:'Pablo-Picasso',
-    43:'Pablo-Picasso', 44:'Pablo-Picasso', 45:'Pablo-Picasso', 46:'Pablo-Picasso', 47:'Pablo-Picasso', 48:'Pablo-Picasso',
-    37:'Les-Pâtis', 38:'Les-Pâtis', 39:'Les-Pâtis', 40:'Les-Pâtis',
-};
-
+// Quartier pré-calculé par point-in-polygon dans adresses_nanterre.json
 function getQuartier(a) {
-    return BV_QUARTIER[a.bv] || `Q-${Math.round(a.lat*100)}-${Math.round(a.lon*100)}`;
+    return a.quartier || `Q-${Math.round(a.lat*100)}-${Math.round(a.lon*100)}`;
 }
 
 function pickSession(pool, capacity, usedZones, quartierCount, maxPerQuartier, quartierLastDate, sessionDate) {
