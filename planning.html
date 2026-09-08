@@ -273,22 +273,20 @@ function getQuartier(a) {
     return BV_QUARTIER[a.bv] || `Q-${Math.round(a.lat*100)}-${Math.round(a.lon*100)}`;
 }
 
-function pickSession(pool, capacity, usedZones, usedQuartiers, strictQuartier) {
+function pickSession(pool, capacity, usedZones, quartierCount, maxPerQuartier) {
     if (!pool.length) return [];
-    // Priorité : quartier pas encore utilisé cette semaine (si strictQuartier=true)
+    // Choisir un seed dans un quartier qui n'a pas encore atteint la limite
     let seedIdx=-1;
     for (let i=0;i<pool.length;i++) {
         const q = getQuartier(pool[i]);
-        if (strictQuartier && usedQuartiers.has(q)) continue;
-        seedIdx=i; break;
+        if ((quartierCount.get(q) || 0) < maxPerQuartier) { seedIdx=i; break; }
     }
-    // Fallback : si tous les quartiers sont pris, prendre le meilleur disponible
-    if (seedIdx<0) {
-        for (let i=0;i<pool.length;i++) { seedIdx=i; break; }
-    }
+    // Fallback : si tous les quartiers sont saturés, prendre le meilleur disponible
+    if (seedIdx<0) { seedIdx=0; }
     if (seedIdx<0) return [];
-    // Marquer le quartier
-    usedQuartiers.add(getQuartier(pool[seedIdx]));
+    // Incrémenter le compteur du quartier
+    const q = getQuartier(pool[seedIdx]);
+    quartierCount.set(q, (quartierCount.get(q) || 0) + 1);
     const seed=pool[seedIdx];
     const selected=[seed];
     const used=new Set([seedIdx]);
@@ -443,9 +441,10 @@ async function recalculate() {
         const n = isPostT1 ? 20 : sessionsPerWeek(ws);
         const slots = scheduleWeek(ws, n);
         const usedZones = new Set();
-        const usedQuartiers = new Set();
-        // Règle de diversité : 1 session par quartier max quand ≤5 sessions/semaine
-        const strictQuartier = n <= 5;
+        const quartierCount = new Map();
+        // max sessions par quartier par semaine : ceil(n/5)
+        // n=3→1, n=7→2, n=11→3, n=15→3, n=20→4
+        const maxPerQuartier = Math.ceil(n / 5);
 
         for (const slot of slots) {
             if (slot.date < startDate || slot.date > END) continue;
@@ -499,7 +498,7 @@ async function recalculate() {
             // Capacité : 70 portes/militant le week-end, 40 en semaine (sans bonus)
             const capacity = nMil * (slot.isWe ? 70 : 40);
 
-            const selected = pickSession(pool, capacity, usedZones, usedQuartiers, strictQuartier);
+            const selected = pickSession(pool, capacity, usedZones, quartierCount, maxPerQuartier);
             if (!selected.length) continue;
 
             // Enregistrer les dates P1, décrémenter le budget, marquer P2
