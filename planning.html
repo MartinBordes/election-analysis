@@ -339,11 +339,25 @@ function pickSession(pool, capacity, usedZones, quartierCount, maxPerQuartier, q
         return qOk && bvOk;
     }
 
+    // Seuil de qualité : si le meilleur seed disponible est sous ce score,
+    // on relâche la contrainte quartier pour trouver mieux
+    // ≈ score 60, 20 votants → 60^1.5 × √20 ≈ 2650
+    const MIN_SEED_PRIORITY = 3000;
+
     // Pass 1 : gap quartier + gap bureau + limite hebdo
     let seedIdx = -1;
     for (let i = 0; i < pool.length; i++) {
         const q = getQuartier(pool[i]);
         if (gapOkFor(pool[i]) && (quartierCount.get(q) || 0) < maxPerQuartier) { seedIdx = i; break; }
+    }
+    // Si le seed trouvé est de mauvaise qualité → chercher mieux en ignorant le gap quartier
+    if (seedIdx >= 0 && pool[seedIdx].score < MIN_SEED_PRIORITY) {
+        for (let i = 0; i < pool.length; i++) {
+            if (pool[i].score >= MIN_SEED_PRIORITY) {
+                const bvLast = bvLastDate.get(pool[i].bv);
+                if (!bvLast || (sessionDate - bvLast >= GAP_MS)) { seedIdx = i; break; }
+            }
+        }
     }
     // Fallback 1 : seulement les gaps (ignore limite hebdo)
     if (seedIdx < 0) {
@@ -372,26 +386,32 @@ function pickSession(pool, capacity, usedZones, quartierCount, maxPerQuartier, q
     const used=new Set([seedIdx]);
     let left=capacity-(seed.lgts||1);
 
-    const FILL_DIST = 0.0018; // ~200m
-    const MIN_SCORE_FILL = 50; // score CSV minimum pour compléter la session
-    while (left>0 && used.size<pool.length) {
-        const last=selected[selected.length-1];
-        let bi=-1, bv=-Infinity;
-        for (let i=0;i<pool.length;i++) {
+    function fillRound(distMax, minScore) {
+        const last = selected[selected.length-1];
+        let bi = -1, bestV = -Infinity;
+        for (let i = 0; i < pool.length; i++) {
             if (used.has(i)) continue;
             const a = pool[i];
-            const d=dist(last,a);
-            if (d > FILL_DIST) continue; // trop loin
-            // Vérifier score CSV minimum
+            const d = dist(last, a);
+            if (d > distMax) continue;
             const csv = addrScoreLookup[a.id];
-            if (csv && csv.score < MIN_SCORE_FILL) continue; // score trop faible
-            const v=(a.lgts||1)/(d+0.00005);
-            if (v>bv) { bv=v; bi=i; }
+            if (csv && csv.score < minScore) continue;
+            const v = (a.lgts||1) / (d + 0.00005);
+            if (v > bestV) { bestV = v; bi = i; }
         }
-        if (bi<0) break;
-        selected.push(pool[bi]);
-        used.add(bi);
-        left-=(pool[bi].lgts||1);
+        return bi;
+    }
+
+    // 1re passe : strict (200m, score>=50)
+    while (left > 0) {
+        const bi = fillRound(0.0018, 50);
+        if (bi < 0) break;
+        selected.push(pool[bi]); used.add(bi); left -= (pool[bi].lgts||1);
+    }
+    // 2e passe si session courte : souple (300m, score>=45) pour ajouter une adresse bonus
+    if (selected.length < 3 && left > 0) {
+        const bi = fillRound(0.0027, 45);
+        if (bi >= 0) { selected.push(pool[bi]); used.add(bi); }
     }
     // Retirer du pool
     [...used].sort((a,b)=>b-a).forEach(i=>pool.splice(i,1));
