@@ -433,6 +433,7 @@ function pickSession(pool, capacity, usedZones, quartierCount, maxPerQuartier, q
     console.log('  splice done:', (performance.now()-_ps2).toFixed(1)+'ms used='+used.size+' pool now='+pool.length);
     // Marquer la zone
     usedZones.add(`${Math.round(seed.lat*500)}_${Math.round(seed.lon*500)}`);
+    console.log('  returning from pickSession');
     return selected;
 }
 
@@ -695,6 +696,7 @@ async function recalculate() {
                     p2Used.add(a.id);
                 }
             }
+            const totalLgts = selected.reduce((s,a)=>s+(a.lgts||1),0);
             const addrList = selected.map(a=>`${a.adr} (~${a.lgts||1})`).join(' | ');
             const bureau = selected[0].bureau;
             const quartier = getQuartier(selected[0]);
