@@ -504,11 +504,15 @@ async function recalculate() {
     const btn=document.getElementById('ubtn');
     btn.disabled=true; btn.textContent='Calcul en cours...';
 
+    const _t0 = performance.now();
     await fetch(`${SB_URL}/rest/v1/sessions?id=gt.0`,{method:'DELETE',headers:SB_H});
+    console.log('DELETE:', (performance.now()-_t0).toFixed(0)+'ms');
 
     const today=new Date(); today.setHours(0,0,0,0);
     const startDate = today > START ? today : START;
+    const _t1 = performance.now();
     const poolPhase1 = buildPoolT1();
+    console.log('Pool P1:', (performance.now()-_t1).toFixed(0)+'ms, size='+poolPhase1.length);
     const p1PlannedDates = {};
     const p2Used = new Set();
     const GAP_MS = 90 * 24 * 3600 * 1000; // 3 mois
@@ -525,6 +529,8 @@ async function recalculate() {
         clusterScoreMap[poolPhase1[i].id] = s;
     }
 
+    console.log('Cluster scores:', (performance.now()-_t1).toFixed(0)+'ms');
+    const _t2 = performance.now();
     // Pool P2 pré-construit : uniquement adresses matchées CSV (même qualité que P1)
     // → ~514 adresses max, pas 8651 (évite l'explosion du fill loop)
     const poolP2base = [];
@@ -542,6 +548,8 @@ async function recalculate() {
         poolP2base.push({...a, score, bureau: a.bv});
     }
     poolP2base.sort((a, b) => (clusterScoreMap[b.id]||b.score) - (clusterScoreMap[a.id]||a.score));
+    console.log('Pool P2:', (performance.now()-_t2).toFixed(0)+'ms, size='+poolP2base.length);
+    const _t3 = performance.now();
 
     // Pré-calculer la part de sessions par quartier (budget proportionnel au score total)
     const quartierShareFraction = {};
@@ -689,11 +697,14 @@ async function recalculate() {
         ws.setDate(ws.getDate()+7);
     }
 
+    console.log('Main loop done:', (performance.now()-_t3).toFixed(0)+'ms, sessions='+newSessions.length);
+    const _t4 = performance.now();
     for (let i=0; i<newSessions.length; i+=50) {
         await fetch(`${SB_URL}/rest/v1/sessions`,{
             method:'POST', headers:SB_H, body:JSON.stringify(newSessions.slice(i,i+50))
         });
     }
+    console.log('INSERT done:', (performance.now()-_t4).toFixed(0)+'ms');
 
     sessions = await (await fetch(`${SB_URL}/rest/v1/sessions?select=*&order=date`,{headers:SB_H})).json();
 
