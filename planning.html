@@ -333,7 +333,6 @@ function getQuartier(a) {
 function pickSession(pool, capacity, usedZones, quartierCount, maxPerQuartier, quartierLastDate, bvLastDate, sessionDate,
                     quartierTotalCount, totalSessionsScheduled, quartierShareFraction, clusterScoreMap) {
     if (!pool.length) return [];
-    console.log('pickSession: pool='+pool.length+' capacity='+capacity+' date='+sessionDate.toISOString().split('T')[0]);
     const GAP_MS = 8 * 864e5; // 8j min
 
     function gapOkFor(a) {
@@ -375,16 +374,13 @@ function pickSession(pool, capacity, usedZones, quartierCount, maxPerQuartier, q
         return best;
     }
 
-    const _ps0 = performance.now();
     // Pass 1 : contraintes complètes
     let seedIdx = bestEligibleSeed(true, true, true);
-    console.log('  bestSeed P1:', (performance.now()-_ps0).toFixed(1)+'ms idx='+seedIdx);
     if (seedIdx < 0) seedIdx = bestEligibleSeed(true, false, true);
     if (seedIdx < 0) seedIdx = bestEligibleSeed(false, false, true);
     if (seedIdx < 0) seedIdx = bestEligibleSeed(false, false, false);
     if (seedIdx < 0) seedIdx = 0;
     if (seedIdx < 0) return [];
-    console.log('  seed chosen:', (performance.now()-_ps0).toFixed(1)+'ms');
 
     const q = getQuartier(pool[seedIdx]);
     const bv = pool[seedIdx].bv;
@@ -420,20 +416,28 @@ function pickSession(pool, capacity, usedZones, quartierCount, maxPerQuartier, q
         return true;
     }
 
-    const _ps1 = performance.now();
-    // Fill : limité à 20 adresses max pour éviter les boucles trop longues
+    // Fill principal : 400m, score >= 45
     let fillCount = 0;
     while (left > 0 && fillCount < 20) { if (!applyFill(fillRound(0.0036, 45))) break; fillCount++; }
-    console.log('  fill done:', (performance.now()-_ps1).toFixed(1)+'ms fills='+fillCount+' selected='+selected.length+' left='+left);
     if (selected.length < 3 && left > 0) applyFill(fillRound(0.0054, 40));
     if (selected.length < 2 && left > 0) applyFill(fillRound(0.0072, 0));
-    const _ps2 = performance.now();
+
+    // Si session trop petite : passes supplémentaires avec critères assouplis
+    // (rayon et score relâchés pour trouver des adresses bonus proches)
+    const lgtsNow = () => selected.reduce((s,a)=>s+(a.lgts||1),0);
+    if (lgtsNow() < capacity * 0.4 && left > 0) {
+        // 600m, score >= 38
+        while (left > 0 && fillCount < 30) { if (!applyFill(fillRound(0.0054, 38))) break; fillCount++; }
+    }
+    if (lgtsNow() < capacity * 0.4 && left > 0) {
+        // 800m, score >= 35
+        while (left > 0 && fillCount < 35) { if (!applyFill(fillRound(0.0072, 35))) break; fillCount++; }
+    }
+
     // Retirer du pool
     [...used].sort((a,b)=>b-a).forEach(i=>pool.splice(i,1));
-    console.log('  splice done:', (performance.now()-_ps2).toFixed(1)+'ms used='+used.size+' pool now='+pool.length);
     // Marquer la zone
     usedZones.add(`${Math.round(seed.lat*500)}_${Math.round(seed.lon*500)}`);
-    console.log('  returning from pickSession');
     return selected;
 }
 
@@ -509,15 +513,11 @@ async function recalculate() {
     const btn=document.getElementById('ubtn');
     btn.disabled=true; btn.textContent='Calcul en cours...';
 
-    const _t0 = performance.now();
     await fetch(`${SB_URL}/rest/v1/sessions?id=gt.0`,{method:'DELETE',headers:SB_H});
-    console.log('DELETE:', (performance.now()-_t0).toFixed(0)+'ms');
 
     const today=new Date(); today.setHours(0,0,0,0);
     const startDate = today > START ? today : START;
-    const _t1 = performance.now();
     const poolPhase1 = buildPoolT1();
-    console.log('Pool P1:', (performance.now()-_t1).toFixed(0)+'ms, size='+poolPhase1.length);
     const p1PlannedDates = {};
     const p2Used = new Set();
     const GAP_MS = 90 * 24 * 3600 * 1000; // 3 mois
@@ -534,8 +534,6 @@ async function recalculate() {
         clusterScoreMap[poolPhase1[i].id] = s;
     }
 
-    console.log('Cluster scores:', (performance.now()-_t1).toFixed(0)+'ms');
-    const _t2 = performance.now();
     // Pool P2 pré-construit : uniquement adresses matchées CSV (même qualité que P1)
     // → ~514 adresses max, pas 8651 (évite l'explosion du fill loop)
     const poolP2base = [];
@@ -553,8 +551,6 @@ async function recalculate() {
         poolP2base.push({...a, score, bureau: a.bv});
     }
     poolP2base.sort((a, b) => (clusterScoreMap[b.id]||b.score) - (clusterScoreMap[a.id]||a.score));
-    console.log('Pool P2:', (performance.now()-_t2).toFixed(0)+'ms, size='+poolP2base.length);
-    const _t3 = performance.now();
 
     // Pré-calculer la part de sessions par quartier (budget proportionnel au score total)
     const quartierShareFraction = {};
@@ -571,15 +567,11 @@ async function recalculate() {
     const quartierTotalCount = {};
     let totalSessionsScheduled = 0;
 
-    console.log('Setup before budget loop');
     // Calculer le budget total en logements (somme de toutes les sessions possibles)
     let totalBudget = 0;
     let tempWs = new Date(startDate);
     tempWs.setDate(tempWs.getDate() - tempWs.getDay() + 1);
-    let _budgetIter = 0;
     while (tempWs < T1) {
-        _budgetIter++;
-        if (_budgetIter > 100) { console.error('Budget loop infinite!'); break; }
         if (tempWs.getTime() + 6*864e5 >= startDate.getTime()) {
             const n = sessionsPerWeek(tempWs);
             const slots = scheduleWeek(tempWs, n);
@@ -593,7 +585,6 @@ async function recalculate() {
         tempWs.setDate(tempWs.getDate() + 7);
     }
     weekCounter = 0;
-    console.log('Budget loop done, iters='+_budgetIter+', budget='+totalBudget);
 
     // Budget P1 = 50% du total - portes déjà faites sur le terrain
     let portesTerrain = 0;
@@ -617,12 +608,7 @@ async function recalculate() {
     let ws = new Date(startDate);
     ws.setDate(ws.getDate() - ws.getDay() + 1);
 
-    console.log('Starting main while loop, ws='+ws.toISOString().split('T')[0]);
-    let _mainIter = 0;
     while (ws < END) {
-        _mainIter++;
-        if (_mainIter % 5 === 0) console.log('Week '+_mainIter, ws.toISOString().split('T')[0], 'sessions so far:'+newSessions.length);
-        if (_mainIter > 200) { console.error('Main loop infinite!'); break; }
         if (ws.getTime()+6*864e5 < startDate.getTime()) { ws.setDate(ws.getDate()+7); continue; }
 
         const isPostT1 = ws >= T1;
@@ -635,7 +621,6 @@ async function recalculate() {
 
         for (const slot of slots) {
             if (slot.date < startDate || slot.date > END) continue;
-            console.log('Slot:', slot.date.toISOString().split('T')[0], slot.isWe?'WE':'Soir', 'pool='+poolPhase1.length);
 
             // Militants : valeur personnalisée si disponible, sinon calcul auto
             const slotKey = slot.date.toISOString().split('T')[0] + '|' + (slot.isWe ? 'Weekend' : 'Soir');
@@ -685,6 +670,14 @@ async function recalculate() {
             const selected = pickSession(pool, capacity, usedZones, quartierCount, maxPerQuartier, quartierLastDate, bvLastDate, slot.date,
                 quartierTotalCount, totalSessionsScheduled, quartierShareFraction, clusterScoreMap);
             if (!selected.length) continue;
+
+            // En P1 : annuler les sessions trop petites (<20 lgts/militant)
+            // En P2/P3 : garder même les petites sessions (l'élection approche)
+            if (!inP2 && !isPostT1) {
+                const lgts = selected.reduce((s,a)=>s+(a.lgts||1),0);
+                if (lgts < nMil * 20) continue; // trop petite, skip
+            }
+
             if (selected.length) totalSessionsScheduled++;
 
             // Enregistrer les dates P1, décrémenter le budget, marquer P2
@@ -714,14 +707,11 @@ async function recalculate() {
         ws.setDate(ws.getDate()+7);
     }
 
-    console.log('Main loop done:', (performance.now()-_t3).toFixed(0)+'ms, sessions='+newSessions.length);
-    const _t4 = performance.now();
     for (let i=0; i<newSessions.length; i+=50) {
         await fetch(`${SB_URL}/rest/v1/sessions`,{
             method:'POST', headers:SB_H, body:JSON.stringify(newSessions.slice(i,i+50))
         });
     }
-    console.log('INSERT done:', (performance.now()-_t4).toFixed(0)+'ms');
 
     sessions = await (await fetch(`${SB_URL}/rest/v1/sessions?select=*&order=date`,{headers:SB_H})).json();
 
