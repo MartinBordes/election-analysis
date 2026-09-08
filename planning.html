@@ -375,17 +375,16 @@ function pickSession(pool, capacity, usedZones, quartierCount, maxPerQuartier, q
         return best;
     }
 
+    const _ps0 = performance.now();
     // Pass 1 : contraintes complètes
     let seedIdx = bestEligibleSeed(true, true, true);
-    // Fallback 1 : ignore budget
+    console.log('  bestSeed P1:', (performance.now()-_ps0).toFixed(1)+'ms idx='+seedIdx);
     if (seedIdx < 0) seedIdx = bestEligibleSeed(true, false, true);
-    // Fallback 2 : ignore gap quartier + budget, garde limite hebdo
     if (seedIdx < 0) seedIdx = bestEligibleSeed(false, false, true);
-    // Fallback 3 : ignore tout sauf gap bureau
     if (seedIdx < 0) seedIdx = bestEligibleSeed(false, false, false);
-    // Fallback final
     if (seedIdx < 0) seedIdx = 0;
     if (seedIdx < 0) return [];
+    console.log('  seed chosen:', (performance.now()-_ps0).toFixed(1)+'ms');
 
     const q = getQuartier(pool[seedIdx]);
     const bv = pool[seedIdx].bv;
@@ -421,13 +420,17 @@ function pickSession(pool, capacity, usedZones, quartierCount, maxPerQuartier, q
         return true;
     }
 
+    const _ps1 = performance.now();
     // Fill : limité à 20 adresses max pour éviter les boucles trop longues
     let fillCount = 0;
     while (left > 0 && fillCount < 20) { if (!applyFill(fillRound(0.0036, 45))) break; fillCount++; }
+    console.log('  fill done:', (performance.now()-_ps1).toFixed(1)+'ms fills='+fillCount+' selected='+selected.length+' left='+left);
     if (selected.length < 3 && left > 0) applyFill(fillRound(0.0054, 40));
     if (selected.length < 2 && left > 0) applyFill(fillRound(0.0072, 0));
+    const _ps2 = performance.now();
     // Retirer du pool
     [...used].sort((a,b)=>b-a).forEach(i=>pool.splice(i,1));
+    console.log('  splice done:', (performance.now()-_ps2).toFixed(1)+'ms used='+used.size+' pool now='+pool.length);
     // Marquer la zone
     usedZones.add(`${Math.round(seed.lat*500)}_${Math.round(seed.lon*500)}`);
     return selected;
