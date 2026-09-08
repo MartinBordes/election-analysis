@@ -526,6 +526,31 @@ async function recalculate() {
         clusterScoreMap[poolPhase1[i].id] = s;
     }
 
+    // Pré-construire le pool P2 UNE SEULE FOIS (évite de le reconstruire pour chaque slot)
+    const poolP2base = [];
+    for (const a of addresses) {
+        if (!a.bv || !bureauStats[a.bv]) continue;
+        if ((a.lgts||1) < SEUIL_LGTS) continue;
+        if (blacklist.has(a.id)) continue;
+        if (visitCount(a.id) >= 2) continue;
+        const csv = addrScoreLookup[a.id];
+        let score;
+        if (csv) {
+            if (csv.votants < SEUIL_VOTANTS) continue;
+            const ratio = csv.votants / Math.max(a.lgts||1, 1);
+            if (ratio < 0.15) continue;
+            score = Math.pow(csv.score, 1.5) * Math.sqrt(csv.votants);
+        } else {
+            const bs = bureauStats[a.bv];
+            score = bs.score_recup * (a.lgts||1) * 0.05;
+        }
+        if (score <= 0) continue;
+        poolP2base.push({...a, score, bureau: a.bv});
+        // Ajouter aussi au clusterScoreMap si pas déjà présent
+        if (!clusterScoreMap[a.id]) clusterScoreMap[a.id] = score;
+    }
+    poolP2base.sort((a, b) => (clusterScoreMap[b.id]||b.score) - (clusterScoreMap[a.id]||a.score));
+
     // Pré-calculer la part de sessions par quartier (budget proportionnel au score total)
     const quartierShareFraction = {};
     let totalPoolScore = 0;
@@ -617,36 +642,19 @@ async function recalculate() {
                 }
 
                 if (inP2) {
-                    // P2 : mêmes filtres qualité, gap de 2 mois depuis P1 (pas 3)
+                    // Pool P2 : filtrer le pool pré-construit (sans recréer d'objets)
                     const GAP_P2 = 60 * 864e5; // 2 mois
-                    const poolP2now = [];
-                    for (const a of addresses) {
-                        if (p2Used.has(a.id)) continue;
-                        if (!a.bv || !bureauStats[a.bv]) continue;
-                        if ((a.lgts||1) < SEUIL_LGTS) continue;
-                        if (visitCount(a.id) >= 2) continue;
-                        if (blacklist.has(a.id)) continue;
+                    const poolP2now = poolP2base.filter(a => {
+                        if (p2Used.has(a.id)) return false;
+                        if (visitCount(a.id) >= 2) return false;
                         const p1Date = p1PlannedDates[a.id];
-                        if (p1Date && slot.date.getTime() - p1Date.getTime() < GAP_P2) continue;
-                        // Mêmes filtres qualité que P1
-                        const csv = addrScoreLookup[a.id];
-                        if (csv) {
-                            if (csv.votants < SEUIL_VOTANTS) continue;
-                            const ratio = csv.votants / Math.max(a.lgts||1, 1);
-                            if (ratio < 0.15) continue;
-                            const score = Math.pow(csv.score, 1.5) * Math.sqrt(csv.votants);
-                            poolP2now.push({...a, score, bureau: a.bv});
-                        } else {
-                            // Non matché → score très bas, seulement si pool P2 vide
-                            const bs = bureauStats[a.bv];
-                            poolP2now.push({...a, score: bs.score_recup * (a.lgts||1) * 0.05, bureau: a.bv});
-                        }
-                    }
-                    poolP2now.sort((a,b) => b.score - a.score);
+                        if (p1Date && slot.date.getTime() - p1Date.getTime() < GAP_P2) return false;
+                        return true;
+                    });
                     if (poolP2now.length > 0) {
                         pool = poolP2now; passage = 2;
                     } else {
-                        pool = poolPhase1; passage = 1; // fallback si rien éligible en P2
+                        pool = poolPhase1; passage = 1;
                     }
                 } else {
                     pool = poolPhase1; passage = 1;
