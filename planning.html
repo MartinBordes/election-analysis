@@ -261,7 +261,7 @@ function getQuartier(a) {
 
 function pickSession(pool, capacity, usedZones, quartierCount, maxPerQuartier, quartierLastDate, sessionDate) {
     if (!pool.length) return [];
-    const GAP_MS = 7 * 864e5;
+    const GAP_MS = 8 * 864e5; // 8j min pour éviter 2 samedis consécutifs dans le même quartier
 
     // Sélection par score décroissant (pool déjà trié) :
     // prend le premier quartier qui respecte le gap de 7j ET la limite hebdo
