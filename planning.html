@@ -257,7 +257,8 @@ function visitCount(addrId) {
 
 function dist(a,b) { return Math.sqrt((a.lat-b.lat)**2+(a.lon-b.lon)**2); }
 
-const SEUIL_LGTS = 10;
+const SEUIL_LGTS = 30;    // seed : immeuble d'au moins 30 logements
+const SEUIL_LGTS_FILL = 10; // fill : on accepte les plus petits comme adresses secondaires
 const BASCULE_P2 = new Date('2027-02-01');
 
 const SEUIL_VOTANTS = 5; // moins de 5 votants = foyer non électoral, on n'y va pas
@@ -401,9 +402,14 @@ function pickSession(pool, capacity, usedZones, quartierCount, maxPerQuartier, q
     const used=new Set([seedIdx]);
     let left=capacity-(seed.lgts||1);
 
+    // fillPool : inclut les immeubles 10+ lgts pour le remplissage (pas seulement 30+)
+    // On les cherche directement dans le pool (qui peut contenir des petits si passés en fill)
+    // + dans addresses pour les 10-29 lgts proches
+    const selectedIds = new Set(selected.map(a => a.id));
     function fillRound(distMax, minScore) {
         const last = selected[selected.length-1];
-        let bi = -1, bestV = -Infinity;
+        let best = null, bestV = -Infinity;
+        // Chercher dans le pool principal (30+ lgts non-seeds encore disponibles)
         for (let i = 0; i < pool.length; i++) {
             if (used.has(i)) continue;
             const a = pool[i];
@@ -412,27 +418,41 @@ function pickSession(pool, capacity, usedZones, quartierCount, maxPerQuartier, q
             const csv = addrScoreLookup[a.id];
             if (csv && csv.score < minScore) continue;
             const v = (a.lgts||1) / (d + 0.00005);
-            if (v > bestV) { bestV = v; bi = i; }
+            if (v > bestV) { bestV = v; best = {type:'pool', idx:i}; }
         }
-        return bi;
+        // Chercher aussi parmi les 10-29 lgts proches (fill only, pas seeds)
+        for (const a of addresses) {
+            if (selectedIds.has(a.id)) continue;
+            if ((a.lgts||1) < SEUIL_LGTS_FILL || (a.lgts||1) >= SEUIL_LGTS) continue; // 10-29 lgts
+            if (blacklist.has(a.id)) continue;
+            const d = dist(last, a);
+            if (d > distMax) continue;
+            const csv = addrScoreLookup[a.id];
+            if (csv && csv.score < minScore) continue;
+            const v = (a.lgts||1) / (d + 0.00005);
+            if (v > bestV) { bestV = v; best = {type:'addr', addr:a}; }
+        }
+        return best;
     }
 
-    // 1re passe : 400m, score CSV >= 45 (ou non matché dans le pool)
-    while (left > 0) {
-        const bi = fillRound(0.0036, 45);
-        if (bi < 0) break;
-        selected.push(pool[bi]); used.add(bi); left -= (pool[bi].lgts||1);
+    function applyFill(best) {
+        if (!best) return false;
+        if (best.type === 'pool') {
+            selected.push(pool[best.idx]); used.add(best.idx); selectedIds.add(pool[best.idx].id);
+            left -= (pool[best.idx].lgts||1);
+        } else {
+            selected.push(best.addr); selectedIds.add(best.addr.id);
+            left -= (best.addr.lgts||1);
+        }
+        return true;
     }
+
+    // 1re passe : 400m, score CSV >= 45
+    while (left > 0) { if (!applyFill(fillRound(0.0036, 45))) break; }
     // 2e passe si session courte (<3 adresses) : 600m, score >= 40
-    if (selected.length < 3 && left > 0) {
-        const bi = fillRound(0.0054, 40);
-        if (bi >= 0) { selected.push(pool[bi]); used.add(bi); left -= (pool[bi].lgts||1); }
-    }
-    // 3e passe si toujours court : 800m, toute adresse du pool
-    if (selected.length < 2 && left > 0) {
-        const bi = fillRound(0.0072, 0);
-        if (bi >= 0) { selected.push(pool[bi]); used.add(bi); }
-    }
+    if (selected.length < 3 && left > 0) applyFill(fillRound(0.0054, 40));
+    // 3e passe si toujours court : 800m, toute adresse qualifiée
+    if (selected.length < 2 && left > 0) applyFill(fillRound(0.0072, 0));
     // Retirer du pool
     [...used].sort((a,b)=>b-a).forEach(i=>pool.splice(i,1));
     // Marquer la zone
@@ -655,8 +675,13 @@ async function recalculate() {
 
             const selected = pickSession(pool, capacity, usedZones, quartierCount, maxPerQuartier, quartierLastDate, bvLastDate, slot.date,
                 quartierTotalCount, totalSessionsScheduled, quartierShareFraction);
-            if (selected.length) totalSessionsScheduled++;
             if (!selected.length) continue;
+            // Minimum session : au moins 20 logements par militant
+            // Évite d'envoyer des militants pour 2 petites adresses
+            const totalLgts = selected.reduce((s,a)=>s+(a.lgts||1),0);
+            if (totalLgts < nMil * 20) continue;
+
+            if (selected.length) totalSessionsScheduled++;
 
             // Enregistrer les dates P1, décrémenter le budget, marquer P2
             for (const a of selected) {
@@ -667,8 +692,6 @@ async function recalculate() {
                     p2Used.add(a.id);
                 }
             }
-
-            const totalLgts = selected.reduce((s,a)=>s+(a.lgts||1),0);
             const addrList = selected.map(a=>`${a.adr} (~${a.lgts||1})`).join(' | ');
             const bureau = selected[0].bureau;
             const quartier = getQuartier(selected[0]);
