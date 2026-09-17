@@ -334,7 +334,15 @@ path.leaflet-interactive { -webkit-tap-highlight-color: transparent; }
 </div>
 
 <div id="stats-panel" style="display:none;">
-    <div id="sp-title" class="sp-title"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div id="sp-title" class="sp-title" style="margin-bottom:0;"></div>
+        <div style="display:flex;gap:4px;">
+            <button id="toggle-pap" onclick="setMapColorMode('pap')"
+                style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:10px;cursor:pointer;border:1.5px solid var(--lfi-green);background:var(--lfi-green);color:white;">PàP</button>
+            <button id="toggle-boi" onclick="setMapColorMode('boi')"
+                style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:10px;cursor:pointer;border:1.5px solid #ccc;background:white;color:#666;">Boîtage</button>
+        </div>
+    </div>
     <div id="sp-subtitle" class="sp-subtitle"></div>
     <div class="progress-row">
         <span class="progress-label pap">PàP</span>
@@ -354,6 +362,9 @@ path.leaflet-interactive { -webkit-tap-highlight-color: transparent; }
     <h3 id="mo-title"></h3>
     <div class="mo-addr" id="mo-addr"></div>
     <div class="mo-history" id="mo-history"></div>
+    <textarea id="mo-note-field" placeholder="Note (optionnelle)..."
+        style="width:100%;margin-bottom:10px;padding:6px 8px;border:1px solid #ddd;border-radius:6px;
+               font-size:13px;font-family:inherit;resize:none;height:48px;box-sizing:border-box;"></textarea>
     <div class="btn-row">
         <div style="flex:1;text-align:center;">
             <button class="btn-action pap" style="width:100%;" onclick="animateAndAdd(this,'pap')">+ Porte-à-porte</button>
@@ -364,6 +375,7 @@ path.leaflet-interactive { -webkit-tap-highlight-color: transparent; }
             <button class="btn-undo" id="mo-undo-boi" onclick="undoVisite('boi')" style="display:none;">Annuler</button>
         </div>
     </div>
+    <div id="mo-blacklist-btn" style="margin-top:8px;text-align:center;"></div>
 </div>
 
 <!-- Admin review panel -->
@@ -415,17 +427,37 @@ async function enterMode(mode) {
 // === DATA ===
 async function loadAddresses() { ADDRESSES = await (await fetch('adresses_nanterre.json')).json(); }
 async function loadBureaux() { BUREAUX = await (await fetch('bureaux_vote.geojson')).json(); }
+let blacklistedAddrs = new Set(); // adresses blacklistées pour le planning
+let mapColorMode = 'pap'; // 'pap' ou 'boi'
+
 async function loadVisites() {
     try {
-        const rows = await (await fetch(`${SUPABASE_URL}/rest/v1/visites?select=*`, { headers: SB_H })).json();
-        if (Array.isArray(rows)) rows.forEach(r => {
+        const [vRows, blRows] = await Promise.all([
+            (await fetch(`${SUPABASE_URL}/rest/v1/visites?select=*`, { headers: SB_H })).json(),
+            (await fetch(`${SUPABASE_URL}/rest/v1/blacklist_adresses?select=address_id`, { headers: SB_H })).json(),
+        ]);
+        if (Array.isArray(vRows)) vRows.forEach(r => {
             if (!visites[r.address_id]) visites[r.address_id] = {};
             visites[r.address_id][r.type] = {
                 count: r.count || 1, last_date: r.last_date,
-                status: r.status || 'approved'
+                status: r.status || 'approved', note: r.note || ''
             };
         });
+        if (Array.isArray(blRows)) blRows.forEach(r => blacklistedAddrs.add(r.address_id));
     } catch(e) { console.error(e); }
+}
+
+async function toggleBlacklistAddr(addrId, adr) {
+    if (blacklistedAddrs.has(addrId)) {
+        blacklistedAddrs.delete(addrId);
+        await fetch(`${SUPABASE_URL}/rest/v1/blacklist_adresses?address_id=eq.${addrId}`, { method:'DELETE', headers: SB_H });
+    } else {
+        blacklistedAddrs.add(addrId);
+        await fetch(`${SUPABASE_URL}/rest/v1/blacklist_adresses`, {
+            method:'POST', headers:SB_H, body:JSON.stringify({address_id:addrId, adr})
+        });
+    }
+    refreshPopup();
 }
 
 // === PERSISTENCE ===
@@ -460,14 +492,27 @@ async function addVisite(type) {
     const n = prev ? prev.count + 1 : 1;
     const now = new Date().toISOString();
     const status = MODE === 'admin' ? 'approved' : 'pending';
-    visites[currentAddrId][type] = { count: n, last_date: now, status };
+    // Récupérer la note saisie (mobile ou desktop)
+    const noteEl = document.getElementById('note-field-' + currentAddrId) || document.getElementById('mo-note-field');
+    const note = noteEl ? noteEl.value.trim() : (prev ? prev.note : '');
+    visites[currentAddrId][type] = { count: n, last_date: now, status, note };
     const sk = currentAddrId + ':' + type;
     sessionAdded[sk] = (sessionAdded[sk] || 0) + 1;
     try { await fetch(`${SUPABASE_URL}/rest/v1/visites`, {
         method: 'POST', headers: { ...SB_H, 'Prefer': 'resolution=merge-duplicates' },
-        body: JSON.stringify({ address_id: currentAddrId, type, count: n, last_date: now, status })
+        body: JSON.stringify({ address_id: currentAddrId, type, count: n, last_date: now, status, note })
     }); } catch(e) { console.error(e); }
     updateMarkerStyle(currentAddrId); updateStatsPanel(); refreshPopup();
+}
+
+async function saveNote(addrId, type) {
+    const noteEl = document.getElementById('note-field-' + addrId) || document.getElementById('mo-note-field');
+    if (!noteEl || !visites[addrId] || !visites[addrId][type]) return;
+    const note = noteEl.value.trim();
+    visites[addrId][type].note = note;
+    try { await fetch(`${SUPABASE_URL}/rest/v1/visites?address_id=eq.${addrId}&type=eq.${type}`, {
+        method: 'PATCH', headers: SB_H, body: JSON.stringify({ note })
+    }); } catch(e) {}
 }
 
 async function undoVisite(type) {
@@ -519,15 +564,37 @@ function historyText(id) {
     const v = visites[id] || {}; const p = [];
     if (v.pap) {
         const d = new Date(v.pap.last_date).toLocaleDateString('fr-FR');
-        const st = v.pap.status === 'pending' ? ' (en attente)' : '';
-        p.push(`PàP : ${v.pap.count} visite${v.pap.count>1?'s':''} (${d})${st}`);
+        const st = v.pap.status === 'pending' ? ' <i>(en attente)</i>' : '';
+        const note = v.pap.note ? `<br><span style="color:#888;font-size:12px;">📝 ${v.pap.note}</span>` : '';
+        p.push(`PàP : ${v.pap.count} visite${v.pap.count>1?'s':''} (${d})${st}${note}`);
     }
     if (v.boi) {
         const d = new Date(v.boi.last_date).toLocaleDateString('fr-FR');
-        const st = v.boi.status === 'pending' ? ' (en attente)' : '';
-        p.push(`Boîtage : ${v.boi.count} passage${v.boi.count>1?'s':''} (${d})${st}`);
+        const st = v.boi.status === 'pending' ? ' <i>(en attente)</i>' : '';
+        const note = v.boi.note ? `<br><span style="color:#888;font-size:12px;">📝 ${v.boi.note}</span>` : '';
+        p.push(`Boîtage : ${v.boi.count} passage${v.boi.count>1?'s':''} (${d})${st}${note}`);
     }
     return p.length ? p.join('<br>') : 'Aucune visite';
+}
+
+function noteFieldHTML(addrId) {
+    const v = visites[addrId];
+    const existingNote = (v?.pap?.note || v?.boi?.note || '');
+    const noteType = v?.pap ? 'pap' : v?.boi ? 'boi' : 'pap';
+    return `<textarea id="note-field-${addrId}" placeholder="Note (optionnelle)..."
+        style="width:100%;margin-top:6px;padding:6px 8px;border:1px solid #ddd;border-radius:6px;
+               font-size:12px;font-family:inherit;resize:none;height:48px;"
+        onblur="saveNote('${addrId}','${noteType}')">${existingNote}</textarea>`;
+}
+
+function blacklistBtnHTML(addrId, adr) {
+    const isBlack = blacklistedAddrs.has(addrId);
+    return `<button onclick="toggleBlacklistAddr('${addrId}','${adr.replace(/'/g,"\\'")}');"
+        style="background:none;border:1px solid ${isBlack?'var(--lfi-red)':'#ddd'};border-radius:6px;
+               padding:4px 10px;font-size:12px;color:${isBlack?'var(--lfi-red)':'#999'};
+               cursor:pointer;margin-top:6px;">
+        ${isBlack ? '↩ Retirer de la blacklist' : '🚫 Ne plus visiter (planning)'}
+    </button>`;
 }
 
 // === POPUPS ===
@@ -549,6 +616,13 @@ function openAddrPopup(a) {
         document.getElementById('mo-history').innerHTML = historyText(a.id);
         document.getElementById('mo-undo-pap').style.display = canUndo(a.id,'pap') ? '' : 'none';
         document.getElementById('mo-undo-boi').style.display = canUndo(a.id,'boi') ? '' : 'none';
+        // Pré-remplir la note
+        const v = visites[a.id];
+        const noteField = document.getElementById('mo-note-field');
+        if (noteField) noteField.value = v?.pap?.note || v?.boi?.note || '';
+        // Bouton blacklist
+        const blBtn = document.getElementById('mo-blacklist-btn');
+        if (blBtn) blBtn.innerHTML = blacklistBtnHTML(a.id, a.adr);
         document.getElementById('mobile-overlay').style.display = 'block';
         document.getElementById('mobile-backdrop').style.display = 'block';
     }
@@ -566,14 +640,17 @@ function popupHTML(a) {
     return `<div class="addr-popup"><h3>${a.adr}</h3>
         <div class="popup-rue">${a.rue} — ~${a.lgts||1} logement${(a.lgts||1)>1?'s':''}</div>
         <div class="popup-history">${historyText(a.id)}</div>
-        <div class="btn-row">
+        ${noteFieldHTML(a.id)}
+        <div class="btn-row" style="margin-top:8px;">
             <div style="flex:1;text-align:center;">
                 <button class="btn-action pap" style="width:100%;" onclick="currentAddrId='${a.id}';animateAndAdd(this,'pap');">+ PàP</button>
                 ${canUndo(a.id,'pap')?`<button class="btn-undo" onclick="currentAddrId='${a.id}';undoVisite('pap');">Annuler</button>`:''}
             </div><div style="flex:1;text-align:center;">
                 <button class="btn-action boi" style="width:100%;" onclick="currentAddrId='${a.id}';animateAndAdd(this,'boi');">+ Boîtage</button>
                 ${canUndo(a.id,'boi')?`<button class="btn-undo" onclick="currentAddrId='${a.id}';undoVisite('boi');">Annuler</button>`:''}
-            </div></div></div>`;
+            </div></div>
+        ${blacklistBtnHTML(a.id, a.adr)}
+        </div>`;
 }
 
 // === STATS (approved only) ===
@@ -605,6 +682,30 @@ function globalStats() {
     return { totalLgts, totalPending, pctPap: totalLgts ? Math.round(lP/totalLgts*100) : 0,
         pctBoi: totalLgts ? Math.round(lB/totalLgts*100) : 0 };
 }
+function setMapColorMode(mode) {
+    mapColorMode = mode;
+    // Mettre à jour les boutons
+    const btnPap = document.getElementById('toggle-pap');
+    const btnBoi = document.getElementById('toggle-boi');
+    if (btnPap && btnBoi) {
+        btnPap.style.background = mode==='pap' ? 'var(--lfi-green)' : 'white';
+        btnPap.style.color = mode==='pap' ? 'white' : '#666';
+        btnPap.style.borderColor = mode==='pap' ? 'var(--lfi-green)' : '#ccc';
+        btnBoi.style.background = mode==='boi' ? 'var(--lfi-violet)' : 'white';
+        btnBoi.style.color = mode==='boi' ? 'white' : '#666';
+        btnBoi.style.borderColor = mode==='boi' ? 'var(--lfi-violet)' : '#ccc';
+    }
+    // Recalculer les couleurs des bureaux
+    if (bureauLayer) bureauLayer.setStyle(f => {
+        const s = bureauStats(f.properties.bureau);
+        const pct = mode === 'pap' ? s.pctPap : s.pctBoi;
+        const fillColor = pct > 0 ? (mode==='pap' ? 'var(--lfi-green)' : 'var(--lfi-violet)') : '#e0e0e0';
+        let color = '#555', weight = 1.5;
+        if (MODE === 'admin' && s.pending > 0) { color = 'var(--lfi-violet)'; weight = 2.5; }
+        return { fillColor, fillOpacity: pct > 0 ? Math.min(pct/100*0.65, 0.65) : 0.05, color, weight };
+    });
+}
+
 function updateStatsPanel() {
     if (currentBureau) {
         const s = bureauStats(currentBureau);
@@ -657,15 +758,18 @@ function showBureaux() {
     bureauLayer = L.geoJSON(BUREAUX, {
         style: f => {
             const s = bureauStats(f.properties.bureau);
-            const pct = Math.max(s.pctPap, s.pctBoi);
-            let fillColor = pct > 0 ? 'var(--lfi-green)' : '#e0e0e0';
+            const pct = mapColorMode === 'pap' ? s.pctPap : s.pctBoi;
+            // Couleurs progressives : transparent à 0%, bien visible à 100%
+            // Formule: opacity = pct/100 * 0.65 (max 0.65, pas de base pour ne pas sur-noircir)
+            const fillColor = pct > 0
+                ? (mapColorMode === 'pap' ? 'var(--lfi-green)' : 'var(--lfi-violet)')
+                : '#e0e0e0';
             let color = '#555', weight = 1.5;
             if (MODE === 'admin' && s.pending > 0) {
-                fillColor = var_lfi_violet_light;
                 color = var_lfi_violet;
                 weight = 2.5;
             }
-            return { fillColor, fillOpacity: Math.min(0.15 + pct/100*0.5, 0.7), color, weight };
+            return { fillColor, fillOpacity: pct > 0 ? Math.min(pct/100 * 0.65, 0.65) : 0.05, color, weight };
         },
         onEachFeature: (f, layer) => {
             const s = bureauStats(f.properties.bureau);
