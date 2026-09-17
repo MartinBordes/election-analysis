@@ -937,12 +937,17 @@ function renderSessions() {
     let html='', lastW='';
     for (const s of sessions) {
         const d=new Date(s.date);
-        const wn=Math.floor((d-START)/(7*864e5))+1, wk=`S${wn}`;
+        // Semaine lundi→dimanche : trouver le lundi de la semaine contenant d
+        const dayOfWeek = d.getDay() || 7; // 1=lun ... 7=dim
+        const monday = new Date(d); monday.setDate(d.getDate() - dayOfWeek + 1);
+        monday.setHours(0,0,0,0);
+        const wk = monday.toISOString().split('T')[0]; // clé unique par semaine
         if (wk!==lastW) {
-            const ws2=new Date(START.getTime()+(wn-1)*7*864e5);
-            const we2=new Date(ws2.getTime()+6*864e5);
+            const sunday = new Date(monday); sunday.setDate(monday.getDate()+6);
             const fmt=dt=>`${dt.getDate()} ${MOIS[dt.getMonth()]}`;
-            html+=`<div class="week-header">${wk} — ${fmt(ws2)} au ${fmt(we2)}</div>`;
+            // Numéro de semaine relatif à la campagne
+            const wn = Math.floor((monday-START)/(7*864e5))+1;
+            html+=`<div class="week-header">S${wn} — ${fmt(monday)} au ${fmt(sunday)}</div>`;
             lastW=wk;
         }
         const jour=JOURS[d.getDay()], dateStr=`${jour} ${d.getDate()} ${MOIS[d.getMonth()]}`;
