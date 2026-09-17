@@ -460,9 +460,11 @@ function milPerSession(d, isWe) {
 let weekCounter = 0;
 function scheduleWeek(ws, n) {
     const slots = [];
-    // Samedi toujours inclus
+    // Weekend : samedi, sauf 1 semaine sur 3 où c'est dimanche
     const sam = new Date(ws); sam.setDate(sam.getDate()+(6-sam.getDay()));
-    slots.push({date:new Date(sam), isWe:true});
+    const dim0 = new Date(ws); dim0.setDate(dim0.getDate()+(7-dim0.getDay()));
+    const useDim = (weekCounter % 3 === 2);
+    slots.push({date: useDim ? new Date(dim0) : new Date(sam), isWe:true});
 
     // Soirs lun-ven : rotation d'une semaine à l'autre
     // Semaine 0: lun, mer, ven | Semaine 1: mar, jeu | Semaine 2: lun, mer, ven | etc.
