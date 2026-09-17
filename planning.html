@@ -124,6 +124,10 @@ const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJ
 const SB_H = {'apikey':SB_KEY,'Authorization':`Bearer ${SB_KEY}`,'Content-Type':'application/json'};
 
 const START=new Date('2026-09-12'), T1=new Date('2027-04-18'), END=new Date('2027-04-30');
+// Formatage local YYYY-MM-DD sans décalage UTC (évite le bug minuit → veille)
+function localDate(d) {
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
 const INSCR_END=new Date('2027-03-07'), XMAS_S=new Date('2026-12-19'), XMAS_E=new Date('2027-01-04');
 const PORTES_IMM=50, PORTES_PAV=20;
 const JOURS=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
@@ -659,7 +663,7 @@ async function recalculate() {
             if (slot.date < startDate || slot.date > END) continue;
 
             // Militants : valeur personnalisée si disponible, sinon calcul auto
-            const slotKey = slot.date.toISOString().split('T')[0] + '|' + (slot.isWe ? 'Weekend' : 'Soir');
+            const slotKey = localDate(slot.date) + '|' + (slot.isWe ? 'Weekend' : 'Soir');
             const nMil = customMilitants[slotKey] || milPerSession(slot.date, slot.isWe);
             let pool, passage, phaseLabel;
             if (isPostT1) {
@@ -733,7 +737,7 @@ async function recalculate() {
             const quartier = getQuartier(route[0]);
 
             newSessions.push({
-                date: slot.date.toISOString().split('T')[0],
+                date: localDate(slot.date),
                 bureau, phase: phaseLabel,
                 type: slot.isWe ? 'Weekend' : 'Soir',
                 adresses_cibles: addrList,
@@ -847,7 +851,7 @@ function renderPaceIndicator(now) {
 
     // Portes attendues selon la courbe de référence initiale
     let portesAttendues = 0;
-    const todayStr = now.toISOString().split('T')[0];
+    const todayStr = localDate(now);
     if (planningRef.length) {
         for (const r of planningRef) {
             if (r.date <= todayStr) portesAttendues = r.portes_cumulees;
@@ -941,7 +945,7 @@ function renderSessions() {
         const dayOfWeek = d.getDay() || 7; // 1=lun ... 7=dim
         const monday = new Date(d); monday.setDate(d.getDate() - dayOfWeek + 1);
         monday.setHours(0,0,0,0);
-        const wk = monday.toISOString().split('T')[0]; // clé unique par semaine
+        const wk = localDate(monday); // clé unique par semaine
         if (wk!==lastW) {
             const sunday = new Date(monday); sunday.setDate(monday.getDate()+6);
             const fmt=dt=>`${dt.getDate()} ${MOIS[dt.getMonth()]}`;
