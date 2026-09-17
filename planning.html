@@ -466,9 +466,11 @@ function scheduleWeek(ws, n) {
 
     // Soirs lun-ven : rotation d'une semaine à l'autre
     // Semaine 0: lun, mer, ven | Semaine 1: mar, jeu | Semaine 2: lun, mer, ven | etc.
-    // Dimanche toujours inclus en weekend (comme samedi)
-    const dim = new Date(ws); dim.setDate(dim.getDate()+(7-dim.getDay()));
-    slots.push({date: new Date(dim), isWe: true});
+    // Dimanche inclus seulement si n >= 4 (sinon samedi + 2 soirs suffit)
+    if (n >= 4) {
+        const dim = new Date(ws); dim.setDate(dim.getDate()+(7-dim.getDay()));
+        slots.push({date: new Date(dim), isWe: true});
+    }
 
     // Soirs lun-ven : vendredi est un soir normal comme les autres
     const soirPatterns = [
