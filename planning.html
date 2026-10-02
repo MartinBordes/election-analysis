@@ -684,21 +684,39 @@ async function recalculate() {
     // Centroïde de la dernière session par quartier+passage → pour la continuation
     const lastCentroidByQP = {};
 
-    // Pré-charger les gaps depuis les visites terrain récentes
-    // Si un quartier/bureau a eu un PAP approuvé récemment, on respecte le gap
+    // Pré-charger gaps ET centroïdes depuis les visites terrain approuvées
+    const visitPtsByQDate = {}; // "quartier_pP|YYYY-MM-DD" → [{lat,lon}]
     for (const [id, v] of Object.entries(visites)) {
         if (!v.pap || v.pap.status !== 'approved') continue;
         const a = addresses.find(x => x.id === id);
-        if (!a) continue;
-        const visitDate = v.pap.last_date ? new Date(v.pap.last_date) : null;
-        if (!visitDate) continue;
+        if (!a || !v.pap.last_date) continue;
+        const visitDate = new Date(v.pap.last_date);
         const q = getQuartier(a);
         const bv = a.bv;
-        // Garder la date la plus récente par quartier/bureau
+        // Gap quartier/bureau
         if (!quartierLastDate.has(q) || visitDate > quartierLastDate.get(q))
             quartierLastDate.set(q, visitDate);
         if (bv && (!bvLastDate.has(bv) || visitDate > bvLastDate.get(bv)))
             bvLastDate.set(bv, visitDate);
+        // Centroïde : grouper par quartier+passage+date
+        const passage = visitDate < BASCULE_P2 ? 1 : 2;
+        const key = `${q}_p${passage}|${v.pap.last_date}`;
+        if (!visitPtsByQDate[key]) visitPtsByQDate[key] = [];
+        visitPtsByQDate[key].push({lat: a.lat, lon: a.lon});
+    }
+    // Pour chaque quartier+passage, calculer le centroïde de la journée la plus récente
+    const latestDateByQP = {};
+    for (const key of Object.keys(visitPtsByQDate)) {
+        const [qp, date] = key.split('|');
+        if (!latestDateByQP[qp] || date > latestDateByQP[qp]) latestDateByQP[qp] = date;
+    }
+    for (const [qp, date] of Object.entries(latestDateByQP)) {
+        const pts = visitPtsByQDate[`${qp}|${date}`];
+        if (!pts || !pts.length) continue;
+        lastCentroidByQP[qp] = {
+            lat: pts.reduce((s,p)=>s+p.lat,0)/pts.length,
+            lon: pts.reduce((s,p)=>s+p.lon,0)/pts.length,
+        };
     }
     let ws = new Date(startDate);
     ws.setDate(ws.getDate() - ws.getDay() + 1);
