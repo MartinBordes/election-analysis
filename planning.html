@@ -811,6 +811,8 @@ async function recalculate() {
     if (newSessions.length) {
         await fetch(`${SB_URL}/rest/v1/planning_reference?id=gt.0`, { method: 'DELETE', headers: SB_H });
         const byDate = {};
+        // Ancrer la courbe sur le terrain déjà fait : portesAttendues part de portesTerrain, pas de 0
+        byDate[localDate(today)] = (byDate[localDate(today)] || 0) + portesTerrain;
         for (const s of newSessions) {
             byDate[s.date] = (byDate[s.date] || 0) + s.portes_estimees;
         }
