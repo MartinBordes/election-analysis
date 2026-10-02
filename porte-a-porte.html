@@ -361,6 +361,7 @@ path.leaflet-interactive { -webkit-tap-highlight-color: transparent; }
     <div class="mo-handle"></div>
     <h3 id="mo-title"></h3>
     <div class="mo-addr" id="mo-addr"></div>
+    <div id="mo-bureau" style="font-size:12px;color:var(--lfi-gris2);margin-bottom:6px;"></div>
     <div class="mo-history" id="mo-history"></div>
     <textarea id="mo-note-field" placeholder="Note (optionnelle)..."
         style="width:100%;margin-bottom:10px;padding:6px 8px;border:1px solid #ddd;border-radius:6px;
@@ -398,7 +399,7 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const SB_H = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' };
 const ADMIN_PWD = 'objectif50%';
 
-let ADDRESSES = [], BUREAUX = null;
+let ADDRESSES = [], BUREAUX = null, bureauNomIndex = {};
 let visites = {}, markers = {};
 let addressLayer = null, bureauLayer = null, currentAddrId = null, currentBureau = null, map;
 let MODE = null;
@@ -426,7 +427,10 @@ async function enterMode(mode) {
 
 // === DATA ===
 async function loadAddresses() { ADDRESSES = await (await fetch('adresses_nanterre.json')).json(); }
-async function loadBureaux() { BUREAUX = await (await fetch('bureaux_vote.geojson')).json(); }
+async function loadBureaux() {
+    BUREAUX = await (await fetch('bureaux_vote.geojson')).json();
+    for (const f of BUREAUX.features) bureauNomIndex[f.properties.bureau] = f.properties.nom;
+}
 let blacklistedAddrs = new Set(); // adresses blacklistées pour le planning
 let mapColorMode = 'pap'; // 'pap' ou 'boi'
 
@@ -613,6 +617,7 @@ function openAddrPopup(a) {
     if (isMobile()) {
         document.getElementById('mo-title').textContent = a.adr;
         document.getElementById('mo-addr').textContent = `${a.rue} — ~${a.lgts||1} logement${(a.lgts||1)>1?'s':''}`;
+        document.getElementById('mo-bureau').textContent = bureauLabel(a);
         document.getElementById('mo-history').innerHTML = historyText(a.id);
         document.getElementById('mo-undo-pap').style.display = canUndo(a.id,'pap') ? '' : 'none';
         document.getElementById('mo-undo-boi').style.display = canUndo(a.id,'boi') ? '' : 'none';
@@ -636,9 +641,17 @@ function canUndo(addrId, type) {
     if (MODE === 'admin') return !!(visites[addrId] && visites[addrId][type]);
     return (sessionAdded[addrId + ':' + type] || 0) > 0;
 }
+function bureauLabel(a) {
+    const nom = bureauNomIndex[a._bureau];
+    const parts = [`Bureau ${a._bureau||'?'}`];
+    if (nom) parts.push(nom);
+    if (a.quartier) parts.push(a.quartier);
+    return parts.join(' · ');
+}
 function popupHTML(a) {
     return `<div class="addr-popup"><h3>${a.adr}</h3>
         <div class="popup-rue">${a.rue} — ~${a.lgts||1} logement${(a.lgts||1)>1?'s':''}</div>
+        <div style="font-size:11px;color:var(--lfi-gris2);margin-bottom:4px;">${bureauLabel(a)}</div>
         <div class="popup-history">${historyText(a.id)}</div>
         ${noteFieldHTML(a.id)}
         <div class="btn-row" style="margin-top:8px;">
