@@ -335,7 +335,7 @@ function getQuartier(a) {
 }
 
 function pickSession(pool, capacity, usedZones, quartierCount, maxPerQuartier, quartierLastDate, bvLastDate, sessionDate,
-                    quartierTotalCount, totalSessionsScheduled, quartierShareFraction, clusterScoreMap) {
+                    quartierTotalCount, totalSessionsScheduled, quartierShareFraction, clusterScoreMap, forceSeedIdx = -1) {
     if (!pool.length) return [];
     const GAP_MS = 8 * 864e5; // 8j min
 
@@ -378,12 +378,18 @@ function pickSession(pool, capacity, usedZones, quartierCount, maxPerQuartier, q
         return best;
     }
 
-    // Pass 1 : contraintes complètes
-    let seedIdx = bestEligibleSeed(true, true, true);
-    if (seedIdx < 0) seedIdx = bestEligibleSeed(true, false, true);
-    if (seedIdx < 0) seedIdx = bestEligibleSeed(false, false, true);
-    if (seedIdx < 0) seedIdx = bestEligibleSeed(false, false, false);
-    if (seedIdx < 0) seedIdx = 0;
+    // Continuation : utiliser le seed forcé si fourni (immeuble le plus proche du centroïde précédent)
+    let seedIdx;
+    if (forceSeedIdx >= 0 && forceSeedIdx < pool.length) {
+        seedIdx = forceSeedIdx;
+    } else {
+        // Pass 1 : contraintes complètes
+        seedIdx = bestEligibleSeed(true, true, true);
+        if (seedIdx < 0) seedIdx = bestEligibleSeed(true, false, true);
+        if (seedIdx < 0) seedIdx = bestEligibleSeed(false, false, true);
+        if (seedIdx < 0) seedIdx = bestEligibleSeed(false, false, false);
+        if (seedIdx < 0) seedIdx = 0;
+    }
     if (seedIdx < 0) return [];
 
     const q = getQuartier(pool[seedIdx]);
@@ -632,6 +638,8 @@ async function recalculate() {
     const newSessions = [];
     const quartierLastDate = new Map();
     const bvLastDate = new Map();
+    // Centroïde de la dernière session par quartier+passage → pour la continuation
+    const lastCentroidByQP = {};
 
     // Pré-charger les gaps depuis les visites terrain récentes
     // Si un quartier/bureau a eu un PAP approuvé récemment, on respecte le gap
@@ -711,8 +719,39 @@ async function recalculate() {
             // Capacité : 70 portes/militant le week-end, 40 en semaine (sans bonus)
             const capacity = nMil * (slot.isWe ? 70 : 40);
 
+            // Continuation : si un quartier du même passage a un centroïde stocké et assez de logements
+            // restants à proximité (200m), forcer le seed sur l'immeuble le plus proche du centroïde
+            const CONT_RADIUS = 0.0018; // ~200m
+            const contThreshold = capacity; // nMil × 40 ou 70
+            let forceSeedIdx = -1;
+            const GAP_MS_CONT = 8 * 864e5;
+            for (const [key, centroid] of Object.entries(lastCentroidByQP)) {
+                const [cq, cpStr] = key.split('_p');
+                if (parseInt(cpStr) !== passage) continue;
+                // Vérifier le gap quartier
+                const qLast = quartierLastDate.get(cq);
+                if (qLast && (slot.date - qLast < GAP_MS_CONT)) continue;
+                // Vérifier la limite hebdo
+                if ((quartierCount.get(cq) || 0) >= maxPerQuartier) continue;
+                // Compter les logements disponibles dans les 200m
+                let nearbyLgts = 0, nearestDist = Infinity, nearestIdx = -1;
+                for (let i = 0; i < pool.length; i++) {
+                    const a = pool[i];
+                    if (getQuartier(a) !== cq) continue;
+                    const d = dist(a, centroid);
+                    if (d <= CONT_RADIUS) {
+                        nearbyLgts += (a.lgts || 1);
+                        if (d < nearestDist) { nearestDist = d; nearestIdx = i; }
+                    }
+                }
+                if (nearbyLgts >= contThreshold && nearestIdx >= 0) {
+                    forceSeedIdx = nearestIdx;
+                    break;
+                }
+            }
+
             const selected = pickSession(pool, capacity, usedZones, quartierCount, maxPerQuartier, quartierLastDate, bvLastDate, slot.date,
-                quartierTotalCount, totalSessionsScheduled, quartierShareFraction, clusterScoreMap);
+                quartierTotalCount, totalSessionsScheduled, quartierShareFraction, clusterScoreMap, forceSeedIdx);
             if (!selected.length) continue;
 
             // Annuler les sessions trop petites (<20 lgts/militant) en P1 et P2
@@ -739,6 +778,13 @@ async function recalculate() {
             const addrList = route.map(a=>`${a.adr} (~${a.lgts||1})`).join(' | ');
             const bureau = route[0].bureau;
             const quartier = getQuartier(route[0]);
+
+            // Stocker le centroïde de cette session pour la continuation au prochain passage dans ce quartier
+            if (!isPostT1) {
+                const centLat = selected.reduce((s,a)=>s+a.lat,0)/selected.length;
+                const centLon = selected.reduce((s,a)=>s+a.lon,0)/selected.length;
+                lastCentroidByQP[`${quartier}_p${passage}`] = {lat: centLat, lon: centLon};
+            }
 
             newSessions.push({
                 date: localDate(slot.date),
