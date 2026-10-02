@@ -747,8 +747,8 @@ function updateStatsPanel() {
 function buildMap() {
     const initZoom = isMobile() ? 13 : 14;
     map = L.map('map', { zoomControl: false }).setView([48.8925, 2.2052], initZoom);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-        { attribution: '&copy; OSM, CARTO', maxZoom: 19 }).addTo(map);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+        { attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>', maxZoom: 19, maxNativeZoom: 19 }).addTo(map);
     map.on('click', e => {
         if (!currentBureau) return;
         const pt = [e.latlng.lng, e.latlng.lat];
