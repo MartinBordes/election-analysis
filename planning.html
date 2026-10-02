@@ -1026,7 +1026,7 @@ function renderSessions() {
                 <span class="sc-badge ${pCls}">${pShort}</span>
             </div>
             <div class="sc-top" style="margin-top:2px;">
-                <span class="sc-bureau">Bureau ${s.bureau}${quartierLabel ? ` · <b style="color:var(--lfi-violet)">${quartierLabel}</b>` : ''}</span>
+                <span class="sc-bureau">Bureau ${s.bureau}${bureauStats[s.bureau]?.nom ? ` – ${bureauStats[s.bureau].nom}` : ''}${quartierLabel ? ` · <b style="color:var(--lfi-violet)">${quartierLabel}</b>` : ''}</span>
                 <span class="sc-badge ${passageNum===1?'p1':'p2'}">Passage ${passageNum}</span>
             </div>
             <div class="sc-top" style="margin-top:4px;align-items:center;">
