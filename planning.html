@@ -619,6 +619,49 @@ async function recalculate() {
     }
     weekCounter = 0;
 
+    // === PASSE DE RÉFÉRENCE : reconstruire la courbe depuis START avec les lgts actuels ===
+    // Pool complet sans filtre visitCount (comme si on planifiait depuis le début)
+    const refPool = buildPool(null, (a, bs) => bs.score_recup * (a.lgts||1));
+    const refCSM = {};
+    for (let i = 0; i < refPool.length; i++) {
+        let s = refPool[i].score;
+        const qi = getQuartier(refPool[i]);
+        for (let j = 0; j < refPool.length; j++) {
+            if (j!==i && getQuartier(refPool[j])===qi && dist(refPool[i],refPool[j])<=CLUSTER_RADIUS)
+                s += refPool[j].score;
+        }
+        refCSM[refPool[i].id] = s;
+    }
+    const refSFTotal = refPool.reduce((s,a) => s+a.score, 0);
+    const refSF = {};
+    for (const a of refPool) { const q=getQuartier(a); refSF[q]=(refSF[q]||0)+a.score/refSFTotal; }
+    const refQTC={}, refQLD=new Map(), refBLD=new Map();
+    let refTS=0;
+    const refByDate={};
+    let refWs=new Date(START);
+    refWs.setDate(refWs.getDate()-refWs.getDay()+1);
+    while (refWs < T1 && refPool.length > 5) {
+        if (refWs.getTime()+6*864e5 < START.getTime()) { refWs.setDate(refWs.getDate()+7); continue; }
+        const rn = sessionsPerWeek(refWs);
+        const rslots = scheduleWeek(refWs, rn);
+        const rUZ=new Set(), rQC=new Map(), rMaxPQ=Math.ceil(rn/5);
+        for (const rslot of rslots) {
+            if (rslot.date < START || rslot.date >= T1) continue;
+            const rNMil = milPerSession(rslot.date, rslot.isWe);
+            const rCap = rNMil * (rslot.isWe ? 70 : 40);
+            if (!refPool.length) continue;
+            const rSel = pickSession(refPool, rCap, rUZ, rQC, rMaxPQ, refQLD, refBLD, rslot.date,
+                refQTC, refTS, refSF, refCSM);
+            if (!rSel.length) continue;
+            const rLg = rSel.reduce((s,a)=>s+(a.lgts||1),0);
+            if (rLg < rNMil*20) continue;
+            refTS++;
+            refByDate[localDate(rslot.date)] = (refByDate[localDate(rslot.date)]||0) + rLg;
+        }
+        refWs.setDate(refWs.getDate()+7);
+    }
+    weekCounter = 0; // réinitialiser pour la passe principale
+
     // Budget P1 = 50% du total - portes déjà faites sur le terrain
     let portesTerrain = 0;
     for (const [id, v] of Object.entries(visites)) {
@@ -808,19 +851,14 @@ async function recalculate() {
     sessions = await (await fetch(`${SB_URL}/rest/v1/sessions?select=*&order=date`,{headers:SB_H})).json();
 
     // Régénérer la courbe de référence à chaque mise à jour (cohérence avec les lgts actuels)
-    if (newSessions.length) {
+    if (Object.keys(refByDate).length) {
         await fetch(`${SB_URL}/rest/v1/planning_reference?id=gt.0`, { method: 'DELETE', headers: SB_H });
-        const byDate = {};
-        // Ancrer la courbe sur le terrain déjà fait : portesAttendues part de portesTerrain, pas de 0
-        byDate[localDate(today)] = (byDate[localDate(today)] || 0) + portesTerrain;
-        for (const s of newSessions) {
-            byDate[s.date] = (byDate[s.date] || 0) + s.portes_estimees;
-        }
-        const dates = Object.keys(byDate).sort();
+        // Courbe de référence construite depuis START avec les lgts actuels (passe de référence)
+        const dates = Object.keys(refByDate).sort();
         let cumul = 0;
         const refRows = [];
         for (const d of dates) {
-            cumul += byDate[d];
+            cumul += refByDate[d];
             refRows.push({ date: d, portes_cumulees: cumul });
         }
         for (let i = 0; i < refRows.length; i += 50) {
