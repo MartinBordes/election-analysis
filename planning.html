@@ -807,9 +807,9 @@ async function recalculate() {
 
     sessions = await (await fetch(`${SB_URL}/rest/v1/sessions?select=*&order=date`,{headers:SB_H})).json();
 
-    // Sauvegarder la courbe de référence seulement si elle n'existe pas encore
-    if (!planningRef.length && newSessions.length) {
-        // Construire la courbe cumulée jour par jour
+    // Régénérer la courbe de référence à chaque mise à jour (cohérence avec les lgts actuels)
+    if (newSessions.length) {
+        await fetch(`${SB_URL}/rest/v1/planning_reference?id=gt.0`, { method: 'DELETE', headers: SB_H });
         const byDate = {};
         for (const s of newSessions) {
             byDate[s.date] = (byDate[s.date] || 0) + s.portes_estimees;
@@ -821,7 +821,6 @@ async function recalculate() {
             cumul += byDate[d];
             refRows.push({ date: d, portes_cumulees: cumul });
         }
-        // Insérer par batches
         for (let i = 0; i < refRows.length; i += 50) {
             await fetch(`${SB_URL}/rest/v1/planning_reference`, {
                 method: 'POST', headers: SB_H,
