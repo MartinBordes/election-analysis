@@ -368,6 +368,7 @@ path.leaflet-interactive { -webkit-tap-highlight-color: transparent; }
     <div id="mo-bureau" style="font-size:12px;color:var(--lfi-gris2);margin-bottom:6px;"></div>
     <div id="mo-skip"></div>
     <div class="mo-history" id="mo-history"></div>
+    <div id="mo-actions">
     <textarea id="mo-note-field" placeholder="Note (optionnelle)..."
         style="width:100%;margin-bottom:10px;padding:6px 8px;border:1px solid #ddd;border-radius:6px;
                font-size:13px;font-family:inherit;resize:none;height:48px;box-sizing:border-box;"></textarea>
@@ -380,6 +381,7 @@ path.leaflet-interactive { -webkit-tap-highlight-color: transparent; }
             <button class="btn-action boi" style="width:100%;" onclick="animateAndAdd(this,'boi')">+ Boîtage</button>
             <button class="btn-undo" id="mo-undo-boi" onclick="undoVisite('boi')" style="display:none;">Annuler</button>
         </div>
+    </div>
     </div>
     <div id="mo-blacklist-btn" style="margin-top:8px;text-align:center;"></div>
 </div>
@@ -473,6 +475,7 @@ async function toggleBlacklistAddr(addrId, adr) {
 
 // === PERSISTENCE ===
 function animateAndAdd(btn, type) {
+    if (blacklistedAddrs.has(currentAddrId)) return;
     const rect = btn.getBoundingClientRect();
     const cx = rect.left + rect.width / 2;
     const cy = rect.top + rect.height / 2;
@@ -613,7 +616,7 @@ function blacklistBtnHTML(addrId, adr) {
         style="background:none;border:1px solid ${isBlack?'var(--lfi-red)':'#ddd'};border-radius:6px;
                padding:4px 10px;font-size:12px;color:${isBlack?'var(--lfi-red)':'#999'};
                cursor:pointer;margin-top:6px;">
-        ${isBlack ? '↩ Retirer de la blacklist' : '🚫 Ne plus visiter (planning)'}
+        ${isBlack ? '↩ Retirer de la blacklist' : '🚫 Bâtiment inexistant ou vide'}
     </button>`;
 }
 
@@ -627,6 +630,7 @@ function refreshPopup() {
         document.getElementById('mo-undo-pap').style.display = canUndo(a.id,'pap') ? '' : 'none';
         document.getElementById('mo-undo-boi').style.display = canUndo(a.id,'boi') ? '' : 'none';
         document.getElementById('mo-skip').innerHTML = skipNoteHTML(a);
+        document.getElementById('mo-actions').style.display = blacklistedAddrs.has(a.id) ? 'none' : '';
         const blBtn = document.getElementById('mo-blacklist-btn');
         if (blBtn) blBtn.innerHTML = blacklistBtnHTML(a.id, a.adr);
     } else { const m = markers[a.id]; if (m && m.getPopup() && m.getPopup().isOpen()) m.getPopup().setContent(popupHTML(a)); }
@@ -638,6 +642,7 @@ function openAddrPopup(a) {
         document.getElementById('mo-addr').textContent = `${a.rue} — ~${a.lgts||1} logement${(a.lgts||1)>1?'s':''}`;
         document.getElementById('mo-bureau').textContent = bureauLabel(a);
         document.getElementById('mo-skip').innerHTML = skipNoteHTML(a);
+        document.getElementById('mo-actions').style.display = blacklistedAddrs.has(a.id) ? 'none' : '';
         document.getElementById('mo-history').innerHTML = historyText(a.id);
         document.getElementById('mo-undo-pap').style.display = canUndo(a.id,'pap') ? '' : 'none';
         document.getElementById('mo-undo-boi').style.display = canUndo(a.id,'boi') ? '' : 'none';
@@ -670,7 +675,7 @@ function bureauLabel(a) {
 }
 function skipNoteHTML(a) {
     if (blacklistedAddrs.has(a.id))
-        return `<div class="skip-note blacklist"><b>Adresse blacklistée</b> : retirée du planning PAP. Tu peux quand même noter un passage si tu y vas.</div>`;
+        return `<div class="skip-note blacklist"><b>Adresse blacklistée</b> : le bâtiment n'existe plus ou n'est plus habité. Pas de PAP ni de boîtage ici.</div>`;
     if ((a.lgts || 1) < SEUIL_LGTS)
         return `<div class="skip-note"><b>Moins de ${SEUIL_LGTS} logements</b> : pas prévue au planning PAP, trop peu de portes pour le temps passé.</div>`;
     return '';
@@ -681,7 +686,7 @@ function popupHTML(a) {
         <div style="font-size:11px;color:var(--lfi-gris2);margin-bottom:4px;">${bureauLabel(a)}</div>
         ${skipNoteHTML(a)}
         <div class="popup-history">${historyText(a.id)}</div>
-        ${noteFieldHTML(a.id)}
+        ${blacklistedAddrs.has(a.id) ? '' : `${noteFieldHTML(a.id)}
         <div class="btn-row" style="margin-top:8px;">
             <div style="flex:1;text-align:center;">
                 <button class="btn-action pap" style="width:100%;" onclick="currentAddrId='${a.id}';animateAndAdd(this,'pap');">+ PàP</button>
@@ -689,7 +694,7 @@ function popupHTML(a) {
             </div><div style="flex:1;text-align:center;">
                 <button class="btn-action boi" style="width:100%;" onclick="currentAddrId='${a.id}';animateAndAdd(this,'boi');">+ Boîtage</button>
                 ${canUndo(a.id,'boi')?`<button class="btn-undo" onclick="currentAddrId='${a.id}';undoVisite('boi');">Annuler</button>`:''}
-            </div></div>
+            </div></div>`}
         ${blacklistBtnHTML(a.id, a.adr)}
         </div>`;
 }
