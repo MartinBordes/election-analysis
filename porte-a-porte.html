@@ -164,15 +164,14 @@ path.leaflet-interactive { -webkit-tap-highlight-color: transparent; }
 
 /* Marqueurs */
 /* Taille des marqueurs fixée en JS (iconSize) selon le nombre de logements */
-.marker-default, .marker-pap, .marker-boi, .marker-both, .marker-pending, .marker-small, .marker-blacklist { border-radius: 50%; border: 1.5px solid white; }
+.marker-default, .marker-pap, .marker-pending, .marker-small, .marker-blacklist { border-radius: 50%; border: 1.5px solid white; }
 .marker-default { background: #bbb; }
 .marker-pap { background: var(--lfi-red); }
-.marker-boi { background: var(--lfi-violet); }
-.marker-both { background: var(--lfi-noir); }
 .marker-pending { background: var(--lfi-yellow); }
 .marker-small { background: #ccc; border-width: 1px; opacity: 0.7; }
-.marker-blacklist { background: white; border: 2px solid var(--lfi-gris2); color: var(--lfi-gris2); font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
-.marker-blacklist::after { content: '×'; }
+.marker-blacklist { border: 2px solid var(--lfi-gris2); background: white url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M2 2L8 8M8 2L2 8' stroke='%23D1271C' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E") center / 100% 100% no-repeat; }
+.skip-note { font-size: 12px; line-height: 1.4; background: var(--lfi-gris); border-left: 3px solid var(--lfi-gris2); border-radius: 4px; padding: 6px 8px; margin-bottom: 8px; color: var(--lfi-noir); }
+.skip-note.blacklist { border-left-color: var(--lfi-red); }
 
 /* Admin pending badge on bureau */
 .pending-badge {
@@ -367,6 +366,7 @@ path.leaflet-interactive { -webkit-tap-highlight-color: transparent; }
     <h3 id="mo-title"></h3>
     <div class="mo-addr" id="mo-addr"></div>
     <div id="mo-bureau" style="font-size:12px;color:var(--lfi-gris2);margin-bottom:6px;"></div>
+    <div id="mo-skip"></div>
     <div class="mo-history" id="mo-history"></div>
     <textarea id="mo-note-field" placeholder="Note (optionnelle)..."
         style="width:100%;margin-bottom:10px;padding:6px 8px;border:1px solid #ddd;border-radius:6px;
@@ -559,14 +559,10 @@ function isPending(id, type) {
 function getMarkerClass(id) {
     const v = visites[id] || {};
     const aPap = v.pap && v.pap.status === 'approved';
-    const aBoi = v.boi && v.boi.status === 'approved';
     const pPap = v.pap && v.pap.status === 'pending';
-    const pBoi = v.boi && v.boi.status === 'pending';
-    if (MODE === 'admin' && (pPap || pBoi) && !aPap && !aBoi) return 'marker-pending';
-    if (aPap && aBoi) return 'marker-both';
+    // Le boîtage n'influence pas la couleur : seul le PAP est signalé
     if (aPap) return 'marker-pap';
-    if (aBoi) return 'marker-boi';
-    if (MODE === 'admin' && (pPap || pBoi)) return 'marker-pending';
+    if (MODE === 'admin' && pPap) return 'marker-pending';
     if (blacklistedAddrs.has(id)) return 'marker-blacklist';
     const a = ADDRESSES.find(x => x.id === id);
     if (a && (a.lgts || 1) < SEUIL_LGTS) return 'marker-small';
@@ -630,6 +626,9 @@ function refreshPopup() {
         document.getElementById('mo-history').innerHTML = historyText(a.id);
         document.getElementById('mo-undo-pap').style.display = canUndo(a.id,'pap') ? '' : 'none';
         document.getElementById('mo-undo-boi').style.display = canUndo(a.id,'boi') ? '' : 'none';
+        document.getElementById('mo-skip').innerHTML = skipNoteHTML(a);
+        const blBtn = document.getElementById('mo-blacklist-btn');
+        if (blBtn) blBtn.innerHTML = blacklistBtnHTML(a.id, a.adr);
     } else { const m = markers[a.id]; if (m && m.getPopup() && m.getPopup().isOpen()) m.getPopup().setContent(popupHTML(a)); }
 }
 function openAddrPopup(a) {
@@ -638,6 +637,7 @@ function openAddrPopup(a) {
         document.getElementById('mo-title').textContent = a.adr;
         document.getElementById('mo-addr').textContent = `${a.rue} — ~${a.lgts||1} logement${(a.lgts||1)>1?'s':''}`;
         document.getElementById('mo-bureau').textContent = bureauLabel(a);
+        document.getElementById('mo-skip').innerHTML = skipNoteHTML(a);
         document.getElementById('mo-history').innerHTML = historyText(a.id);
         document.getElementById('mo-undo-pap').style.display = canUndo(a.id,'pap') ? '' : 'none';
         document.getElementById('mo-undo-boi').style.display = canUndo(a.id,'boi') ? '' : 'none';
@@ -668,10 +668,18 @@ function bureauLabel(a) {
     if (a.quartier) parts.push(a.quartier);
     return parts.join(' · ');
 }
+function skipNoteHTML(a) {
+    if (blacklistedAddrs.has(a.id))
+        return `<div class="skip-note blacklist"><b>Adresse blacklistée</b> : retirée du planning PAP. Tu peux quand même noter un passage si tu y vas.</div>`;
+    if ((a.lgts || 1) < SEUIL_LGTS)
+        return `<div class="skip-note"><b>Moins de ${SEUIL_LGTS} logements</b> : pas prévue au planning PAP, trop peu de portes pour le temps passé.</div>`;
+    return '';
+}
 function popupHTML(a) {
     return `<div class="addr-popup"><h3>${a.adr}</h3>
         <div class="popup-rue">${a.rue} — ~${a.lgts||1} logement${(a.lgts||1)>1?'s':''}</div>
         <div style="font-size:11px;color:var(--lfi-gris2);margin-bottom:4px;">${bureauLabel(a)}</div>
+        ${skipNoteHTML(a)}
         <div class="popup-history">${historyText(a.id)}</div>
         ${noteFieldHTML(a.id)}
         <div class="btn-row" style="margin-top:8px;">
