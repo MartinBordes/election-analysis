@@ -163,13 +163,15 @@ path.leaflet-interactive { -webkit-tap-highlight-color: transparent; }
 .progress-pct { font-size: 12px; font-weight: 700; width: 36px; text-align: right; }
 
 /* Marqueurs */
-.marker-default { background: #bbb; border: 2px solid white; border-radius: 50%; width: 10px; height: 10px; margin: -5px 0 0 -5px; }
-.marker-pap { background: var(--lfi-red); border: 2px solid white; border-radius: 50%; width: 12px; height: 12px; margin: -6px 0 0 -6px; }
-.marker-boi { background: var(--lfi-violet); border: 2px solid white; border-radius: 50%; width: 12px; height: 12px; margin: -6px 0 0 -6px; }
-.marker-both { background: var(--lfi-noir); border: 2px solid white; border-radius: 50%; width: 12px; height: 12px; margin: -6px 0 0 -6px; }
-.marker-pending { background: var(--lfi-yellow); border: 2px solid white; border-radius: 50%; width: 12px; height: 12px; margin: -6px 0 0 -6px; }
-.marker-small { background: #ccc; border: 1px solid white; border-radius: 50%; width: 6px; height: 6px; margin: -3px 0 0 -3px; opacity: 0.7; }
-.marker-blacklist { background: white; border: 2px solid var(--lfi-gris2); border-radius: 50%; width: 12px; height: 12px; margin: -6px 0 0 -6px; color: var(--lfi-gris2); font-size: 10px; font-weight: 700; line-height: 8px; text-align: center; }
+/* Taille des marqueurs fixée en JS (iconSize) selon le nombre de logements */
+.marker-default, .marker-pap, .marker-boi, .marker-both, .marker-pending, .marker-small, .marker-blacklist { border-radius: 50%; border: 1.5px solid white; }
+.marker-default { background: #bbb; }
+.marker-pap { background: var(--lfi-red); }
+.marker-boi { background: var(--lfi-violet); }
+.marker-both { background: var(--lfi-noir); }
+.marker-pending { background: var(--lfi-yellow); }
+.marker-small { background: #ccc; border-width: 1px; opacity: 0.7; }
+.marker-blacklist { background: white; border: 2px solid var(--lfi-gris2); color: var(--lfi-gris2); font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
 .marker-blacklist::after { content: '×'; }
 
 /* Admin pending badge on bureau */
@@ -570,7 +572,17 @@ function getMarkerClass(id) {
     if (a && (a.lgts || 1) < SEUIL_LGTS) return 'marker-small';
     return 'marker-default';
 }
-function updateMarkerStyle(id) { const m = markers[id]; if (m) m.setIcon(L.divIcon({ className: getMarkerClass(id) })); }
+function markerSize(a) {
+    // Échelle log bornée : 1 lgt → 6px, 10 → 10px, 100 → 14px, max 16px
+    return Math.round(Math.min(16, 6 + 4 * Math.log10(Math.max(1, (a && a.lgts) || 1))));
+}
+function makeMarkerIcon(id) {
+    const cls = getMarkerClass(id);
+    let s = markerSize(ADDRESSES.find(x => x.id === id));
+    if (cls === 'marker-blacklist') s = Math.max(s, 12);
+    return L.divIcon({ className: cls, iconSize: [s, s] });
+}
+function updateMarkerStyle(id) { const m = markers[id]; if (m) m.setIcon(makeMarkerIcon(id)); }
 
 function historyText(id) {
     const v = visites[id] || {}; const p = [];
@@ -844,7 +856,7 @@ function showAddresses(bId) {
     if (addressLayer) map.removeLayer(addressLayer);
     addressLayer = L.layerGroup();
     ADDRESSES.filter(a => a._bureau === bId).forEach(a => {
-        const m = L.marker([a.lat, a.lon], { icon: L.divIcon({ className: getMarkerClass(a.id) }) });
+        const m = L.marker([a.lat, a.lon], { icon: makeMarkerIcon(a.id) });
         m.on('click', () => {
             if (isMobile()) openAddrPopup(a);
             else { currentAddrId = a.id; m.unbindPopup(); m.bindPopup(popupHTML(a), { maxWidth: 260 }).openPopup(); }
