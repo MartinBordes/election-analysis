@@ -153,12 +153,14 @@ path.leaflet-interactive { -webkit-tap-highlight-color: transparent; }
 }
 #stats-panel .sp-subtitle { font-size: 12px; color: var(--lfi-gris2); margin-bottom: 8px; }
 .progress-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
-.progress-label { font-size: 12px; font-weight: 700; width: 60px; flex-shrink: 0; }
+.progress-label { font-size: 12px; font-weight: 700; width: 78px; flex-shrink: 0; }
 .progress-label.pap { color: var(--lfi-red); }
+.progress-label.pap2 { color: #8E1A12; }
 .progress-bar-bg { flex: 1; height: 14px; background: #eee; border-radius: 7px; overflow: hidden; }
 .progress-bar-fill { height: 100%; border-radius: 7px; transition: width 0.3s; }
 .progress-bar-fill.pap { background: var(--lfi-red); }
-.progress-pct { font-size: 12px; font-weight: 700; width: 36px; text-align: right; }
+.progress-bar-fill.pap2 { background: #8E1A12; }
+.progress-pct { font-size: 12px; font-weight: 700; min-width: 36px; text-align: right; white-space: nowrap; }
 
 /* Marqueurs */
 /* Taille des marqueurs fixée en JS (iconSize) selon le nombre de logements */
@@ -340,9 +342,14 @@ path.leaflet-interactive { -webkit-tap-highlight-color: transparent; }
     </div>
     <div id="sp-subtitle" class="sp-subtitle"></div>
     <div class="progress-row">
-        <span class="progress-label pap">PàP</span>
+        <span class="progress-label pap">1er passage</span>
         <div class="progress-bar-bg"><div class="progress-bar-fill pap" id="bar-pap" style="width:0%"></div></div>
         <span class="progress-pct" id="pct-pap">0%</span>
+    </div>
+    <div class="progress-row">
+        <span class="progress-label pap2">2e passage</span>
+        <div class="progress-bar-bg"><div class="progress-bar-fill pap2" id="bar-pap2" style="width:0%"></div></div>
+        <span class="progress-pct" id="pct-pap2">0%</span>
     </div>
 </div>
 
@@ -665,26 +672,35 @@ function popupHTML(a) {
 function bureauStats(bId) {
     const ba = ADDRESSES.filter(a => a._bureau === bId);
     const totalLgts = ba.reduce((s,a) => s + (a.lgts||1), 0);
-    let lP=0, pending=0;
+    let lP=0, lP2=0, pending=0;
     Object.entries(visites).forEach(([id,v]) => {
         const a = ba.find(x => x.id===id); if (!a) return;
         const lg = a.lgts||1;
-        if (v.pap && v.pap.status==='approved') lP += lg;
+        if (v.pap && v.pap.status==='approved') { lP += lg; if (v.pap.count >= 2) lP2 += lg; }
         if (v.pap && v.pap.status==='pending') pending++;
     });
-    return { totalLgts, totalAddr: ba.length, pending,
-        pctPap: totalLgts ? Math.round(lP/totalLgts*100) : 0 };
+    return { totalLgts, totalAddr: ba.length, pending, lP, lP2,
+        pctPap: totalLgts ? Math.round(lP/totalLgts*100) : 0,
+        pctPap2: totalLgts ? Math.round(lP2/totalLgts*100) : 0 };
 }
 function globalStats() {
     const totalLgts = ADDRESSES.reduce((s,a) => s + (a.lgts||1), 0);
-    let lP=0, totalPending=0;
+    let lP=0, lP2=0, totalPending=0;
     Object.entries(visites).forEach(([id,v]) => {
         const a = ADDRESSES.find(x => x.id===id); if (!a) return;
         const lg = a.lgts||1;
-        if (v.pap && v.pap.status==='approved') lP += lg;
+        if (v.pap && v.pap.status==='approved') { lP += lg; if (v.pap.count >= 2) lP2 += lg; }
         if (v.pap && v.pap.status==='pending') totalPending++;
     });
-    return { totalLgts, totalPending, pctPap: totalLgts ? Math.round(lP/totalLgts*100) : 0 };
+    return { totalLgts, totalPending, lP, lP2,
+        pctPap: totalLgts ? Math.round(lP/totalLgts*100) : 0,
+        pctPap2: totalLgts ? Math.round(lP2/totalLgts*100) : 0 };
+}
+function renderProgressBars(s) {
+    document.getElementById('bar-pap').style.width = s.pctPap + '%';
+    document.getElementById('pct-pap').textContent = `${s.lP.toLocaleString('fr-FR')} · ${s.pctPap}%`;
+    document.getElementById('bar-pap2').style.width = s.pctPap2 + '%';
+    document.getElementById('pct-pap2').textContent = `${s.lP2.toLocaleString('fr-FR')} · ${s.pctPap2}%`;
 }
 function updateStatsPanel() {
     if (currentBureau) {
@@ -692,8 +708,7 @@ function updateStatsPanel() {
         document.getElementById('sp-title').textContent = `Bureau ${currentBureau} — ${s.totalAddr} adresses`;
         document.getElementById('sp-subtitle').textContent = `~${s.totalLgts} logements` +
             (MODE==='admin' && s.pending ? ` · ${s.pending} en attente` : '');
-        document.getElementById('bar-pap').style.width = s.pctPap + '%';
-        document.getElementById('pct-pap').textContent = s.pctPap + '%';
+        renderProgressBars(s);
     } else {
         const s = globalStats();
         document.getElementById('sp-title').textContent = `Nanterre — ~${s.totalLgts} logements`;
@@ -701,8 +716,7 @@ function updateStatsPanel() {
             MODE === 'admin' && s.totalPending > 0
                 ? `${s.totalPending} visite${s.totalPending > 1 ? 's' : ''} en attente de validation`
                 : '';
-        document.getElementById('bar-pap').style.width = s.pctPap + '%';
-        document.getElementById('pct-pap').textContent = s.pctPap + '%';
+        renderProgressBars(s);
     }
 }
 
