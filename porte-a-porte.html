@@ -372,6 +372,11 @@ path.leaflet-interactive { -webkit-tap-highlight-color: transparent; }
         </div>
     </div>
     </div>
+    <div id="mo-militant-note" style="display:none;">
+        <textarea id="mo-add-note" placeholder="Ajouter une note (digicode, gardien...)"
+            style="width:100%;margin-bottom:6px;padding:6px 8px;border:1px solid #ddd;border-radius:6px;font-size:13px;font-family:inherit;resize:none;height:48px;box-sizing:border-box;"></textarea>
+        <button class="btn-action pap" style="width:100%;" onclick="addNote(currentAddrId)">Ajouter la note</button>
+    </div>
     <div id="mo-blacklist-btn" style="margin-top:8px;text-align:center;"></div>
 </div>
 
@@ -425,15 +430,18 @@ async function loadBureaux() {
     BUREAUX = await (await fetch('bureaux_vote.geojson')).json();
     for (const f of BUREAUX.features) bureauNomIndex[f.properties.bureau] = f.properties.nom;
 }
+let addrNotes = {}; // address_id → [{texte, created_at}], notes militants en ajout seul
 let blacklistedAddrs = new Set(); // adresses blacklistées pour le planning
 const SEUIL_LGTS = 10; // même seuil que planning.html : en dessous, pas prévu au planning
 
 async function loadVisites() {
     try {
-        const [vRows, blRows] = await Promise.all([
+        const [vRows, blRows, nRows] = await Promise.all([
             (await fetch(`${SUPABASE_URL}/rest/v1/visites?select=*`, { headers: SB_H })).json(),
             (await fetch(`${SUPABASE_URL}/rest/v1/blacklist_adresses?select=address_id`, { headers: SB_H })).json(),
+            (await fetch(`${SUPABASE_URL}/rest/v1/notes?select=address_id,texte,created_at&order=created_at`, { headers: SB_H })).json(),
         ]);
+        if (Array.isArray(nRows)) nRows.forEach(r => (addrNotes[r.address_id] ||= []).push(r));
         if (Array.isArray(vRows)) vRows.forEach(r => {
             if (!visites[r.address_id]) visites[r.address_id] = {};
             visites[r.address_id][r.type] = {
@@ -443,6 +451,23 @@ async function loadVisites() {
         });
         if (Array.isArray(blRows)) blRows.forEach(r => blacklistedAddrs.add(r.address_id));
     } catch(e) { console.error(e); }
+}
+
+async function addNote(addrId) {
+    const el = document.getElementById('add-note-' + addrId) || document.getElementById('mo-add-note');
+    const texte = el ? el.value.trim() : '';
+    if (!texte || blacklistedAddrs.has(addrId)) return;
+    try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/notes`, {
+            method: 'POST', headers: { ...SB_H, 'Prefer': 'return=representation' },
+            body: JSON.stringify({ address_id: addrId, texte })
+        });
+        if (!res.ok) throw new Error(await res.text());
+        const [row] = await res.json();
+        (addrNotes[addrId] ||= []).push(row);
+        el.value = '';
+    } catch(e) { console.error(e); alert("La note n'a pas pu être enregistrée."); }
+    refreshPopup();
 }
 
 async function toggleBlacklistAddr(addrId, adr) {
@@ -564,13 +589,20 @@ function makeMarkerIcon(id) {
 }
 function updateMarkerStyle(id) { const m = markers[id]; if (m) m.setIcon(makeMarkerIcon(id)); }
 
+function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
 function historyText(id) {
     const v = visites[id] || {}; const p = [];
     if (v.pap) {
         const d = new Date(v.pap.last_date).toLocaleDateString('fr-FR');
         const st = v.pap.status === 'pending' ? ' <i>(en attente)</i>' : '';
-        const note = v.pap.note ? `<br><span style="color:#888;font-size:12px;">📝 ${v.pap.note}</span>` : '';
+        const note = v.pap.note ? `<br><span style="color:#888;font-size:12px;">📝 ${escapeHtml(v.pap.note)}</span>` : '';
         p.push(`PàP : ${v.pap.count} visite${v.pap.count>1?'s':''} (${d})${st}${note}`);
+    }
+    for (const n of addrNotes[id] || []) {
+        const d = new Date(n.created_at).toLocaleDateString('fr-FR');
+        p.push(`<span style="color:#888;font-size:12px;">📝 ${d} — ${escapeHtml(n.texte)}</span>`);
     }
     return p.length ? p.join('<br>') : 'Aucune visite';
 }
@@ -605,6 +637,7 @@ function refreshPopup() {
         document.getElementById('mo-undo-pap').style.display = canUndo(a.id,'pap') ? '' : 'none';
         document.getElementById('mo-skip').innerHTML = skipNoteHTML(a);
         document.getElementById('mo-actions').style.display = (MODE !== 'admin' || blacklistedAddrs.has(a.id)) ? 'none' : '';
+        document.getElementById('mo-militant-note').style.display = (MODE === 'militant' && !blacklistedAddrs.has(a.id)) ? '' : 'none';
         const blBtn = document.getElementById('mo-blacklist-btn');
         if (blBtn) blBtn.innerHTML = MODE === 'admin' ? blacklistBtnHTML(a.id, a.adr) : '';
     } else { const m = markers[a.id]; if (m && m.getPopup() && m.getPopup().isOpen()) m.getPopup().setContent(popupHTML(a)); }
@@ -617,8 +650,10 @@ function openAddrPopup(a) {
         document.getElementById('mo-bureau').textContent = bureauLabel(a);
         document.getElementById('mo-skip').innerHTML = skipNoteHTML(a);
         document.getElementById('mo-actions').style.display = (MODE !== 'admin' || blacklistedAddrs.has(a.id)) ? 'none' : '';
+        document.getElementById('mo-militant-note').style.display = (MODE === 'militant' && !blacklistedAddrs.has(a.id)) ? '' : 'none';
         document.getElementById('mo-history').innerHTML = historyText(a.id);
         document.getElementById('mo-undo-pap').style.display = canUndo(a.id,'pap') ? '' : 'none';
+        document.getElementById('mo-add-note').value = '';
         // Pré-remplir la note
         const v = visites[a.id];
         const noteField = document.getElementById('mo-note-field');
@@ -652,6 +687,13 @@ function skipNoteHTML(a) {
         return `<div class="skip-note"><b>Moins de ${SEUIL_LGTS} logements</b> : pas prévue au planning PAP, trop peu de portes pour le temps passé.</div>`;
     return '';
 }
+function addNoteHTML(addrId) {
+    return `<div style="margin-top:6px;">
+        <textarea id="add-note-${addrId}" placeholder="Ajouter une note (digicode, gardien...)"
+            style="width:100%;padding:6px 8px;border:1px solid #ddd;border-radius:6px;font-size:12px;font-family:inherit;resize:none;height:48px;box-sizing:border-box;"></textarea>
+        <button class="btn-action pap" style="width:100%;margin-top:4px;" onclick="addNote('${addrId}')">Ajouter la note</button>
+    </div>`;
+}
 function popupHTML(a) {
     return `<div class="addr-popup"><h3>${a.adr}</h3>
         <div class="popup-rue">${a.rue} — ~${a.lgts||1} logement${(a.lgts||1)>1?'s':''}</div>
@@ -664,6 +706,7 @@ function popupHTML(a) {
                 <button class="btn-action pap" style="width:100%;" onclick="currentAddrId='${a.id}';animateAndAdd(this,'pap');">+ PàP</button>
                 ${canUndo(a.id,'pap')?`<button class="btn-undo" onclick="currentAddrId='${a.id}';undoVisite('pap');">Annuler</button>`:''}
             </div></div>`}
+        ${MODE === 'militant' && !blacklistedAddrs.has(a.id) ? addNoteHTML(a.id) : ''}
         ${MODE === 'admin' ? blacklistBtnHTML(a.id, a.adr) : ''}
         </div>`;
 }
@@ -751,7 +794,7 @@ function showBureaux() {
             const pct = s.pctPap;
             // Couleurs progressives : transparent à 0%, bien visible à 100%
             // Formule: opacity = pct/100 * 0.65 (max 0.65, pas de base pour ne pas sur-noircir)
-            const fillColor = pct > 0 ? 'var(--lfi-green)' : '#e0e0e0';
+            const fillColor = pct > 0 ? 'var(--lfi-red)' : '#e0e0e0';
             let color = '#555', weight = 1.5;
             if (MODE === 'admin' && s.pending > 0) {
                 color = var_lfi_violet;
