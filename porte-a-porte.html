@@ -155,11 +155,9 @@ path.leaflet-interactive { -webkit-tap-highlight-color: transparent; }
 .progress-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
 .progress-label { font-size: 12px; font-weight: 700; width: 60px; flex-shrink: 0; }
 .progress-label.pap { color: var(--lfi-red); }
-.progress-label.boi { color: var(--lfi-violet); }
 .progress-bar-bg { flex: 1; height: 14px; background: #eee; border-radius: 7px; overflow: hidden; }
 .progress-bar-fill { height: 100%; border-radius: 7px; transition: width 0.3s; }
 .progress-bar-fill.pap { background: var(--lfi-red); }
-.progress-bar-fill.boi { background: var(--lfi-violet); }
 .progress-pct { font-size: 12px; font-weight: 700; width: 36px; text-align: right; }
 
 /* Marqueurs */
@@ -208,7 +206,6 @@ path.leaflet-interactive { -webkit-tap-highlight-color: transparent; }
     font-family: inherit; background: white;
 }
 #mobile-overlay .btn-action.pap { border-color: var(--lfi-red-light); color: var(--lfi-red); }
-#mobile-overlay .btn-action.boi { border-color: var(--lfi-violet-light); color: var(--lfi-violet); }
 .btn-undo { background: none; border: none; color: var(--lfi-gris2); font-size: 12px; cursor: pointer; padding: 2px 6px; font-family: inherit; }
 
 /* Confetti sticker */
@@ -236,7 +233,6 @@ path.leaflet-interactive { -webkit-tap-highlight-color: transparent; }
     font-family: inherit; background: white;
 }
 .addr-popup .btn-action.pap { border-color: var(--lfi-red-light); color: var(--lfi-red); }
-.addr-popup .btn-action.boi { border-color: var(--lfi-violet-light); color: var(--lfi-violet); }
 
 /* Admin review panel */
 #admin-review {
@@ -267,7 +263,6 @@ path.leaflet-interactive { -webkit-tap-highlight-color: transparent; }
 .ar-item .ar-addr { flex: 1; }
 .ar-item .ar-type { font-weight: 700; font-size: 12px; padding: 2px 8px; border-radius: 4px; }
 .ar-item .ar-type.pap { background: var(--lfi-red-light); color: var(--lfi-red); }
-.ar-item .ar-type.boi { background: var(--lfi-violet-light); color: var(--lfi-violet); }
 .ar-item .ar-date { color: var(--lfi-gris2); font-size: 12px; }
 
 /* Navigation menu */
@@ -310,7 +305,7 @@ path.leaflet-interactive { -webkit-tap-highlight-color: transparent; }
     <div class="w-image"></div>
     <div class="w-content">
         <div class="w-overline">Nanterre Insoumise</div>
-        <div class="w-title">Porte-à-porte<br>&amp; Boîtage</div>
+        <div class="w-title">Porte-à-porte</div>
         <button class="welcome-btn militant" onclick="enterMode('militant')">Je suis militant</button>
         <button class="welcome-btn admin" onclick="showAdminLogin()">Admin</button>
     <div id="admin-pwd">
@@ -342,23 +337,12 @@ path.leaflet-interactive { -webkit-tap-highlight-color: transparent; }
 <div id="stats-panel" style="display:none;">
     <div style="display:flex;justify-content:space-between;align-items:center;">
         <div id="sp-title" class="sp-title" style="margin-bottom:0;"></div>
-        <div style="display:flex;gap:4px;">
-            <button id="toggle-pap" onclick="setMapColorMode('pap')"
-                style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:10px;cursor:pointer;border:1.5px solid var(--lfi-green);background:var(--lfi-green);color:white;">PàP</button>
-            <button id="toggle-boi" onclick="setMapColorMode('boi')"
-                style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:10px;cursor:pointer;border:1.5px solid #ccc;background:white;color:#666;">Boîtage</button>
-        </div>
     </div>
     <div id="sp-subtitle" class="sp-subtitle"></div>
     <div class="progress-row">
         <span class="progress-label pap">PàP</span>
         <div class="progress-bar-bg"><div class="progress-bar-fill pap" id="bar-pap" style="width:0%"></div></div>
         <span class="progress-pct" id="pct-pap">0%</span>
-    </div>
-    <div class="progress-row">
-        <span class="progress-label boi">Boîtage</span>
-        <div class="progress-bar-bg"><div class="progress-bar-fill boi" id="bar-boi" style="width:0%"></div></div>
-        <span class="progress-pct" id="pct-boi">0%</span>
     </div>
 </div>
 
@@ -378,10 +362,6 @@ path.leaflet-interactive { -webkit-tap-highlight-color: transparent; }
         <div style="flex:1;text-align:center;">
             <button class="btn-action pap" style="width:100%;" onclick="animateAndAdd(this,'pap')">+ Porte-à-porte</button>
             <button class="btn-undo" id="mo-undo-pap" onclick="undoVisite('pap')" style="display:none;">Annuler</button>
-        </div>
-        <div style="flex:1;text-align:center;">
-            <button class="btn-action boi" style="width:100%;" onclick="animateAndAdd(this,'boi')">+ Boîtage</button>
-            <button class="btn-undo" id="mo-undo-boi" onclick="undoVisite('boi')" style="display:none;">Annuler</button>
         </div>
     </div>
     </div>
@@ -412,8 +392,6 @@ let ADDRESSES = [], BUREAUX = null, bureauNomIndex = {};
 let visites = {}, markers = {};
 let addressLayer = null, bureauLayer = null, currentAddrId = null, currentBureau = null, map;
 let MODE = null;
-// Track what the current militant session added (for undo)
-let sessionAdded = {}; // { 'addr_id:type': count_added_this_session }
 
 // === AUTH ===
 function showAdminLogin() { document.getElementById('admin-pwd').style.display = 'block'; }
@@ -442,7 +420,6 @@ async function loadBureaux() {
 }
 let blacklistedAddrs = new Set(); // adresses blacklistées pour le planning
 const SEUIL_LGTS = 10; // même seuil que planning.html : en dessous, pas prévu au planning
-let mapColorMode = 'pap'; // 'pap' ou 'boi'
 
 async function loadVisites() {
     try {
@@ -462,6 +439,7 @@ async function loadVisites() {
 }
 
 async function toggleBlacklistAddr(addrId, adr) {
+    if (MODE !== 'admin') return;
     if (blacklistedAddrs.has(addrId)) {
         blacklistedAddrs.delete(addrId);
         await fetch(`${SUPABASE_URL}/rest/v1/blacklist_adresses?address_id=eq.${addrId}`, { method:'DELETE', headers: SB_H });
@@ -477,7 +455,7 @@ async function toggleBlacklistAddr(addrId, adr) {
 
 // === PERSISTENCE ===
 function animateAndAdd(btn, type) {
-    if (blacklistedAddrs.has(currentAddrId)) return;
+    if (MODE !== 'admin' || blacklistedAddrs.has(currentAddrId)) return;
     const rect = btn.getBoundingClientRect();
     const cx = rect.left + rect.width / 2;
     const cy = rect.top + rect.height / 2;
@@ -502,18 +480,16 @@ function animateAndAdd(btn, type) {
     addVisite(type);
 }
 async function addVisite(type) {
-    if (!currentAddrId) return;
+    if (MODE !== 'admin' || !currentAddrId) return;
     if (!visites[currentAddrId]) visites[currentAddrId] = {};
     const prev = visites[currentAddrId][type];
     const n = prev ? prev.count + 1 : 1;
     const now = new Date().toISOString();
-    const status = MODE === 'admin' ? 'approved' : 'pending';
+    const status = 'approved';
     // Récupérer la note saisie (mobile ou desktop)
     const noteEl = document.getElementById('note-field-' + currentAddrId) || document.getElementById('mo-note-field');
     const note = noteEl ? noteEl.value.trim() : (prev ? prev.note : '');
     visites[currentAddrId][type] = { count: n, last_date: now, status, note };
-    const sk = currentAddrId + ':' + type;
-    sessionAdded[sk] = (sessionAdded[sk] || 0) + 1;
     try { await fetch(`${SUPABASE_URL}/rest/v1/visites`, {
         method: 'POST', headers: { ...SB_H, 'Prefer': 'resolution=merge-duplicates' },
         body: JSON.stringify({ address_id: currentAddrId, type, count: n, last_date: now, status, note })
@@ -532,11 +508,8 @@ async function saveNote(addrId, type) {
 }
 
 async function undoVisite(type) {
-    if (!currentAddrId) return;
+    if (MODE !== 'admin' || !currentAddrId) return;
     const v = visites[currentAddrId]; if (!v || !v[type]) return;
-    const sk = currentAddrId + ':' + type;
-    if (MODE === 'militant' && (!sessionAdded[sk] || sessionAdded[sk] <= 0)) return;
-    if (MODE === 'militant') sessionAdded[sk]--;
     const n = v[type].count - 1;
     if (n <= 0) {
         delete v[type]; if (!Object.keys(v).length) delete visites[currentAddrId];
@@ -565,7 +538,6 @@ function getMarkerClass(id) {
     const v = visites[id] || {};
     const aPap = v.pap && v.pap.status === 'approved';
     const pPap = v.pap && v.pap.status === 'pending';
-    // Le boîtage n'influence pas la couleur : seul le PAP est signalé
     if (aPap) return 'marker-pap';
     if (MODE === 'admin' && pPap) return 'marker-pending';
     if (blacklistedAddrs.has(id)) return 'marker-blacklist';
@@ -593,19 +565,13 @@ function historyText(id) {
         const note = v.pap.note ? `<br><span style="color:#888;font-size:12px;">📝 ${v.pap.note}</span>` : '';
         p.push(`PàP : ${v.pap.count} visite${v.pap.count>1?'s':''} (${d})${st}${note}`);
     }
-    if (v.boi) {
-        const d = new Date(v.boi.last_date).toLocaleDateString('fr-FR');
-        const st = v.boi.status === 'pending' ? ' <i>(en attente)</i>' : '';
-        const note = v.boi.note ? `<br><span style="color:#888;font-size:12px;">📝 ${v.boi.note}</span>` : '';
-        p.push(`Boîtage : ${v.boi.count} passage${v.boi.count>1?'s':''} (${d})${st}${note}`);
-    }
     return p.length ? p.join('<br>') : 'Aucune visite';
 }
 
 function noteFieldHTML(addrId) {
     const v = visites[addrId];
-    const existingNote = (v?.pap?.note || v?.boi?.note || '');
-    const noteType = v?.pap ? 'pap' : v?.boi ? 'boi' : 'pap';
+    const existingNote = v?.pap?.note || '';
+    const noteType = 'pap';
     return `<textarea id="note-field-${addrId}" placeholder="Note (optionnelle)..."
         style="width:100%;margin-top:6px;padding:6px 8px;border:1px solid #ddd;border-radius:6px;
                font-size:12px;font-family:inherit;resize:none;height:48px;"
@@ -630,11 +596,10 @@ function refreshPopup() {
     if (isMobile()) {
         document.getElementById('mo-history').innerHTML = historyText(a.id);
         document.getElementById('mo-undo-pap').style.display = canUndo(a.id,'pap') ? '' : 'none';
-        document.getElementById('mo-undo-boi').style.display = canUndo(a.id,'boi') ? '' : 'none';
         document.getElementById('mo-skip').innerHTML = skipNoteHTML(a);
-        document.getElementById('mo-actions').style.display = blacklistedAddrs.has(a.id) ? 'none' : '';
+        document.getElementById('mo-actions').style.display = (MODE !== 'admin' || blacklistedAddrs.has(a.id)) ? 'none' : '';
         const blBtn = document.getElementById('mo-blacklist-btn');
-        if (blBtn) blBtn.innerHTML = blacklistBtnHTML(a.id, a.adr);
+        if (blBtn) blBtn.innerHTML = MODE === 'admin' ? blacklistBtnHTML(a.id, a.adr) : '';
     } else { const m = markers[a.id]; if (m && m.getPopup() && m.getPopup().isOpen()) m.getPopup().setContent(popupHTML(a)); }
 }
 function openAddrPopup(a) {
@@ -644,17 +609,16 @@ function openAddrPopup(a) {
         document.getElementById('mo-addr').textContent = `${a.rue} — ~${a.lgts||1} logement${(a.lgts||1)>1?'s':''}`;
         document.getElementById('mo-bureau').textContent = bureauLabel(a);
         document.getElementById('mo-skip').innerHTML = skipNoteHTML(a);
-        document.getElementById('mo-actions').style.display = blacklistedAddrs.has(a.id) ? 'none' : '';
+        document.getElementById('mo-actions').style.display = (MODE !== 'admin' || blacklistedAddrs.has(a.id)) ? 'none' : '';
         document.getElementById('mo-history').innerHTML = historyText(a.id);
         document.getElementById('mo-undo-pap').style.display = canUndo(a.id,'pap') ? '' : 'none';
-        document.getElementById('mo-undo-boi').style.display = canUndo(a.id,'boi') ? '' : 'none';
         // Pré-remplir la note
         const v = visites[a.id];
         const noteField = document.getElementById('mo-note-field');
-        if (noteField) noteField.value = v?.pap?.note || v?.boi?.note || '';
+        if (noteField) noteField.value = v?.pap?.note || '';
         // Bouton blacklist
         const blBtn = document.getElementById('mo-blacklist-btn');
-        if (blBtn) blBtn.innerHTML = blacklistBtnHTML(a.id, a.adr);
+        if (blBtn) blBtn.innerHTML = MODE === 'admin' ? blacklistBtnHTML(a.id, a.adr) : '';
         document.getElementById('mobile-overlay').style.display = 'block';
         document.getElementById('mobile-backdrop').style.display = 'block';
     }
@@ -665,8 +629,7 @@ function closeMobilePopup() {
     currentAddrId = null;
 }
 function canUndo(addrId, type) {
-    if (MODE === 'admin') return !!(visites[addrId] && visites[addrId][type]);
-    return (sessionAdded[addrId + ':' + type] || 0) > 0;
+    return MODE === 'admin' && !!(visites[addrId] && visites[addrId][type]);
 }
 function bureauLabel(a) {
     const nom = bureauNomIndex[a._bureau];
@@ -677,7 +640,7 @@ function bureauLabel(a) {
 }
 function skipNoteHTML(a) {
     if (blacklistedAddrs.has(a.id))
-        return `<div class="skip-note blacklist"><b>Adresse blacklistée</b> : le bâtiment n'existe plus ou n'est plus habité. Pas de PAP ni de boîtage ici.</div>`;
+        return `<div class="skip-note blacklist"><b>Adresse blacklistée</b> : le bâtiment n'existe plus ou n'est plus habité. Pas de PAP ici.</div>`;
     if ((a.lgts || 1) < SEUIL_LGTS)
         return `<div class="skip-note"><b>Moins de ${SEUIL_LGTS} logements</b> : pas prévue au planning PAP, trop peu de portes pour le temps passé.</div>`;
     return '';
@@ -688,16 +651,13 @@ function popupHTML(a) {
         <div style="font-size:11px;color:var(--lfi-gris2);margin-bottom:4px;">${bureauLabel(a)}</div>
         ${skipNoteHTML(a)}
         <div class="popup-history">${historyText(a.id)}</div>
-        ${blacklistedAddrs.has(a.id) ? '' : `${noteFieldHTML(a.id)}
+        ${(MODE !== 'admin' || blacklistedAddrs.has(a.id)) ? '' : `${noteFieldHTML(a.id)}
         <div class="btn-row" style="margin-top:8px;">
             <div style="flex:1;text-align:center;">
                 <button class="btn-action pap" style="width:100%;" onclick="currentAddrId='${a.id}';animateAndAdd(this,'pap');">+ PàP</button>
                 ${canUndo(a.id,'pap')?`<button class="btn-undo" onclick="currentAddrId='${a.id}';undoVisite('pap');">Annuler</button>`:''}
-            </div><div style="flex:1;text-align:center;">
-                <button class="btn-action boi" style="width:100%;" onclick="currentAddrId='${a.id}';animateAndAdd(this,'boi');">+ Boîtage</button>
-                ${canUndo(a.id,'boi')?`<button class="btn-undo" onclick="currentAddrId='${a.id}';undoVisite('boi');">Annuler</button>`:''}
             </div></div>`}
-        ${blacklistBtnHTML(a.id, a.adr)}
+        ${MODE === 'admin' ? blacklistBtnHTML(a.id, a.adr) : ''}
         </div>`;
 }
 
@@ -705,55 +665,27 @@ function popupHTML(a) {
 function bureauStats(bId) {
     const ba = ADDRESSES.filter(a => a._bureau === bId);
     const totalLgts = ba.reduce((s,a) => s + (a.lgts||1), 0);
-    let lP=0, lB=0, pending=0;
+    let lP=0, pending=0;
     Object.entries(visites).forEach(([id,v]) => {
         const a = ba.find(x => x.id===id); if (!a) return;
         const lg = a.lgts||1;
         if (v.pap && v.pap.status==='approved') lP += lg;
-        if (v.boi && v.boi.status==='approved') lB += lg;
-        if ((v.pap && v.pap.status==='pending') || (v.boi && v.boi.status==='pending')) pending++;
+        if (v.pap && v.pap.status==='pending') pending++;
     });
     return { totalLgts, totalAddr: ba.length, pending,
-        pctPap: totalLgts ? Math.round(lP/totalLgts*100) : 0,
-        pctBoi: totalLgts ? Math.round(lB/totalLgts*100) : 0 };
+        pctPap: totalLgts ? Math.round(lP/totalLgts*100) : 0 };
 }
 function globalStats() {
     const totalLgts = ADDRESSES.reduce((s,a) => s + (a.lgts||1), 0);
-    let lP=0, lB=0, totalPending=0;
+    let lP=0, totalPending=0;
     Object.entries(visites).forEach(([id,v]) => {
         const a = ADDRESSES.find(x => x.id===id); if (!a) return;
         const lg = a.lgts||1;
         if (v.pap && v.pap.status==='approved') lP += lg;
-        if (v.boi && v.boi.status==='approved') lB += lg;
-        if ((v.pap && v.pap.status==='pending') || (v.boi && v.boi.status==='pending')) totalPending++;
+        if (v.pap && v.pap.status==='pending') totalPending++;
     });
-    return { totalLgts, totalPending, pctPap: totalLgts ? Math.round(lP/totalLgts*100) : 0,
-        pctBoi: totalLgts ? Math.round(lB/totalLgts*100) : 0 };
+    return { totalLgts, totalPending, pctPap: totalLgts ? Math.round(lP/totalLgts*100) : 0 };
 }
-function setMapColorMode(mode) {
-    mapColorMode = mode;
-    // Mettre à jour les boutons
-    const btnPap = document.getElementById('toggle-pap');
-    const btnBoi = document.getElementById('toggle-boi');
-    if (btnPap && btnBoi) {
-        btnPap.style.background = mode==='pap' ? 'var(--lfi-green)' : 'white';
-        btnPap.style.color = mode==='pap' ? 'white' : '#666';
-        btnPap.style.borderColor = mode==='pap' ? 'var(--lfi-green)' : '#ccc';
-        btnBoi.style.background = mode==='boi' ? 'var(--lfi-violet)' : 'white';
-        btnBoi.style.color = mode==='boi' ? 'white' : '#666';
-        btnBoi.style.borderColor = mode==='boi' ? 'var(--lfi-violet)' : '#ccc';
-    }
-    // Recalculer les couleurs des bureaux
-    if (bureauLayer) bureauLayer.setStyle(f => {
-        const s = bureauStats(f.properties.bureau);
-        const pct = mode === 'pap' ? s.pctPap : s.pctBoi;
-        const fillColor = pct > 0 ? (mode==='pap' ? 'var(--lfi-green)' : 'var(--lfi-violet)') : '#e0e0e0';
-        let color = '#555', weight = 1.5;
-        if (MODE === 'admin' && s.pending > 0) { color = 'var(--lfi-violet)'; weight = 2.5; }
-        return { fillColor, fillOpacity: pct > 0 ? Math.min(pct/100*0.65, 0.65) : 0.05, color, weight };
-    });
-}
-
 function updateStatsPanel() {
     if (currentBureau) {
         const s = bureauStats(currentBureau);
@@ -762,8 +694,6 @@ function updateStatsPanel() {
             (MODE==='admin' && s.pending ? ` · ${s.pending} en attente` : '');
         document.getElementById('bar-pap').style.width = s.pctPap + '%';
         document.getElementById('pct-pap').textContent = s.pctPap + '%';
-        document.getElementById('bar-boi').style.width = s.pctBoi + '%';
-        document.getElementById('pct-boi').textContent = s.pctBoi + '%';
     } else {
         const s = globalStats();
         document.getElementById('sp-title').textContent = `Nanterre — ~${s.totalLgts} logements`;
@@ -773,8 +703,6 @@ function updateStatsPanel() {
                 : '';
         document.getElementById('bar-pap').style.width = s.pctPap + '%';
         document.getElementById('pct-pap').textContent = s.pctPap + '%';
-        document.getElementById('bar-boi').style.width = s.pctBoi + '%';
-        document.getElementById('pct-boi').textContent = s.pctBoi + '%';
     }
 }
 
@@ -806,12 +734,10 @@ function showBureaux() {
     bureauLayer = L.geoJSON(BUREAUX, {
         style: f => {
             const s = bureauStats(f.properties.bureau);
-            const pct = mapColorMode === 'pap' ? s.pctPap : s.pctBoi;
+            const pct = s.pctPap;
             // Couleurs progressives : transparent à 0%, bien visible à 100%
             // Formule: opacity = pct/100 * 0.65 (max 0.65, pas de base pour ne pas sur-noircir)
-            const fillColor = pct > 0
-                ? (mapColorMode === 'pap' ? 'var(--lfi-green)' : 'var(--lfi-violet)')
-                : '#e0e0e0';
+            const fillColor = pct > 0 ? 'var(--lfi-green)' : '#e0e0e0';
             let color = '#555', weight = 1.5;
             if (MODE === 'admin' && s.pending > 0) {
                 color = var_lfi_violet;
@@ -891,7 +817,7 @@ function showAdminReview(bId) {
     ba.forEach(a => {
         const v = visites[a.id];
         if (!v) return;
-        ['pap', 'boi'].forEach(type => {
+        ['pap'].forEach(type => {
             if (v[type] && v[type].status === 'pending') {
                 pending.push({ addr: a, type, data: v[type] });
             }
@@ -910,7 +836,7 @@ function showAdminReview(bId) {
         return `<div class="ar-item">
             <input type="checkbox" checked data-idx="${i}">
             <div class="ar-addr">${p.addr.adr}</div>
-            <span class="ar-type ${p.type}">${p.type === 'pap' ? 'PàP' : 'Boîtage'}</span>
+            <span class="ar-type ${p.type}">PàP</span>
             <span class="ar-date">${d}</span>
         </div>`;
     }).join('');
