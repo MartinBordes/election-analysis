@@ -1028,14 +1028,18 @@ function renderPaceIndicator(now) {
 function renderStats() {
     const nSess=sessions.length;
     const portesP=sessions.reduce((s,x)=>s+(x.portes_estimees||0),0);
-    let portesFaites=0;
+    let portesFaites=0, portesFaites2=0;
     for (const [id,v] of Object.entries(visites)) {
-        if (v.pap&&v.pap.status==='approved') { const a=addresses.find(x=>x.id===id); portesFaites+=a?(a.lgts||1):1; }
+        if (v.pap&&v.pap.status==='approved') {
+            const a=addresses.find(x=>x.id===id); const lg=a?(a.lgts||1):1;
+            portesFaites+=lg; if (v.pap.count>=2) portesFaites2+=lg;
+        }
     }
     document.getElementById('stats').innerHTML=`
         <div class="stat-card"><div class="num">${nSess}</div><div class="label">Sessions</div></div>
         <div class="stat-card"><div class="num">${portesP.toLocaleString()}</div><div class="label">Portes planifiées</div></div>
-        <div class="stat-card"><div class="num">${portesFaites.toLocaleString()}</div><div class="label">Portes terrain</div></div>`;
+        <div class="stat-card"><div class="num">${portesFaites.toLocaleString()}</div><div class="label">Visités 1 fois</div></div>
+        <div class="stat-card"><div class="num">${portesFaites2.toLocaleString()}</div><div class="label">Visités 2 fois</div></div>`;
 }
 
 function addrItemHtml(raw) {
