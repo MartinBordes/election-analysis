@@ -172,6 +172,11 @@ path.leaflet-interactive { -webkit-tap-highlight-color: transparent; }
 .marker-pending { background: var(--lfi-yellow); }
 .marker-small { background: #ccc; border-width: 1px; opacity: 0.7; }
 .marker-blacklist { border: 2px solid var(--lfi-gris2); background: white url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M2 2L8 8M8 2L2 8' stroke='%23D1271C' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E") center / 100% 100% no-repeat; }
+/* Infos campagne de l'adresse */
+.addr-infos { font-size: 12px; background: var(--lfi-gris); border-radius: 6px; padding: 6px 8px; margin-bottom: 8px; }
+.addr-infos div { display: flex; justify-content: space-between; gap: 12px; line-height: 1.6; }
+.addr-infos span { color: var(--lfi-gris2); }
+.addr-infos i { font-weight: 400; color: var(--lfi-gris2); }
 .skip-note { font-size: 12px; line-height: 1.4; background: var(--lfi-gris); border-left: 3px solid var(--lfi-gris2); border-radius: 4px; padding: 6px 8px; margin-bottom: 8px; color: var(--lfi-noir); }
 .skip-note.blacklist { border-left-color: var(--lfi-red); }
 
@@ -359,6 +364,7 @@ path.leaflet-interactive { -webkit-tap-highlight-color: transparent; }
     <h3 id="mo-title"></h3>
     <div class="mo-addr" id="mo-addr"></div>
     <div id="mo-bureau" style="font-size:12px;color:var(--lfi-gris2);margin-bottom:6px;"></div>
+    <div id="mo-infos"></div>
     <div id="mo-skip"></div>
     <div class="mo-history" id="mo-history"></div>
     <div id="mo-actions">
@@ -648,6 +654,7 @@ function openAddrPopup(a) {
         document.getElementById('mo-title').textContent = a.adr;
         document.getElementById('mo-addr').textContent = `${a.rue} — ~${a.lgts||1} logement${(a.lgts||1)>1?'s':''}`;
         document.getElementById('mo-bureau').textContent = bureauLabel(a);
+        document.getElementById('mo-infos').innerHTML = addrInfosHTML(a);
         document.getElementById('mo-skip').innerHTML = skipNoteHTML(a);
         document.getElementById('mo-actions').style.display = (MODE !== 'admin' || blacklistedAddrs.has(a.id)) ? 'none' : '';
         document.getElementById('mo-militant-note').style.display = (MODE === 'militant' && !blacklistedAddrs.has(a.id)) ? '' : 'none';
@@ -680,6 +687,16 @@ function bureauLabel(a) {
     if (a.quartier) parts.push(a.quartier);
     return parts.join(' · ');
 }
+function addrInfosHTML(a) {
+    const nd = '<i>pas disponible</i>';
+    const fr = n => n.toLocaleString('fr-FR');
+    const rows = [
+        ['Mélenchon 2022 (bureau)', a.mel22 != null ? fr(a.mel22) + ' %' : nd],
+        ['Logements sociaux', a.ls != null ? fr(a.ls) : nd],
+        ['Score', a.score != null ? fr(a.score) : nd],
+    ];
+    return `<div class="addr-infos">${rows.map(([k, v]) => `<div><span>${k}</span><b>${v}</b></div>`).join('')}</div>`;
+}
 function skipNoteHTML(a) {
     if (blacklistedAddrs.has(a.id))
         return `<div class="skip-note blacklist"><b>Adresse blacklistée</b> : le bâtiment n'existe plus ou n'est plus habité. Pas de PAP ici.</div>`;
@@ -698,6 +715,7 @@ function popupHTML(a) {
     return `<div class="addr-popup"><h3>${a.adr}</h3>
         <div class="popup-rue">${a.rue} — ~${a.lgts||1} logement${(a.lgts||1)>1?'s':''}</div>
         <div style="font-size:11px;color:var(--lfi-gris2);margin-bottom:4px;">${bureauLabel(a)}</div>
+        ${addrInfosHTML(a)}
         ${skipNoteHTML(a)}
         <div class="popup-history">${historyText(a.id)}</div>
         ${(MODE !== 'admin' || blacklistedAddrs.has(a.id)) ? '' : `${noteFieldHTML(a.id)}
